@@ -1,0 +1,6599 @@
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { jsPDF } from "jspdf";
+import confetti from "canvas-confetti";
+
+const triggerQuickConfetti = () => {
+  try {
+    confetti({
+      particleCount: 85,
+      spread: 65,
+      origin: { y: 0.72 },
+      colors: ["#C45BAA", "#3D1052", "#E8845C", "#2DD4BF", "#8B5CF6"]
+    });
+  } catch (e) {
+    console.warn("Unable to trigger confetti", e);
+  }
+};
+
+const triggerCelebrationConfetti = () => {
+  try {
+    const duration = 2.5 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100, colors: ["#C45BAA", "#3D1052", "#E8845C", "#2DD4BF", "#FCD34D"] };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    const interval: any = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
+  } catch (e) {
+    console.warn("Unable to trigger celebration confetti", e);
+  }
+};
+
+import { 
+  Sparkles, 
+  Brain, 
+  Zap, 
+  ShieldCheck, 
+  FileText, 
+  Bookmark, 
+  CheckCircle, 
+  Check,
+  Compass, 
+  ShieldAlert, 
+  Dribbble, 
+  Clock, 
+  ArrowRight, 
+  Heart, 
+  Volume2, 
+  Download, 
+  AlertTriangle, 
+  X, 
+  Smile, 
+  Calendar, 
+  Menu, 
+  ChevronRight, 
+  ChevronLeft,
+  Award,
+  BookOpen,
+  Lock,
+  Moon,
+  LogOut,
+  ChevronDown,
+  User,
+  Camera,
+  Upload,
+  Plus
+} from "lucide-react";
+
+import { 
+  AFFIRMATIONS, 
+  MOODS, 
+  ADA_RIGHTS, 
+  DOPAMINE_ITEMS, 
+  BREATH_STAGES,
+  ADHD_GLOSSARY
+} from "./constants";
+
+import { Win, MaskMoment } from "./types";
+
+const MINIMIZERS = [
+  { regex: /\bjust\b/gi, word: "just", replacement: "(remove entirely)", reason: "Softens recommendations and signals hesitancy." },
+  { regex: /\b(sorry|apologize|apologies)\b/gi, word: "sorry", replacement: "Thank you for bringing this to my attention / Thank you for your patience", reason: "Over-apologizing for standard work processes or capacity bounds weakens professional stature." },
+  { regex: /\bactually\b/gi, word: "actually", replacement: "(remove entirely)", reason: "Highlights defensiveness or surprise instead of calm authority." },
+  { regex: /\bdoes that make sense\??/gi, word: "does that make sense?", replacement: "I look forward to your feedback / Let me know your thoughts.", reason: "Asks the reader to question your clarity or logic." },
+  { regex: /\bhope (this|that) is okay\b/gi, word: "hope this is okay", replacement: "I am moving forward with this approach / Let me know your thoughts.", reason: "Requests permission for normal administrative decisions." },
+  { regex: /\bI (think|feel|believe)\b/gi, word: "I think / feel", replacement: "I recommend / I plan / I propose", reason: "Substitutes confidence and professional conviction for subjective feeling." },
+  { regex: /\bno worries\b/gi, word: "no worries", replacement: "Certainly / My pleasure / Safe to proceed", reason: "Under-values your effort and can sound overly conversational." },
+  { regex: /\b(bother|sorry to bother)\b/gi, word: "bother", replacement: "(omit / replace with statement)", reason: "Implies your outreach is an annoyance or inconvenience." }
+];
+
+const EMAIL_PRESETS = [
+  { 
+    label: "Timeline Pushback ⏳", 
+    template: "Polite workload pushback",
+    situation: "The team is demanding final graphic assets tomorrow morning, but I am already at maximum capacity this week. I will deliver them on Friday afternoon instead of rushing."
+  },
+  { 
+    label: "Saying No to Overtime 🚫", 
+    template: "Setting structural capacity boundaries",
+    situation: "My manager requested a last-minute sync at 8 PM tonight or working over the upcoming weekend. I want to decline because it impacts my sensory recovery downtime."
+  },
+  { 
+    label: "Written Context Demand 📝", 
+    template: "Following up on timelines",
+    situation: "A colleague sent a vague 'let's jump on a quick call to plan things'. I experience severe executive friction with unstructured meetings. I want to request a brief email list or agenda first."
+  },
+  { 
+    label: "Overshare-Free Sick Leave 🤒", 
+    template: "Setting structural capacity boundaries",
+    situation: "I need to take a sensory sick day or mental health day today. I want to state clearly that I am offline without oversharing personal physical symptoms or saying 'sorry'."
+  },
+  { 
+    label: "Scope Creep Restraint 💼", 
+    template: "Accommodations request templates",
+    situation: "The client asked for three extra features that were not part of the initial signed scope of work. I want to tell them we must scope this as Phase 2 or adjust the fee structure."
+  }
+];
+
+const SCRIPT_PRESETS = [
+  { 
+    label: "Explain Delay Confidently ⏳", 
+    template: "Explain delay confidently", 
+    situation: "My deliverable is delayed because a key external dependency didn't send their assets on time. I need to explain this to a high-pressure stakeholder without apologetic cushioning."
+  },
+  { 
+    label: "Reject Last-minute Demand 🚫", 
+    template: "Reject last-minute demand", 
+    situation: "A team member pinged me at 5:05 PM asking for a 'quick' 30-minute sync to redesign a dashboard layout. I have sensory fatigue and need to close up."
+  },
+  { 
+    label: "Ask for Written Briefing 📝", 
+    template: "Ask for written briefing summary", 
+    situation: "A product manager wants to hop on an unplanned brainstorming call. I experience severe executive friction with live verbal requests, and want to ask for a brief written summary first."
+  },
+  { 
+    label: "Decline Meeting Overload 📴", 
+    template: "Decline structural meeting overloads", 
+    situation: "We have five consecutive daily catch-up standups scheduled this week. It is fracturing my coding focus block, and I want to propose sending a morning written Slack bullet instead."
+  }
+];
+
+const EMAIL_TONES = [
+  { key: "neutral", label: "Friendly & Firm", tag: "Warm but immovable limits" },
+  { key: "bold", label: "Completely Unapologetic", tag: "Zero filler, max speed" },
+  { key: "formal", label: "Formal Corporate", tag: "Polished client elegance" },
+  { key: "accommodating", label: "Protected Request", tag: "Confident structure requests" }
+];
+
+const EMAIL_SIGNATURE_PRESETS = [
+  {
+    id: "batch",
+    label: "Focus Protection ⏳",
+    tag: "Minimize email urgency & interruptions",
+    benefit: "Shields hyperfocus states by training recipients to expect rhythmic response intervals instead of immediate availability.",
+    text: "\n\nWarm regards,\n[Your Name]\n\n---\n*Note: In alignment with deep-work habits, I batch-process my inbox twice daily to protect active technical/creative focus blocks. Thank you for your patience.*"
+  },
+  {
+    id: "sensory",
+    label: "Sensory Recovery 🔋",
+    tag: "Establish after-hours digital limits",
+    benefit: "Protects high-cognitive evening downtime, preventing visual and mental sensory burnout before it depletes executive capacity.",
+    text: "\n\nBest,\n[Your Name]\n\n---\n*Note: To prevent digital fatigue and ensure executive recovery, I protect my evening visual downtime starting after 5:30 PM. I will attend to your query when next online.*"
+  },
+  {
+    id: "bullet",
+    label: "Cognitive Clarity 📝",
+    tag: "Encourage concise bulleted replies",
+    benefit: "Reduces working memory load and prevents dyslexia or ADHD fatigue by normalizing dense, list-oriented information exchange.",
+    text: "\n\nCheers,\n[Your Name]\n\n---\n*Note: To optimize executive processing, I favor crisp bullet points and written agendas over verbal overloads. Feel free to respond in notes!*"
+  },
+  {
+    id: "boundary",
+    label: "Accommodating Directness 💼",
+    tag: "Firm but professional request format",
+    benefit: "Mitigates rejection-sensitive loops by converting emotional status updates into structured, documented timeline logs.",
+    text: "\n\nKind regards,\n[Your Name]\n\n---\n*Note: This update represents a professional capacity status log. All timeline updates or change-requests must be logged in writing to maintain trackable workspace progress.*"
+  }
+];
+
+interface ResonanceReport {
+  toneType: string;
+  toneColor: string;
+  toneEmoji: string;
+  description: string;
+  resonanceRating: string;
+  scores: {
+    assertiveness: number;
+    clarity: number;
+    emotionalLoad: number;
+  };
+  insights: { title: string; body: string; type: "alert" | "info" | "success" }[];
+}
+
+const analyzeEmailResonance = (text: string): ResonanceReport => {
+  const lowercase = text.toLowerCase();
+  
+  // 1. Analyze minimizing words matching MINIMIZERS count
+  const minimizerCount = MINIMIZERS.filter(m => m.regex.test(lowercase)).length;
+
+  // 2. Identify over-explaining / justification
+  const overExplainWords = ["because", "due to", "since i", "as i am", "reason is", "unfortunate", "actually", "just wanted to", "so sorry", "my apologies"];
+  let overExplainCount = 0;
+  overExplainWords.forEach(w => {
+    const regex = new RegExp("\\b" + w, "gi");
+    const matches = lowercase.match(regex);
+    if (matches) overExplainCount += matches.length;
+  });
+
+  // 3. Identify stress & executive overloads
+  const stressWords = ["overwhelmed", "struggling", "impossible", "stressed", "exhausted", "burnout", "stressful", "anxious", "panic", "hard to", "difficult"];
+  let stressCount = 0;
+  const matchedStressTerm: string[] = [];
+  stressWords.forEach(w => {
+    const regex = new RegExp("\\b" + w, "gi");
+    const matches = lowercase.match(regex);
+    if (matches) {
+      stressCount += matches.length;
+      if (!matchedStressTerm.includes(w)) {
+        matchedStressTerm.push(w);
+      }
+    }
+  });
+
+  // 4. Identify command tension
+  const commandWords = ["must", "need", "immediately", "required", "strictly", "demand", "essential", "crucial", "urgent"];
+  let commandCount = 0;
+  commandWords.forEach(w => {
+    const regex = new RegExp("\\b" + w, "gi");
+    const matches = lowercase.match(regex);
+    if (matches) commandCount += matches.length;
+  });
+
+  // 5. Positive assertions
+  const assertionWords = ["will", "plan", "propose", "recommend", "delivering", "on track", "structured", "prefer", "moving forward"];
+  let assertionCount = 0;
+  assertionWords.forEach(w => {
+    const regex = new RegExp("\\b" + w, "gi");
+    const matches = lowercase.match(regex);
+    if (matches) {
+      assertionCount += matches.length;
+    }
+  });
+
+  // Calculate scores
+  const assertivenessScore = Math.max(10, Math.min(100, 100 - (minimizerCount * 12) - (overExplainCount * 6) + (assertionCount * 8)));
+  
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const sentenceCount = text.split(/[.!?]+/).filter(Boolean).length;
+  const avgSentenceLength = sentenceCount > 0 ? wordCount / sentenceCount : 0;
+  
+  let clarityScore = 100;
+  if (avgSentenceLength > 18) clarityScore -= 15;
+  if (overExplainCount > 2) clarityScore -= 15;
+  if (minimizerCount > 2) clarityScore -= 10;
+  clarityScore = Math.max(20, clarityScore);
+
+  const emotionalLoadScore = Math.max(0, Math.min(100, (stressCount * 25) + (overExplainCount * 10) + (minimizerCount * 5)));
+
+  // Determine Overall Tone
+  let toneType = "Balanced & Firm";
+  let toneColor = "text-emerald-400 bg-emerald-950/40 border-emerald-500/20";
+  let toneEmoji = "🛡️";
+  let description = "This writing is well-grounded, straightforward, and clearly defines constraints without defensive clutter.";
+  let resonanceRating = "Grounded Assertiveness";
+
+  if (emotionalLoadScore > 50 && assertivenessScore < 50) {
+    toneType = "High Cognitive Burden / Defensive Shield";
+    toneColor = "text-[#FF9E7D] bg-[#E8845C]/10 border-[#E8845C]/35";
+    toneEmoji = "🤕";
+    description = "The text contains multiple stress markers and over-explanations. This suggests significant under-the-hood fatigue or communication anxiety.";
+    resonanceRating = "Frictional Burnout Signature";
+  } else if (overExplainCount > 3 && assertivenessScore < 70) {
+    toneType = "Over-Explaining Loop";
+    toneColor = "text-amber-300 bg-amber-950/40 border-amber-500/20";
+    toneEmoji = "🔁";
+    description = "You are over-detailing your reasons to justify standard technical boundaries, which might dilute your authority.";
+    resonanceRating = "Oversharing Defense";
+  } else if (minimizerCount > 1 && assertionCount === 0) {
+    toneType = "Apologetic & Hesitant";
+    toneColor = "text-amber-400 bg-amber-950/30 border-amber-500/15";
+    toneEmoji = "🥺";
+    description = "Wording signals submissive patterns and high rejection sensitivity. The text over-cushions standard professional requests.";
+    resonanceRating = "Submissive Cushioning";
+  } else if (commandCount > 1 && minimizerCount > 1) {
+    toneType = "Mixed Signals / Friction Loop";
+    toneColor = "text-fuchsia-300 bg-fuchsia-955/40 border-fuchsia-500/20";
+    toneEmoji = "⚡";
+    description = "We notice overlapping signals: very direct/forceful words alongside apologetic/softening phrases. This can confuse the audience's perception.";
+    resonanceRating = "Mixed Assertiveness Pattern";
+  } else if (assertivenessScore > 85) {
+    toneType = "High-Confidence Prism State";
+    toneColor = "text-[#E085C9] bg-[#C45BAA]/10 border-[#C45BAA]/20";
+    toneEmoji = "👑";
+    description = "Impeccable executive presence. Highly refined, clean boundary-setting with zero unnecessary qualifiers.";
+    resonanceRating = "Supreme Professional Presence";
+  }
+
+  // Create Insights
+  const insights: { title: string; body: string; type: "alert" | "info" | "success" }[] = [];
+
+  // Over-explaining check
+  if (overExplainCount > 1) {
+    insights.push({
+      title: "Reasoning & Explanation Check",
+      body: "You've shared a lot of background context on why you cannot do something. Over-explaining can sometimes feel like you have to defend yourself, but simple boundaries (e.g., 'I cannot deliver this report by tomorrow') are perfectly robust. Try keeping it brief and calm!",
+      type: "alert"
+    });
+  } else {
+    insights.push({
+      title: "Capacity Insulation",
+      body: "Excellent work keeping explanations private. You didn't leak details of personal downtime or overload to qualify your boundary. Keep this standard!",
+      type: "success"
+    });
+  }
+
+  // Stress keyword check
+  if (stressCount > 0) {
+    const terms = matchedStressTerm.join(", ");
+    insights.push({
+      title: "Emotional Load Triggers Detected",
+      body: `You used distress markers: "${terms}". While validating, disclosing emotional struggles in a corporate environment can open the door for micro-management. Try converting 'I am struggling with sensory overload' into 'To maintain structural focus and deliver high quality, I require 2 undisturbed days.'`,
+      type: "alert"
+    });
+  }
+
+  // mixed messages check
+  if (commandCount > 0 && minimizerCount > 0) {
+    insights.push({
+      title: "Mixed Message Cushioning",
+      body: "You blended direct demands with safety cushions (like 'sorry to ask but we strictly must...'). This creates cognitive dissonance. Declare your request calmly, but do not apologize for the requirement itself.",
+      type: "info"
+    });
+  }
+
+  // long sentences / run-ons
+  if (avgSentenceLength > 18) {
+    insights.push({
+      title: "High Structural Run-ons",
+      body: `Your average sentence is ${Math.round(avgSentenceLength)} words long. Highly verbose blocks suggest high cognitive anxiety. Try splitting long thoughts with bullet points. It saves reading stress for them, and spelling anxiety for you.`,
+      type: "info"
+    });
+  }
+
+  return {
+    toneType,
+    toneColor,
+    toneEmoji,
+    description,
+    resonanceRating,
+    scores: {
+      assertiveness: assertivenessScore,
+      clarity: clarityScore,
+      emotionalLoad: emotionalLoadScore
+    },
+    insights
+  };
+};
+
+const renderHighlightedText = (text: string) => {
+  if (!text) {
+    return <span className="text-gray-500 italic">No text written yet. Type or paste your draft above to start the real-time boundary scan!</span>;
+  }
+  
+  let tokens: { text: string; isMatch: boolean; matchedWord?: string }[] = [{ text, isMatch: false }];
+  
+  MINIMIZERS.forEach(({ regex, word }) => {
+    let newTokens: { text: string; isMatch: boolean; matchedWord?: string }[] = [];
+    tokens.forEach(token => {
+      if (token.isMatch) {
+        newTokens.push(token);
+        return;
+      }
+      
+      const parts = token.text.split(regex);
+      const matches = token.text.match(regex) || [];
+      
+      parts.forEach((part, i) => {
+        newTokens.push({ text: part, isMatch: false });
+        if (i < parts.length - 1 && matches[i]) {
+          newTokens.push({ text: matches[i], isMatch: true, matchedWord: word });
+        }
+      });
+    });
+    tokens = newTokens;
+  });
+
+  return (
+    <div className="whitespace-pre-wrap leading-relaxed select-text">
+      {tokens.map((token, i) => {
+        if (token.isMatch) {
+          return (
+            <span 
+              key={i} 
+              className="bg-[#E8845C]/20 text-[#FF9E7D] border-b border-[#E8845C]/50 px-1 py-0.5 rounded font-bold transition-all relative group inline-block"
+              title={`Minimizer matching: "${token.text}". View alternatives below.`}
+            >
+              {token.text}
+            </span>
+          );
+        }
+        return <span key={i}>{token.text}</span>;
+      })}
+    </div>
+  );
+};
+
+const TOUR_STEPS = [
+  {
+    title: "Welcome to FlowHer 🌸",
+    text: "FlowHer is a supportive workspace designed to clear your head and reduce workday stress. We translate regular workday challenges — like feeling overwhelmed, communication anxieties, self-doubt, and task paralysis — into simple, calming, and protective daily routines.",
+    targetTab: "home",
+    tool: null,
+    highlightIndicator: "Main Navigation Space",
+    iconName: "Sparkles"
+  },
+  {
+    title: "Daily Battery Check-in 🧠",
+    text: "Tired of having to pretend everything is perfect? Tell us how your actual brain energy and mood are feeling today. Checking in helps you remember your limits and gives you quick, easy tips to take care of yourself.",
+    targetTab: "home",
+    tool: null,
+    highlightIndicator: "How is your brain energy level today?",
+    iconName: "Smile"
+  },
+  {
+    title: "Smallest Step Assistant ⚙️",
+    text: "Stuck and having trouble starting? This tool breaks down large, scary goals into the single, smallest possible physical action that takes under 2 minutes. Start small with absolutely zero pressure.",
+    targetTab: "focus",
+    tool: null,
+    highlightIndicator: "Smallest Step AI Breakdown Engine",
+    iconName: "Brain"
+  },
+  {
+    title: "Confident Email Drafting ✉️",
+    text: "Protect your energy with communication templates that require no apologizing. Our helper translates raw stress or frustration into warm yet firm tones, cutting out trailing, self-minimizing apologies.",
+    targetTab: "work",
+    tool: "email",
+    subTab: "ai",
+    highlightIndicator: "Confident Email Drafting & Boundary Scan",
+    iconName: "ShieldCheck"
+  },
+  {
+    title: "Multiple Custom Signatures ✍️",
+    text: "Set clear communication boundaries without awkward explaining. Save signature sign-offs — like afternoon quiet blocks or focused work intervals — and stamp them to the bottom of emails with a single tap.",
+    targetTab: "work",
+    tool: "email",
+    subTab: "signatures",
+    highlightIndicator: "Personalized Signatures Library",
+    iconName: "Sparkles"
+  },
+  {
+    title: "My Win Journal 🏆",
+    text: "When you start doubting yourself or feel hit by external critique, keeping a live list of your daily wins is your ultimate shield. Record small wins daily, creating a secure list that you can review or export whenever you need that confidence boost.",
+    targetTab: "wins",
+    tool: null,
+    highlightIndicator: "Evidence receipts journal",
+    iconName: "Award"
+  },
+  {
+    title: "You're Ready to Go! 🚀",
+    text: "You are ready to command your workspace safely and confidently. Everything in FlowHer is stored privately on your device to keep your entries yours alone. Re-trigger this onboarding tour anytime with the '✨ Tour' button at the top.",
+    targetTab: "home",
+    tool: null,
+    highlightIndicator: "Enjoy FlowHer!",
+    iconName: "CheckCircle"
+  }
+];
+
+const renderTourIcon = (name: string) => {
+  switch (name) {
+    case "Sparkles": return <Sparkles className="h-6 w-6 text-[#C45BAA]" />;
+    case "Smile": return <Smile className="h-6 w-6 text-[#E085C9]" />;
+    case "Brain": return <Brain className="h-6 w-6 text-teal" />;
+    case "ShieldCheck": return <ShieldCheck className="h-6 w-6 text-[#E8845C]" />;
+    case "Award": return <Award className="h-6 w-6 text-[#D4A843]" />;
+    case "CheckCircle": return <CheckCircle className="h-6 w-6 text-emerald-400" />;
+    default: return <Sparkles className="h-6 w-6 text-mag" />;
+  }
+};
+
+export default function App() {
+  // Navigation & Screen Control
+  const [currentView, setCurrentView] = useState<"landing" | "founding" | "app">("landing");
+  const [appTab, setAppTab] = useState<"home" | "focus" | "work" | "wins" | "unmask" | "mask" | "glossary">("home");
+  const [selectedWorkTool, setSelectedWorkTool] = useState<string | null>(null);
+
+  // ADHD Glossary and Neuro-Hub States
+  const [glossarySearch, setGlossarySearch] = useState("");
+  const [glossaryCategory, setGlossaryCategory] = useState<"All" | "Focus" | "Energy" | "Emotion" | "Work & Study">("All");
+  const [resonatingTerms, setResonatingTerms] = useState<string[]>([]);
+  const [selectedGlossaryTerm, setSelectedGlossaryTerm] = useState<string | null>(null);
+  const [dopamineSparks, setDopamineSparks] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_dopamine_sparks") || "0");
+  });
+  const [customSparkParticles, setCustomSparkParticles] = useState<{ id: number; x: number; y: number; emoji: string }[]>([]);
+
+  // Guided Interactive Tour States
+  const [showGuidedTour, setShowGuidedTour] = useState<boolean>(() => {
+    return !localStorage.getItem("fh_guided_tour_completed");
+  });
+  const [tourStep, setTourStep] = useState<number>(0);
+
+  // Dynamic Founding Spots Urgency States
+  const [spotsRemaining, setSpotsRemaining] = useState<number>(() => {
+    const saved = localStorage.getItem("fh_founding_spots_remaining");
+    if (saved) return Number(saved);
+    const initial = Math.floor(Math.random() * 5) + 9; // between 9 and 13 spots left
+    localStorage.setItem("fh_founding_spots_remaining", String(initial));
+    return initial;
+  });
+
+  // Billing interval cycle & Founding intake active status toggles
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [foundingStatus, setFoundingStatus] = useState<"active" | "filled">("active");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpotsRemaining(prev => {
+        if (prev <= 3) {
+          return 3; // Keep a buffer minimum of 3 spots
+        }
+        const decrease = Math.random() > 0.65 ? 1 : 0;
+        if (decrease > 0) {
+          const nextVal = prev - decrease;
+          localStorage.setItem("fh_founding_spots_remaining", String(nextVal));
+          return nextVal;
+        }
+        return prev;
+      });
+    }, 45000); // Scrutinize every 45 secs for real-time engagement decay
+    return () => clearInterval(interval);
+  }, []);
+
+  // User Authentication & Plan State
+  const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
+    const saved = localStorage.getItem("fh_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [userPlan, setUserPlan] = useState<"free" | "core">(() => {
+    const savedUserStr = localStorage.getItem("fh_user");
+    if (savedUserStr) {
+      try {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.email === "s.strain04@gmail.com") {
+          return "core";
+        }
+      } catch (err) {}
+    }
+    const savedPlan = localStorage.getItem("fh_user_plan") as "free" | "core" | null;
+    return savedPlan || "free"; // Default to free for general customers
+  });
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signup");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authForm, setAuthForm] = useState({ name: "", email: "", password: "", promo: "" });
+  const [authError, setAuthError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  // User Profile States
+  const [profilePic, setProfilePic] = useState<string>(() => {
+    return localStorage.getItem("fh_profile_pic") || "";
+  });
+  const [profileBio, setProfileBio] = useState<string>(() => {
+    return localStorage.getItem("fh_profile_bio") || "A professional navigating executive functioning with smart aesthetic micro-structures.";
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [appHelpOpenIdx, setAppHelpOpenIdx] = useState<number | null>(null);
+
+  // Plan Gate Overlay Modal
+  const [showGateModal, setShowGateModal] = useState<string | null>(null);
+
+  // Legal, Privacy, and Disclosure compliance states
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalTab, setLegalTab] = useState<"medical" | "privacy" | "terms">("medical");
+
+  // Daily Check-In & Streak States
+  const [streakCount, setStreakCount] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_streak_count") || "3");
+  });
+  const [lastCheckInDate, setLastCheckInDate] = useState<string>(() => {
+    return localStorage.getItem("fh_last_checkin") || "";
+  });
+  const [bestStreak, setBestStreak] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_best_streak") || "4");
+  });
+  const [isFogDayToday, setIsFogDayToday] = useState(false);
+  const [isNotTodayActive, setIsNotTodayActive] = useState(false);
+  const [selectedMoodIndex, setSelectedMoodIndex] = useState<number | null>(() => {
+    const saved = localStorage.getItem("fh_selected_mood");
+    return saved !== null ? Number(saved) : null;
+  });
+  const [moodNote, setMoodNote] = useState<string>(() => {
+    return localStorage.getItem("fh_mood_note") || "";
+  });
+
+  // Affirmation Carousel
+  const [affirmationIdx, setAffirmationIdx] = useState(0);
+
+  // Focus Timer
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
+  const [timerActive, setTimerActive] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Localized confetti particle celebration
+  const triggerLocalizedConfetti = (x: number, y: number) => {
+    try {
+      confetti({
+        particleCount: 28,
+        spread: 45,
+        gravity: 0.95,
+        scalar: 0.75,
+        startVelocity: 16,
+        origin: { x, y },
+        colors: ["#C45BAA", "#E8845C", "#2DD4BF", "#9333EA", "#FCD34D"]
+      });
+    } catch (err) {
+      console.warn("Unable to trigger localized confetti", err);
+    }
+  };
+
+  // Action Priorities State
+  const [priorities, setPriorities] = useState<string[]>(() => {
+    const saved = localStorage.getItem("fh_priorities");
+    return saved ? JSON.parse(saved) : ["", "", ""];
+  });
+
+  const [prioritiesCompleted, setPrioritiesCompleted] = useState<boolean[]>(() => {
+    const saved = localStorage.getItem("fh_priorities_completed");
+    return saved ? JSON.parse(saved) : [false, false, false];
+  });
+
+  // Smallest Step Engine
+  const [smallestStepInput, setSmallestStepInput] = useState("");
+  const [smallestStepResult, setSmallestStepResult] = useState("");
+  const [smallestStepLoading, setSmallestStepLoading] = useState(false);
+
+  // Email Drafting Assistant
+  const [emailSelectedTemplate, setEmailSelectedTemplate] = useState("Following up on a proposal");
+  const [emailSituation, setEmailSituation] = useState("");
+  const [emailResult, setEmailResult] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSelectedTone, setEmailSelectedTone] = useState("neutral");
+  const [emailSubTab, setEmailSubTab] = useState<"ai" | "scan" | "signatures">("ai");
+  const [scannerInput, setScannerInput] = useState("");
+
+  // Custom Email Presets
+  const [customEmailPresets, setCustomEmailPresets] = useState<{ label: string; template: string; situation: string }[]>(() => {
+    const saved = localStorage.getItem("fh_custom_email_presets");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [newEmailPresetLabel, setNewEmailPresetLabel] = useState("");
+  const [newEmailPresetTemplate, setNewEmailPresetTemplate] = useState("");
+
+  const allEmailPresets = useMemo(() => {
+    return [...EMAIL_PRESETS, ...customEmailPresets];
+  }, [customEmailPresets]);
+
+  const handleSaveEmailPreset = () => {
+    if (!newEmailPresetLabel.trim() || !newEmailPresetTemplate.trim() || !emailSituation.trim()) return;
+    const newPreset = {
+      label: newEmailPresetLabel.trim(),
+      template: newEmailPresetTemplate.trim(),
+      situation: emailSituation.trim()
+    };
+    const updated = [...customEmailPresets, newPreset];
+    setCustomEmailPresets(updated);
+    localStorage.setItem("fh_custom_email_presets", JSON.stringify(updated));
+    setNewEmailPresetLabel("");
+    setNewEmailPresetTemplate("");
+    triggerQuickConfetti();
+    triggerToast("Saved custom template to your personalized preset list! 🎉");
+  };
+
+  const handleDeleteEmailPreset = (labelToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = customEmailPresets.filter(p => p.label !== labelToDelete);
+    setCustomEmailPresets(updated);
+    localStorage.setItem("fh_custom_email_presets", JSON.stringify(updated));
+    triggerToast("Preset removed successfully.");
+  };
+
+  // Memoized email scanner reports to prevent heavy regex execution on 1s tick render loops
+  const memoizedScannerReport = useMemo(() => {
+    return analyzeEmailResonance(scannerInput);
+  }, [scannerInput]);
+
+  const memoizedScannerMinimizers = useMemo(() => {
+    return MINIMIZERS.filter(m => m.regex.test(scannerInput));
+  }, [scannerInput]);
+
+  // Custom Email Signatures Manager
+  const [customSignatures, setCustomSignatures] = useState<{ id: string; label: string; tag: string; text: string }[]>(() => {
+    const saved = localStorage.getItem("fh_custom_signatures");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse custom signatures", e);
+      }
+    }
+    return [
+      {
+        id: "sig-batch",
+        label: "Deep Focus Batching ⏳",
+        tag: "Protect energetic focus channels",
+        text: "\n\nWarm regards,\n[Your Name]\n\n---\n*Note: To protect technical and deep-work lanes, I review and batch-process my emails twice daily. Thank you for your support of focused development!*"
+      },
+      {
+        id: "sig-sensory",
+        label: "Downtime Boundary 🔋",
+        tag: "Set evening digital limit parameters",
+        text: "\n\nBest,\n[Your Name]\n\n---\n*Note: To limit digital sensory fatigue and maintain cognitive efficacy, I protect my quiet focus boundaries starting at 5:00 PM. I will attend to your request first thing in the morning.*"
+      }
+    ];
+  });
+  const [sigFormLabel, setSigFormLabel] = useState("");
+  const [sigFormTag, setSigFormTag] = useState("");
+  const [sigFormText, setSigFormText] = useState("");
+  const [sigEditId, setSigEditId] = useState<string | null>(null);
+
+  // Dynamic Stateful Presets for email signatures with strategic ND benefits
+  const [signaturePresets, setSignaturePresets] = useState<{ id: string; label: string; tag: string; benefit: string; text: string }[]>(() => {
+    const saved = localStorage.getItem("fh_signature_presets");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse signature presets", e);
+      }
+    }
+    return EMAIL_SIGNATURE_PRESETS;
+  });
+
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+  const [presetEditLabel, setPresetEditLabel] = useState("");
+  const [presetEditTag, setPresetEditTag] = useState("");
+  const [presetEditBenefit, setPresetEditBenefit] = useState("");
+  const [presetEditText, setPresetEditText] = useState("");
+
+  // Conversation Script Generator
+  const [scriptSelectedTemplate, setScriptSelectedTemplate] = useState("Ask for accommodation");
+  const [scriptSituation, setScriptSituation] = useState("");
+  const [scriptResult, setScriptResult] = useState("");
+  const [scriptLoading, setScriptLoading] = useState(false);
+
+  // Custom Script Presets
+  const [customScriptPresets, setCustomScriptPresets] = useState<{ label: string; template: string; situation: string }[]>(() => {
+    const saved = localStorage.getItem("fh_custom_script_presets");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [newScriptPresetLabel, setNewScriptPresetLabel] = useState("");
+  const [newScriptPresetTemplate, setNewScriptPresetTemplate] = useState("");
+
+  const allScriptPresets = useMemo(() => {
+    return [...SCRIPT_PRESETS, ...customScriptPresets];
+  }, [customScriptPresets]);
+
+  const handleSaveScriptPreset = () => {
+    if (!newScriptPresetLabel.trim() || !newScriptPresetTemplate.trim() || !scriptSituation.trim()) return;
+    const newPreset = {
+      label: newScriptPresetLabel.trim(),
+      template: newScriptPresetTemplate.trim(),
+      situation: scriptSituation.trim()
+    };
+    const updated = [...customScriptPresets, newPreset];
+    setCustomScriptPresets(updated);
+    localStorage.setItem("fh_custom_script_presets", JSON.stringify(updated));
+    setNewScriptPresetLabel("");
+    setNewScriptPresetTemplate("");
+    triggerQuickConfetti();
+    triggerToast("Saved custom script template to your personalized list! 🎉");
+  };
+
+  const handleDeleteScriptPreset = (labelToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = customScriptPresets.filter(p => p.label !== labelToDelete);
+    setCustomScriptPresets(updated);
+    localStorage.setItem("fh_custom_script_presets", JSON.stringify(updated));
+    triggerToast("Preset removed successfully.");
+  };
+
+  // RSD Toolkit
+  const [rsdSpiral, setRsdSpiral] = useState("");
+  const [rsdResult, setRsdResult] = useState("");
+  const [rsdLoading, setRsdLoading] = useState(false);
+
+  // Meeting Mode
+  const [meetingTopic, setMeetingTopic] = useState("");
+  const [meetingPeople, setMeetingPeople] = useState("");
+  const [meetingGoal, setMeetingGoal] = useState("");
+  const [meetingAnxiety, setMeetingAnxiety] = useState<number>(2); // 1 = Calm, 2 = Nervous, 3 = Dreading
+  const [meetingResult, setMeetingResult] = useState("");
+  const [meetingLoading, setMeetingLoading] = useState(false);
+
+  // Time Blindness Corrector
+  const [tbcTask, setTbcTask] = useState("");
+  const [tbcEstimate, setTbcEstimate] = useState<number | "">("");
+  const [tbcTimerActive, setTbcTimerActive] = useState(false);
+  const [tbcSeconds, setTbcSeconds] = useState(0);
+  const tbcTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [tbcHistory, setTbcHistory] = useState<any[]>(() => {
+    const saved = localStorage.getItem("fh_tbc_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Memoized time blindness multiplier average
+  const multiplierAvg = useMemo(() => {
+    if (tbcHistory.length === 0) return 1.4;
+    const sum = tbcHistory.reduce((acc, h) => acc + h.ratio, 0);
+    return Number((sum / tbcHistory.length).toFixed(1));
+  }, [tbcHistory]);
+
+  // Time Blindness Assist Feature States
+  const [tbcAssistEnabled, setTbcAssistEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("fh_tbc_assist_enabled") === "true";
+  });
+  const [tbcAssistInterval, setTbcAssistInterval] = useState<number>(() => {
+    const saved = localStorage.getItem("fh_tbc_assist_interval");
+    return saved ? Number(saved) : 3;
+  });
+  const [tbcAssistType, setTbcAssistType] = useState<"pulse" | "chime" | "both">(() => {
+    return (localStorage.getItem("fh_tbc_assist_type") as any) || "both";
+  });
+  const [pulseCueActive, setPulseCueActive] = useState(false);
+  const [pulseCueMessage, setPulseCueMessage] = useState("");
+
+  // Audio Customizer Sound settings
+  const [audioVolume, setAudioVolume] = useState<number>(() => {
+    const saved = localStorage.getItem("fh_audio_volume");
+    return saved !== null ? Number(saved) : 0.5;
+  });
+  const [selectedSoundCue, setSelectedSoundCue] = useState<string>(() => {
+    return localStorage.getItem("fh_selected_sound_cue") || "gentle-chime";
+  });
+
+  // Body Double Timer
+  const [bdTask, setBdTask] = useState("");
+  const [bdTimerSeconds, setBdTimerSeconds] = useState(25 * 60);
+  const [bdTimerActive, setBdTimerActive] = useState(false);
+  const bdTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Win Journal State
+  const [winsList, setWinsList] = useState<Win[]>(() => {
+    const saved = localStorage.getItem("fh_wins_list");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Memoized count of professional category wins to avoid array filtering on every tick
+  const professionalWinsCount = useMemo(() => {
+    return winsList.filter(w => w.category === "Professional").length;
+  }, [winsList]);
+  const [newWinText, setNewWinText] = useState("");
+  const [newWinCat, setNewWinCat] = useState("Professional");
+
+  // Unmask Space & Grounding Reset
+  const [unmaskText, setUnmaskText] = useState("");
+  const [somaticStep, setSomaticStep] = useState(0);
+
+  // Masking Debt State
+  const [selectedMaskTypes, setSelectedMaskTypes] = useState<string[]>([]);
+  const [maskIntensity, setMaskIntensity] = useState<number>(5);
+  const [maskNote, setMaskNote] = useState("");
+  const [allMaskMoments, setAllMaskMoments] = useState<MaskMoment[]>(() => {
+    const saved = localStorage.getItem("fh_mask_moments");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Memoized daily cumulative mask debt score
+  const combinedDailyDebt = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const todayMoments = allMaskMoments.filter(m => m.date === todayStr);
+    return todayMoments.reduce((acc, curr) => acc + curr.cost, 0);
+  }, [allMaskMoments]);
+  const [showRecoveryAlert, setShowRecoveryAlert] = useState<{
+    cost: number;
+    types: string[];
+    advice: {
+      level: string;
+      duration: number;
+      tip: string;
+      activity: string;
+      color: string;
+    };
+  } | null>(null);
+
+  // End of Day Wind Down
+  const [windDownStep, setWindDownStep] = useState<"form" | "done">("form");
+  const [windDownForm, setWindDownForm] = useState({ did: "", letGo: "", tomorrow: "" });
+  const [showWindDown, setShowWindDown] = useState(false);
+
+  // System Overlays & Feedback Toasts
+  const [toastMessage, setToastMessage] = useState("");
+  const [isSosActive, setIsSosActive] = useState(false);
+  const [sosPhase, setSosPhase] = useState("Breathe In");
+  const [sosCountdown, setSosCountdown] = useState(4);
+  const [sosInhaleTime, setSosInhaleTime] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_sos_inhale_time") || "4");
+  });
+  const [sosHoldTime, setSosHoldTime] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_sos_hold_time") || "4");
+  });
+  const [sosExhaleTime, setSosExhaleTime] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_sos_exhale_time") || "6");
+  });
+  const [sosPauseTime, setSosPauseTime] = useState<number>(() => {
+    return Number(localStorage.getItem("fh_sos_pause_time") || "2");
+  });
+  const [sosGroundingType, setSosGroundingType] = useState<string>(() => {
+    return localStorage.getItem("fh_sos_grounding_type") || "54321";
+  });
+  const [faqOpenIdx, setFaqOpenIdx] = useState<number | null>(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  // Onboarding Quiz Modal State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1);
+  const [onboardingAnswers, setOnboardingAnswers] = useState({
+    profile: "",
+    primaryGoal: "",
+  });
+
+  // Save priorities automatically
+  useEffect(() => {
+    localStorage.setItem("fh_priorities", JSON.stringify(priorities));
+  }, [priorities]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_priorities_completed", JSON.stringify(prioritiesCompleted));
+  }, [prioritiesCompleted]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_user_plan", userPlan);
+  }, [userPlan]);
+
+  useEffect(() => {
+    if (user && user.email === "s.strain04@gmail.com") {
+      setUserPlan("core");
+      if (user.name !== "Silvella") {
+        const revised = { ...user, name: "Silvella" };
+        setUser(revised);
+        localStorage.setItem("fh_user", JSON.stringify(revised));
+      }
+    }
+  }, [user]);
+
+  // Network listener
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Sync state helpers
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  // Profile Upload & Drag Drop handlers
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      triggerToast("Please upload an image file (PNG, JPG, SVG, WEBP).");
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) { // 1.5MB limit
+      triggerToast("Please choose an image under 1.5MB to maintain smooth offline rendering.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setProfilePic(result);
+        localStorage.setItem("fh_profile_pic", result);
+        triggerToast("Profile photo loaded successfully! 📸");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    if (!editName.trim()) {
+      triggerToast("Name cannot be empty!");
+      return;
+    }
+    setProfileBio(editBio);
+    localStorage.setItem("fh_profile_bio", editBio);
+
+    if (user) {
+      const updatedUser = { ...user, name: editName };
+      setUser(updatedUser);
+      localStorage.setItem("fh_user", JSON.stringify(updatedUser));
+    } else {
+      const newUser = { name: editName, email: "user@test.com" };
+      setUser(newUser);
+      localStorage.setItem("fh_user", JSON.stringify(newUser));
+    }
+
+    triggerToast("User Profile updated successfully! ✨");
+    setIsEditingProfile(false);
+    setShowProfileModal(false);
+  };
+
+  // Onboarding triggers on new user creation
+  const handleCompleteOnboarding = () => {
+    setShowOnboarding(false);
+    triggerToast("Your workspace profile has been configured successfully! Enjoy FlowHer Core.");
+  };
+
+  // Auth System Functions
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+
+    if (authMode === "forgot") {
+      if (!authForm.email) {
+        setAuthError("Please input your registered email address.");
+        return;
+      }
+      setResetSuccess(true);
+      triggerCelebrationConfetti();
+      triggerToast("Simulated password reset instructions dispatched! 📬");
+      return;
+    }
+
+    if (!authForm.email || !authForm.password) {
+      setAuthError("All authorization credentials fields are required.");
+      return;
+    }
+
+    if (authMode === "signup") {
+      if (!authForm.name) {
+        setAuthError("Please input your name.");
+        return;
+      }
+      // Create user
+      const userData = { name: authForm.name, email: authForm.email };
+      setUser(userData);
+      localStorage.setItem("fh_user", JSON.stringify(userData));
+
+      // Promo validation for Core access
+      const normalCode = authForm.promo.trim().toUpperCase();
+      const validBetaCodes = ["BETAFLOWHER2026", "FLOWHERBETA", "FLOWHER_AI", "BETA3MONTHS", "FLOWHER3MONTHS", "FLOWHER3M"];
+      if (validBetaCodes.includes(normalCode)) {
+        setUserPlan("core");
+        localStorage.setItem("fh_plan", "core");
+        localStorage.setItem("fh_beta_tier", "3_months");
+      } else {
+        setUserPlan("free");
+        localStorage.setItem("fh_plan", "free");
+        localStorage.removeItem("fh_beta_tier");
+      }
+
+      setShowAuthModal(false);
+      setShowOnboarding(true); // show Onboarding onboarding steps
+      setCurrentView("app");
+      triggerCelebrationConfetti();
+      const isBetaMonths = ["BETA3MONTHS", "FLOWHER3MONTHS", "FLOWHER3M"].includes(normalCode);
+      if (isBetaMonths) {
+        triggerToast("🎉 3-Month Beta Testing Pass Activated! Full Core features unlocked.");
+      } else {
+        triggerToast(`Account created successfully! Welcome to FlowHer, ${authForm.name}. 🎉`);
+      }
+    } else {
+      // Signin simulation
+      let userToLoad = null;
+      const savedStr = localStorage.getItem("fh_user");
+      if (savedStr) {
+        try {
+          userToLoad = JSON.parse(savedStr);
+        } catch (e) {}
+      }
+      
+      // If none was saved, or email typed is different, dynamically build the session user
+      if (!userToLoad || userToLoad.email !== authForm.email) {
+        userToLoad = {
+          name: authForm.email === "s.strain04@gmail.com" ? "Silvella" : "Professional User",
+          email: authForm.email
+        };
+      }
+      
+      setUser(userToLoad);
+      localStorage.setItem("fh_user", JSON.stringify(userToLoad));
+
+      if (userToLoad.email === "s.strain04@gmail.com") {
+        setUserPlan("core");
+        localStorage.setItem("fh_user_plan", "core");
+      } else {
+        const savedPlan = localStorage.getItem("fh_user_plan") as "free" | "core" | null;
+        setUserPlan(savedPlan || "free");
+      }
+
+      setShowAuthModal(false);
+      setCurrentView("app");
+      triggerToast(`Welcome back to FlowHer, ${userToLoad.name}!`);
+    }
+  };
+
+  const handleSignOut = () => {
+    setUser(null);
+    setUserPlan("free");
+    setCurrentView("landing");
+    triggerToast("You have been signed out safely.");
+  };
+
+  // Guided Interactive Tour Handlers
+  const handleNextTourStep = () => {
+    if (tourStep < TOUR_STEPS.length - 1) {
+      const nextStep = tourStep + 1;
+      setTourStep(nextStep);
+      const target = TOUR_STEPS[nextStep];
+      if (target.targetTab) {
+        setAppTab(target.targetTab as any);
+      }
+      if (target.tool) {
+        setSelectedWorkTool(target.tool);
+      } else if (target.targetTab !== "work") {
+        setSelectedWorkTool(null);
+      }
+      if (target.subTab) {
+        setEmailSubTab(target.subTab as any);
+      }
+    } else {
+      handleDismissTour();
+    }
+  };
+
+  const handlePrevTourStep = () => {
+    if (tourStep > 0) {
+      const prevStep = tourStep - 1;
+      setTourStep(prevStep);
+      const target = TOUR_STEPS[prevStep];
+      if (target.targetTab) {
+        setAppTab(target.targetTab as any);
+      }
+      if (target.tool) {
+        setSelectedWorkTool(target.tool);
+      } else if (target.targetTab !== "work") {
+        setSelectedWorkTool(null);
+      }
+      if (target.subTab) {
+        setEmailSubTab(target.subTab as any);
+      }
+    }
+  };
+
+  const handleDismissTour = () => {
+    setShowGuidedTour(false);
+    localStorage.setItem("fh_guided_tour_completed", "true");
+    triggerToast("Onboarding guide completed! Access it anytime from your header. ✨");
+  };
+
+  const handleRestartTour = () => {
+    setTourStep(0);
+    setAppTab("home");
+    setSelectedWorkTool(null);
+    setShowGuidedTour(true);
+    triggerToast("Guided tour restarted! Let's walk through FlowHer. 🌿");
+  };
+
+  const handleDopamineClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+      id: Date.now() + i + Math.random(),
+      x: Math.floor(Math.random() * 180) - 90,
+      y: Math.floor(Math.random() * -120) - 50,
+      emoji: ["✨", "🌈", "⚡", "🌸", "💧", "⭐", "🦄", "🎯", "🧠"][Math.floor(Math.random() * 9)]
+    }));
+    
+    setCustomSparkParticles(prev => [...prev, ...newParticles]);
+    const updatedCount = dopamineSparks + 1;
+    setDopamineSparks(updatedCount);
+    localStorage.setItem("fh_dopamine_sparks", String(updatedCount));
+    
+    const insights = [
+      "You are doing spectacularly! No speed check needed. ✨",
+      "Focus isn't linear. Celebrate any step you took today. 🌿",
+      "Hydration alert: Open your water container and take a sip! 💧",
+      "Give your wrists a quick, therapeutic shake. You work hard! 🧘",
+      "Your neurodivergence makes you an incredible out-of-the-box thinker. 🧠",
+      "A late response doesn't change your exceptional competence. 🌸",
+      "Rest is productive. Your brain needs time to compound files! 💤",
+      "You don't need absolute perfection to deliver brilliant results. 🏆"
+    ];
+    const triggerMsg = insights[Math.floor(Math.random() * insights.length)];
+    triggerToast(triggerMsg);
+
+    setTimeout(() => {
+      setCustomSparkParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
+    }, 1200);
+  };
+
+  // Plan guard utility
+  const executeCoreAction = (featureName: string, action: () => void) => {
+    if (userPlan === "core") {
+      action();
+    } else {
+      setShowGateModal(featureName);
+    }
+  };
+
+  // Focus Timer Hooks & Handling
+  useEffect(() => {
+    if (timerActive) {
+      timerRef.current = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            setTimerActive(false);
+            triggerQuickConfetti();
+            triggerToast("Focus block complete! Take a relaxing dopamine moment now. 🎉");
+            playAudioCue();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive]);
+
+  // Time Blindness Timer
+  useEffect(() => {
+    if (tbcTimerActive) {
+      tbcTimerRef.current = setInterval(() => {
+        setTbcSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (tbcTimerRef.current) clearInterval(tbcTimerRef.current);
+    }
+    return () => {
+      if (tbcTimerRef.current) clearInterval(tbcTimerRef.current);
+    };
+  }, [tbcTimerActive]);
+
+  // Audio Customizer: Beautiful Synthesizer for Relaxing Audio Cues and Notifications
+  const playAudioCue = (customSoundType?: string, customVolume?: number) => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const sound = customSoundType || selectedSoundCue;
+      const vol = customVolume !== undefined ? customVolume : audioVolume;
+
+      if (sound === "gentle-chime") {
+        const osc = ctx.createOscillator();
+        const overtone = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        const overtoneGain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        overtone.type = "sine";
+        overtone.frequency.setValueAtTime(523.25 * 1.5, ctx.currentTime); // G5 (fifth harmonizer)
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.12 * vol, ctx.currentTime + 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.0);
+        
+        overtoneGain.gain.setValueAtTime(0, ctx.currentTime);
+        overtoneGain.gain.linearRampToValueAtTime(0.04 * vol, ctx.currentTime + 0.1);
+        overtoneGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+        
+        osc.connect(gainNode);
+        overtone.connect(overtoneGain);
+        gainNode.connect(ctx.destination);
+        overtoneGain.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime);
+        overtone.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 2.1);
+        overtone.stop(ctx.currentTime + 1.3);
+      } else if (sound === "singing-bowl") {
+        const osc = ctx.createOscillator();
+        const overtone1 = ctx.createOscillator();
+        const overtone2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gainNode = ctx.createGain();
+        const overtone1Gain = ctx.createGain();
+        const overtone2Gain = ctx.createGain();
+        const masterGain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(220, ctx.currentTime); // A3 fundamental
+        overtone1.type = "sine";
+        overtone1.frequency.setValueAtTime(220 * 2.76, ctx.currentTime); // non-integer overtones for realism
+        overtone2.type = "sine";
+        overtone2.frequency.setValueAtTime(220 * 5.4, ctx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.4); // slow, meditative resonance swell
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.5);
+        
+        overtone1Gain.gain.setValueAtTime(0, ctx.currentTime);
+        overtone1Gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.3);
+        overtone1Gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.5);
+
+        overtone2Gain.gain.setValueAtTime(0, ctx.currentTime);
+        overtone2Gain.gain.linearRampToValueAtTime(0.02, ctx.currentTime + 0.2);
+        overtone2Gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.8);
+        
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(600, ctx.currentTime);
+        
+        masterGain.gain.setValueAtTime(vol, ctx.currentTime);
+        
+        osc.connect(gainNode);
+        overtone1.connect(overtone1Gain);
+        overtone2.connect(overtone2Gain);
+        
+        gainNode.connect(filter);
+        overtone1Gain.connect(filter);
+        overtone2Gain.connect(filter);
+        filter.connect(masterGain);
+        masterGain.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime);
+        overtone1.start(ctx.currentTime);
+        overtone2.start(ctx.currentTime);
+        
+        osc.stop(ctx.currentTime + 3.6);
+        overtone1.stop(ctx.currentTime + 2.6);
+        overtone2.stop(ctx.currentTime + 1.9);
+      } else if (sound === "water-drop") {
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.12); // bouncy bubble sweep
+        
+        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.12 * vol, ctx.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+      } else if (sound === "cosmic-bell") {
+        const osc = ctx.createOscillator();
+        const overtone1 = ctx.createOscillator();
+        const overtone2 = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        const o1Gain = ctx.createGain();
+        const o2Gain = ctx.createGain();
+        const masterGain = ctx.createGain();
+        
+        osc.type = "triangle"; // metallic quality
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+        
+        overtone1.type = "sine";
+        overtone1.frequency.setValueAtTime(1318.51, ctx.currentTime); // E6
+        
+        overtone2.type = "sine";
+        overtone2.frequency.setValueAtTime(1760, ctx.currentTime); // A6
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.015);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.2);
+        
+        o1Gain.gain.setValueAtTime(0, ctx.currentTime);
+        o1Gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.015);
+        o1Gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+
+        o2Gain.gain.setValueAtTime(0, ctx.currentTime);
+        o2Gain.gain.linearRampToValueAtTime(0.02, ctx.currentTime + 0.01);
+        o2Gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0);
+        
+        masterGain.gain.setValueAtTime(vol, ctx.currentTime);
+        
+        osc.connect(gainNode);
+        overtone1.connect(o1Gain);
+        overtone2.connect(o2Gain);
+        
+        gainNode.connect(masterGain);
+        o1Gain.connect(masterGain);
+        o2Gain.connect(masterGain);
+        
+        masterGain.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime);
+        overtone1.start(ctx.currentTime);
+        overtone2.start(ctx.currentTime);
+        
+        osc.stop(ctx.currentTime + 2.3);
+        overtone1.stop(ctx.currentTime + 1.6);
+        overtone2.stop(ctx.currentTime + 1.1);
+      } else {
+        // digital-beep
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.08 * vol, ctx.currentTime + 0.01);
+        gainNode.gain.setValueAtTime(0.08 * vol, ctx.currentTime + 0.08);
+        gainNode.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      }
+    } catch (err) {
+      console.warn("AudioContext error: ", err);
+    }
+  };
+
+  const playGentleChime = () => {
+    // Legacy support fallback calling actual synthesizer
+    playAudioCue();
+  };
+
+  // State synchronization hooks for TBC Assist & Audio
+  useEffect(() => {
+    localStorage.setItem("fh_audio_volume", String(audioVolume));
+  }, [audioVolume]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_selected_sound_cue", selectedSoundCue);
+  }, [selectedSoundCue]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_tbc_assist_enabled", String(tbcAssistEnabled));
+  }, [tbcAssistEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_tbc_assist_interval", String(tbcAssistInterval));
+  }, [tbcAssistInterval]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_tbc_assist_type", tbcAssistType);
+  }, [tbcAssistType]);
+
+  // Real-Time Time Blindness Assist interval observer
+  useEffect(() => {
+    if (tbcTimerActive && tbcSeconds > 0 && tbcAssistEnabled) {
+      const intervalSecs = tbcAssistInterval * 60;
+      if (tbcSeconds % intervalSecs === 0) {
+        const passedMins = tbcSeconds / 60;
+        const rawEst = Number(tbcEstimate) || 0;
+        const avgMult = getMultiplierAvg();
+        const adjustedLimit = Math.round(rawEst * avgMult);
+        
+        let message = `🌿 Breathing check-in: ${passedMins} minute${passedMins > 1 ? "s" : ""} gently elapsed.`;
+        if (adjustedLimit > 0 && passedMins >= adjustedLimit) {
+          message = `🌅 Comfort envelope crossed. ${passedMins} mins elapsed. We recommend wrapping up or stepping away with zero guilt!`;
+        } else if (adjustedLimit > 0 && passedMins >= adjustedLimit * 0.8) {
+          message = `⏳ Running perfectly on schedule: approaching your support-adjusted safety target (${adjustedLimit} mins).`;
+        }
+        
+        setPulseCueMessage(message);
+        setPulseCueActive(true);
+        triggerToast(message);
+        
+        if (tbcAssistType === "chime" || tbcAssistType === "both") {
+          playGentleChime();
+        }
+        
+        // auto dismiss state cue overlay
+        const t = setTimeout(() => {
+          setPulseCueActive(false);
+        }, 4500);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [tbcSeconds, tbcTimerActive, tbcAssistEnabled, tbcAssistInterval, tbcAssistType]);
+
+  // Body Double Timer
+  useEffect(() => {
+    if (bdTimerActive) {
+      bdTimerRef.current = setInterval(() => {
+        setBdTimerSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(bdTimerRef.current!);
+            setBdTimerActive(false);
+            triggerQuickConfetti();
+            triggerToast("Well done! Your body double session is complete! 🎉");
+            playAudioCue();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (bdTimerRef.current) clearInterval(bdTimerRef.current);
+    }
+    return () => {
+      if (bdTimerRef.current) clearInterval(bdTimerRef.current);
+    };
+  }, [bdTimerActive]);
+
+  // Wind down display logic (after 5 PM check)
+  useEffect(() => {
+    const currentHour = new Date().getHours();
+    if (currentHour >= 17) {
+      setShowWindDown(true);
+    } else {
+      setShowWindDown(false);
+    }
+  }, []);
+
+  // SOS Soma guided breathe (dynamic sequence with countdown)
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isSosActive) {
+      // Start with Breathe In and its allocated time
+      setSosPhase("Breathe In");
+      setSosCountdown(sosInhaleTime);
+
+      let activePhase = "Breathe In";
+      let timerVal = sosInhaleTime;
+
+      interval = setInterval(() => {
+        timerVal -= 1;
+        if (timerVal <= 0) {
+          // Transition to the next phase on timer expiry
+          if (activePhase === "Breathe In") {
+            activePhase = "Hold...";
+            timerVal = sosHoldTime;
+          } else if (activePhase === "Hold...") {
+            activePhase = "Breathe Out";
+            timerVal = sosExhaleTime;
+          } else if (activePhase === "Breathe Out") {
+            activePhase = "Pause...";
+            timerVal = sosPauseTime;
+          } else {
+            activePhase = "Breathe In";
+            timerVal = sosInhaleTime;
+          }
+          setSosPhase(activePhase);
+        }
+        setSosCountdown(timerVal);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSosActive, sosInhaleTime, sosHoldTime, sosExhaleTime, sosPauseTime]);
+
+  // Word fadeout effect calculation
+  const getFadingWords = () => {
+    if (!unmaskText) return [];
+    const arr = unmaskText.split(/\s+/).filter(Boolean);
+    return arr.slice(-7);
+  };
+
+  // Dynamic API Base URL Resolver for hosted pasting integration
+  const API_BASE = (() => {
+    const h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1" || h.includes(".run.app") || !h) {
+      return "";
+    }
+    return "https://ais-dev-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
+  })();
+
+  // AI API Handlers
+  const handleFetchSmallestStep = async () => {
+    if (!smallestStepInput.trim()) return;
+    setSmallestStepLoading(true);
+    setSmallestStepResult("");
+    try {
+      const response = await fetch(API_BASE + "/api/ai/smallest-step", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: smallestStepInput }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSmallestStepResult(data.result);
+      } else {
+        setSmallestStepResult(`Offline Draft Coach suggestion: Let's segment your task of "${smallestStepInput}" into simple items. First: Focus just on opening the document. That's your only goal for 3 minutes!`);
+      }
+    } catch {
+      setSmallestStepResult("Ready Coach suggestion: Open the software workspace first and sit comfortability for 60 seconds.");
+    } finally {
+      setSmallestStepLoading(false);
+    }
+  };
+
+  const handleFetchEmailDraft = async () => {
+    if (!emailSituation.trim()) return;
+    setEmailLoading(true);
+    setEmailResult("");
+    try {
+      const response = await fetch(API_BASE + "/api/ai/draft-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          template: emailSelectedTemplate, 
+          situation: emailSituation,
+          tone: emailSelectedTone 
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setEmailResult(data.result);
+      } else {
+        setEmailResult("Subject: Project Status and Boundary Alignment\n\nHi Team,\n\nI wanted to share updates on my milestones...");
+      }
+    } catch {
+      setEmailResult("Subject: Capacity Update\n\nHi Team, I am structuring this target to meet standard deadlines safely.");
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleFetchScript = async () => {
+    if (!scriptSituation.trim()) return;
+    setScriptLoading(true);
+    setScriptResult("");
+    try {
+      const response = await fetch(API_BASE + "/api/ai/gen-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scriptType: scriptSelectedTemplate, situation: scriptSituation }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setScriptResult(data.result);
+      } else {
+        setScriptResult("ASSERTIVE SCRIPT: Thanks for thinking of me! I want to give this target my full focus, so I will need to finish Project X first.");
+      }
+    } catch {
+      setScriptResult("ASSERTIVE: Let's lock this timing on Monday so we are structured.");
+    } finally {
+      setScriptLoading(false);
+    }
+  };
+
+  const handleFetchRSDCheck = async () => {
+    if (!rsdSpiral.trim()) return;
+    setRsdLoading(true);
+    setRsdResult("");
+    try {
+      const response = await fetch(API_BASE + "/api/ai/rsd-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spiral: rsdSpiral }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setRsdResult(data.result);
+      } else {
+        setRsdResult("Facts: They delayed a meeting. Interpretation: They might be busy with client obligations, not signaling an issue with your capability. Take a somatic breath.");
+      }
+    } catch {
+      setRsdResult("Objective Check: This feedback is standard operational updates. Your overall trajectory is entirely safe.");
+    } finally {
+      setRsdLoading(false);
+    }
+  };
+
+  const handleFetchMeetingPrep = async () => {
+    if (!meetingTopic.trim()) return;
+    setMeetingLoading(true);
+    setMeetingResult("");
+    try {
+      const response = await fetch(API_BASE + "/api/ai/meeting-prep", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: meetingTopic,
+          people: meetingPeople,
+          goal: meetingGoal,
+          anxietyLevel: meetingAnxiety,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMeetingResult(data.result);
+      } else {
+        setMeetingResult("**WALK IN KNOWING:**\n- Your core metrics are healthy\n- You completed last weeks priority checklist safely");
+      }
+    } catch {
+      setMeetingResult("**WALK IN KNOWING:**\n- You are ready and well capable.");
+    } finally {
+      setMeetingLoading(false);
+    }
+  };
+
+  // Time Blindness Logger Functions
+  const handleStartTbcTimer = () => {
+    if (!tbcTask.trim() || !tbcEstimate) return;
+    setTbcSeconds(0);
+    setTbcTimerActive(true);
+    triggerToast("Time blind timer running! Complete your task organically without watching the minutes.");
+  };
+
+  const handleStopTbcTimer = () => {
+    setTbcTimerActive(false);
+    const measuredMins = Math.max(1, Math.round(tbcSeconds / 60));
+    const rawEst = Number(tbcEstimate);
+    const multiplier = measuredMins / rawEst;
+
+    const newRecord = {
+      id: crypto.randomUUID(),
+      task: tbcTask,
+      estimated: rawEst,
+      actual: measuredMins,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      ratio: Number(multiplier.toFixed(1))
+    };
+
+    const updated = [newRecord, ...tbcHistory].slice(0, 5);
+    setTbcHistory(updated);
+    localStorage.setItem("fh_tbc_history", JSON.stringify(updated));
+
+    // reset fields
+    setTbcTask("");
+    setTbcEstimate("");
+    triggerToast(`Logged. Real actual time: ${measuredMins} mins vs ${rawEst} mins estimated.`);
+  };
+
+  const getMultiplierAvg = () => {
+    return multiplierAvg;
+  };
+
+  // Win Logger Functions
+  const handleAddWinObj = () => {
+    if (!newWinText.trim()) return;
+    const item: Win = {
+      id: crypto.randomUUID(),
+      text: newWinText,
+      category: newWinCat,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    };
+    const updated = [item, ...winsList];
+    setWinsList(updated);
+    localStorage.setItem("fh_wins_list", JSON.stringify(updated));
+    setNewWinText("");
+    triggerQuickConfetti();
+    triggerToast("Excellent work! Win recorded in your archive. 🎉");
+  };
+
+  const handleDeleteWin = (id: string) => {
+    const updated = winsList.filter(w => w.id !== id);
+    setWinsList(updated);
+    localStorage.setItem("fh_wins_list", JSON.stringify(updated));
+    triggerToast("Win removed from archive.");
+  };
+
+  const downloadWinJournalTxt = () => {
+    if (winsList.length === 0) return;
+    const headers = [
+      "========================================",
+      "          FLOWHER WIN JOURNAL           ",
+      "      Your Portable Evidence Log        ",
+      "========================================\n",
+    ];
+    const body = winsList.map((w, idx) => {
+      return `${idx + 1}. [${w.category}] - ${w.date}\n   "${w.text}"\n`;
+    });
+    const blob = new Blob([...headers, ...body], { type: "text/plain;charset=utf-8" });
+    const fileUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.download = "FlowHer_Secret_Win_Receipts.txt";
+    link.click();
+    URL.revokeObjectURL(fileUrl);
+  };
+
+  const handleExportGlossaryPlaybook = () => {
+    if (resonatingTerms.length === 0) {
+      triggerToast("Select at least one term you resonate with to generate your playbook!");
+      return;
+    }
+    
+    const doc = new jsPDF();
+    let y = 45;
+
+    const drawHeader = (pageNumber: number) => {
+      // Header background bar (Teal hex: 20, 184, 166)
+      doc.setFillColor(20, 184, 166);
+      doc.rect(15, 12, 180, 22, "F");
+
+      // Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11.5);
+      doc.text("FLOWHER™ — ADHD NEURODIVERGENT WORKSPACE PLAYBOOK", 20, 21);
+
+      // Subtitle inside header bar
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(215, 255, 248);
+      doc.text(`CUSTOM SURVIVAL ACCOMMODATIONS & INTEGRATIONS • ${new Date().toLocaleDateString()}`, 20, 28);
+    };
+
+    const drawFooter = (pageNumber: number) => {
+      doc.setDrawColor(20, 184, 166);
+      doc.setLineWidth(0.6);
+      doc.line(20, 275, 190, 275);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(140, 130, 145);
+      doc.text("Cozy, self-empowered workspace resource created via FlowHer™.", 20, 281);
+      doc.text(`Page ${pageNumber}`, 175, 281);
+    };
+
+    let currentPage = 1;
+    drawHeader(currentPage);
+    drawFooter(currentPage);
+
+    // Introduction block
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Prepared for: ${user?.name || "Professional User"}`, 20, y);
+    y += 6;
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8.5);
+    const introText = "This playbook represents a customized outline of neurodivergent brain patterns and actionable accommodations. Share this with professors, disability services, managers, or loved ones to help align your environment with your physiological flow.";
+    const splitIntro = doc.splitTextToSize(introText, 170);
+    doc.text(splitIntro, 20, y);
+    y += (splitIntro.length * 4.5) + 12;
+
+    // Filter terms based on resonating list
+    const selectedTerms = ADHD_GLOSSARY.filter(t => resonatingTerms.includes(t.word));
+
+    selectedTerms.forEach((t, idx) => {
+      // Check for page overflow
+      if (y > 225) {
+        doc.addPage();
+        currentPage += 1;
+        drawHeader(currentPage);
+        drawFooter(currentPage);
+        y = 45;
+      }
+
+      // Card separator
+      if (idx > 0) {
+        doc.setDrawColor(230, 240, 238);
+        doc.setLineWidth(0.4);
+        doc.line(20, y - 6, 190, y - 6);
+      }
+
+      // Render Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(61, 16, 82); // Plum background color
+      doc.text(`• ${t.word}  ${t.pronunciation || ""}`, 20, y);
+      y += 5.5;
+
+      // Category Tag
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(20, 184, 166); // Teal
+      doc.text(`CATEGORY: ${t.category.toUpperCase()}`, 20, y);
+      y += 4.5;
+
+      // Simple Def
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(70, 70, 70);
+      const splitDef = doc.splitTextToSize(`What it is: ${t.simpleDef}`, 170);
+      doc.text(splitDef, 20, y);
+      y += (splitDef.length * 4) + 2;
+
+      // Superpower
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(196, 91, 170); // Magenta/Plum shade
+      const splitSuper = doc.splitTextToSize(`The Superpower: ${t.superpower}`, 170);
+      doc.text(splitSuper, 20, y);
+      y += (splitSuper.length * 4) + 2;
+
+      // Strategy
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(232, 132, 92); // Orange/Coral
+      const splitStrategy = doc.splitTextToSize(`Accommodation Strategy: ${t.strategy}`, 170);
+      doc.text(splitStrategy, 20, y);
+      y += (splitStrategy.length * 4) + 10;
+    });
+
+    doc.save(`FlowHer_ADHD_Workspace_Playbook_${(user?.name || "User").replace(/\s+/g, "_")}.pdf`);
+    triggerToast("Your Custom ADHD Workspace Playbook downloaded! ✓");
+  };
+
+  const downloadWinJournalPdf = () => {
+    if (winsList.length === 0) {
+      triggerToast("No wins inside the journal to export yet!");
+      return;
+    }
+    
+    const doc = new jsPDF();
+    let y = 45;
+
+    const drawHeader = (pageNumber: number) => {
+      // Header background bar (Plum #3D1052)
+      doc.setFillColor(61, 16, 82);
+      doc.rect(15, 12, 180, 22, "F");
+
+      // Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("FLOWHER™ — WINS & CONFIDENCE JOURNAL", 20, 21);
+
+      // Subtitle inside header bar
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(230, 210, 240);
+      doc.text(`YOUR SAVED CONFIDENCE & WIN RECEIPTS • ${new Date().toLocaleDateString()}`, 20, 28);
+    };
+
+    const drawFooter = (pageNumber: number) => {
+      doc.setDrawColor(196, 91, 170);
+      doc.setLineWidth(0.6);
+      doc.line(20, 275, 190, 275);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(140, 130, 145);
+      doc.text("Protected private local device copy by FlowHer™.", 20, 281);
+      doc.text(`Page ${pageNumber}`, 175, 281);
+    };
+
+    let currentPage = 1;
+    drawHeader(currentPage);
+    drawFooter(currentPage);
+
+    // Introduction block
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "italic");
+    const introText = "When self-doubt or worry flares, use this list of wins as a quick reminder of how talented and capable you are. Your records are yours to cherish.";
+    const splitIntro = doc.splitTextToSize(introText, 170);
+    doc.text(splitIntro, 20, y);
+    y += (splitIntro.length * 5) + 12;
+
+    // Loop through winsList
+    winsList.forEach((w, idx) => {
+      // Check if we need a new page (allowing room for the text)
+      if (y > 240) {
+        doc.addPage();
+        currentPage += 1;
+        drawHeader(currentPage);
+        drawFooter(currentPage);
+        y = 45;
+      }
+
+      // Card boundary separator line
+      if (idx > 0) {
+        doc.setDrawColor(230, 220, 235);
+        doc.setLineWidth(0.4);
+        doc.line(20, y - 6, 190, y - 6);
+      }
+
+      // Render custom tags Category tag background
+      const catText = w.category.toUpperCase();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      
+      // Select branding colors based on category
+      if (w.category === "Professional") {
+        doc.setFillColor(196, 91, 170); // Magenta / Plum
+        doc.setTextColor(255, 255, 255);
+      } else {
+        doc.setFillColor(138, 127, 141); // Slate gray #8A7F8D
+        doc.setTextColor(255, 255, 255);
+      }
+      
+      // Draw a clean pill for Category tag
+      const catWidth = doc.getTextWidth(catText) + 6;
+      doc.rect(20, y, catWidth, 5.5, "F");
+      doc.text(catText, 23, y + 4);
+
+      // Win Date
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(130, 120, 135);
+      doc.text(w.date || new Date().toLocaleDateString(), 20 + catWidth + 6, y + 4.2);
+
+      y += 10;
+
+      // Win Text text wrap
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(30, 20, 35);
+      
+      const splitText = doc.splitTextToSize(w.text, 165);
+      doc.text(splitText, 20, y);
+      
+      y += (splitText.length * 5.2) + 12;
+    });
+
+    doc.save(`FlowHer_Wins_List.pdf`);
+    triggerToast("Saved custom PDF document successfully! 🎉");
+  };
+
+  // Masking Debt Logger
+  const handleToggleMaskType = (type: string) => {
+    if (selectedMaskTypes.includes(type)) {
+      setSelectedMaskTypes(prev => prev.filter(t => t !== type));
+    } else {
+      setSelectedMaskTypes(prev => [...prev, type]);
+    }
+  };
+
+  const getRecoveryAdvice = (debt: number) => {
+    if (debt === 0) {
+      return {
+        level: "Perfect Harmony",
+        duration: 0,
+        tip: "You have excellent balance right now. Keep listening to your feelings and letting yourself work comfortably!",
+        activity: "No active decompression needed yet.",
+        color: "text-green-400"
+      };
+    }
+    if (debt >= 40) {
+      return {
+        level: "Completely Traversed",
+        duration: Math.max(45, Math.round(debt * 2.5)),
+        tip: "Your brain is telling you it represents empty. Step completely away from all work. Lay down in a peaceful, quiet, or dimly lit room, rest your eyes, and listen to some calming silence for a bit.",
+        activity: "Quiet Space Rest & Complete Digital Break",
+        color: "text-rose-400"
+      };
+    }
+    if (debt >= 20) {
+      return {
+        level: "Running on Low",
+        duration: Math.round(debt * 2.5),
+        tip: "You are running low on energy. Close your eyes, dim the screen, and take a quick, cozy 15 to 20-minute break away from work.",
+        activity: "Sensory Calm Decompression & Soft Eye-Rest",
+        color: "text-amber-400"
+      };
+    }
+    return {
+      level: "Slight Over-expansion",
+      duration: Math.max(10, Math.round(debt * 2.5)),
+      tip: "Feeling slightly exhausted. Take a cozy step away from your desk for 10 minutes, splash some cool water on your hands or face, or enjoy a gentle stretch to refresh.",
+      activity: "Gentle Stretch or Splash Cool Water",
+      color: "text-teal"
+    };
+  };
+
+  const handleLogMaskMoment = () => {
+    if (selectedMaskTypes.length === 0) return;
+    const costScore = Math.round(selectedMaskTypes.length * (maskIntensity / 5) * 8);
+
+    const moment: MaskMoment = {
+      id: crypto.randomUUID(),
+      types: selectedMaskTypes,
+      intensity: maskIntensity,
+      cost: costScore,
+      note: maskNote,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    };
+
+    const updated = [moment, ...allMaskMoments].slice(0, 10);
+    setAllMaskMoments(updated);
+    localStorage.setItem("fh_mask_moments", JSON.stringify(updated));
+
+    // Calculate prompt recovery
+    const advice = getRecoveryAdvice(costScore);
+    setShowRecoveryAlert({
+      cost: costScore,
+      types: [...selectedMaskTypes],
+      advice
+    });
+
+    // Clear
+    setSelectedMaskTypes([]);
+    setMaskIntensity(5);
+    setMaskNote("");
+    triggerToast(`Logged masking debt of ${costScore} points! Recovery advice available below.`);
+  };
+
+  const getCombinedDailyDebt = () => {
+    return combinedDailyDebt;
+  };
+
+  return (
+    <div className="min-h-screen bg-warm text-[#1C0A2E] flex flex-col items-center relative">
+      
+      {/* Offline Status Tracker Bannering */}
+      {isOffline && (
+        <div className="w-full bg-[#E8845C] text-white text-center text-xs py-1.5 font-medium flex items-center justify-center gap-2 sticky top-0 z-50">
+          <AlertTriangle className="h-4 w-4" />
+          <span>You are currently operating offline. AI functions are offline, but local tracking works perfectly.</span>
+        </div>
+      )}
+
+      {/* Global Interactive Notification Toast */}
+      {toastMessage && (
+        <div className="fixed top-6 right-6 z-50 bg-[#3D1052] text-[#FAF6F0] px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 border border-mag/40 transition-all text-sm animate-bounce">
+          <Sparkles className="h-4 w-4 text-mag" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Somatic Safe Space Overlays (SOS Overlay) */}
+      {isSosActive && (
+        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center text-[#FAF6F0]">
+          <div className="max-w-md w-full flex flex-col items-center">
+            <ShieldAlert className="h-12 w-12 text-[#E8845C] mb-4 animate-pulse" />
+            <h2 className="font-serif text-3xl font-light mb-3">Halt. You are entirely safe.</h2>
+            <p className="text-sm text-gray-300 mb-8 leading-relaxed font-light">
+              Take a slow breath. You are doing completely fine. Your brain just walked into standard overload — and that's not your fault at all. Let's find your footing together first.
+            </p>
+
+            {/* Guided circle breath animation mock */}
+            <div className="w-44 h-44 rounded-full border border-teal/40 flex flex-col items-center justify-center relative mb-8">
+              <div className="absolute inset-2 rounded-full bg-teal/10 border-2 border-teal animate-ping animate-duration-3000" />
+              <span className="font-serif italic text-teal text-xl z-10 leading-none">{sosPhase}</span>
+              <span className="text-[11px] font-mono text-gray-400 mt-2 z-10">{sosCountdown}s</span>
+            </div>
+
+            {/* Custom Grounding Selection rendering */}
+            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 text-left text-sm space-y-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs tracking-wider text-teal block uppercase font-mono">Quick Calming Checklist</span>
+                <span className="text-[9px] font-mono text-gray-400 capitalize bg-white/15 px-2 py-0.5 rounded">
+                  {sosGroundingType === "54321" ? "Sensory 5-4-3-2-1" : 
+                   sosGroundingType === "333" ? "3-3-3 Spotting" : 
+                   sosGroundingType === "posture" ? "Posture Align" : "Quiet Focus Anchor"}
+                </span>
+              </div>
+              {sosGroundingType === "54321" && (
+                <>
+                  <div>👁️ Observe <strong className="text-[#FAF7FF]">5 physical objects</strong> on your desk.</div>
+                  <div>✋ Touch <strong className="text-[#FAF7FF]">4 physical patterns</strong> near your palm.</div>
+                  <div>👂 Recognize <strong className="text-[#FAF7FF]">3 surrounding noise frequencies</strong>.</div>
+                  <div>👃 Breathe in and name <strong className="text-[#FAF7FF]">2 smell profiles</strong>.</div>
+                  <div>👄 Touch your tongue to notice <strong className="text-[#FAF7FF]">1 focal taste parameter</strong>.</div>
+                </>
+              )}
+              {sosGroundingType === "333" && (
+                <>
+                  <div>👁️ Spot <strong className="text-[#FAF7FF]">3 distinct physical shapes</strong> in the room.</div>
+                  <div>👂 Identify <strong className="text-[#FAF7FF]">3 nearby quiet sound frequencies</strong>.</div>
+                  <div>💪 Gently stretch or rotate <strong className="text-[#FAF7FF]">3 distinct joint pairs</strong>.</div>
+                </>
+              )}
+              {sosGroundingType === "posture" && (
+                <>
+                  <div>👣 Feel the weight of your <strong className="text-[#FAF7FF]">feet pressed against the floor</strong>.</div>
+                  <div>🧘 Softly lengthen and align your <strong className="text-[#FAF7FF]">spine toward the ceiling</strong>.</div>
+                  <div>💨 Unclench your jaw and <strong className="text-[#FAF7FF]">part your teeth slightly</strong>.</div>
+                  <div>🌬️ Gently roll your <strong className="text-[#FAF7FF]">shoulders downwards and back</strong>.</div>
+                </>
+              )}
+              {sosGroundingType === "anchor" && (
+                <div className="space-y-2 py-1">
+                  <div className="italic text-teal/90 text-center font-serif text-xs">"I am completely off-call to all external friction."</div>
+                  <div className="italic text-teal/90 text-center font-serif text-xs">"My nervous system is exceptionally smart, capable, and safe."</div>
+                  <div className="italic text-teal/90 text-center font-serif text-xs">"I have all the breathing room I need to proceed organically."</div>
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={() => setIsSosActive(false)}
+              className="w-full py-3.5 bg-gradient-to-r from-plum to-mag text-white rounded-xl text-sm font-medium hover:opacity-90 transition-all font-sans"
+            >
+              Nervous System Reset: Close Overlay
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Core Plan Gate Modal Overlay */}
+      {showGateModal && (
+        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#FAF6F0] border-2 border-[#C45BAA]/35 text-[#1C0A2E] rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+            <button 
+              onClick={() => setShowGateModal(null)} 
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-black/5 text-[#8A7F8D]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="bg-mag/10 text-mag px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest inline-block mb-3">
+              ✦ Premium Feature Guard
+            </div>
+            <h3 className="font-serif text-3xl font-light mb-2">This is a <em className="text-mag italic font-serif">Core feature</em></h3>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              Unlock entire custom survival scripts, full time blindness multipliers tracker, RSD Toolkit, and unlimited Wins logging by stepping up to Core.
+            </p>
+
+            {/* Spots ticker indicators */}
+            <div className="bg-plum/5 border border-[#C45BAA]/20 rounded-2xl p-4 mb-6">
+              <div className="flex justify-between text-xs font-mono mb-1 text-plum">
+                <span>Core Founding Slots remaining</span>
+                <span className="text-mag font-semibold">{spotsRemaining} left</span>
+              </div>
+              <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-[#E8845C] to-[#C45BAA] rounded-full transition-all duration-1000" 
+                  style={{ width: `${((200 - spotsRemaining) / 200) * 100}%` }} 
+                />
+              </div>
+              <p className="text-[11px] text-[#8A7F8D] mt-2">
+                Only {spotsRemaining} of our 200 slots remain. Locked pricing ($24.99/month) is secured permanently for those who claim today.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  setUserPlan("core");
+                  setShowGateModal(null);
+                  triggerCelebrationConfetti();
+                  triggerToast("Promo Sim: You are now upgraded to FlowHer Core! 🎉");
+                }}
+                className="w-full py-4 bg-gradient-to-r from-plum to-mag text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>Unlock Core (Simulate Beta Promo Code)</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => {
+                  setShowGateModal(null);
+                  setCurrentView("founding");
+                }}
+                className="w-full py-3 bg-plum/10 text-plum font-sans text-xs font-medium rounded-xl hover:bg-plum/15 transition-all"
+              >
+                Explore Founding Page Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Wizard Dialogue */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/93 backdrop-blur-lg flex items-center justify-center p-4">
+          <div className="bg-[#FAF6F0] text-[#1C0A2E] rounded-3xl p-8 max-w-lg w-full border border-[#C45BAA]/20 shadow-2xl">
+            <span className="text-xs font-mono tracking-widest text-[#C45BAA] uppercase block mb-2">Step {onboardingStep} of 2</span>
+            
+            {onboardingStep === 1 ? (
+              <div>
+                <h3 className="font-serif text-2xl font-light mb-4">How does your brain operate at work?</h3>
+                <p className="text-xs text-[#8A7F8D] mb-6">This configures custom workspace boundary parameters in the home tab tips.</p>
+                <div className="grid grid-cols-1 gap-3 mb-8">
+                  {[
+                    "ADHD / Hyper-divergent focus pattern",
+                    "Chronic burn-out / low organic cognitive reserves",
+                    "Late-diagnosed Autism / high social masking patterns",
+                    "Sensory hypersensitivity & high workplace anxiety"
+                  ].map((p, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => setOnboardingAnswers(prev => ({ ...prev, profile: p }))}
+                      className={`p-4 rounded-xl border-2 text-left text-sm transition-all ${
+                        onboardingAnswers.profile === p 
+                          ? "border-mag bg-[#C45BAA]/10 text-[#3D1052]" 
+                          : "border-gray-200 bg-white hover:border-mag/30"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  disabled={!onboardingAnswers.profile}
+                  onClick={() => setOnboardingStep(2)}
+                  className="w-full py-3.5 bg-[#3D1052] text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all font-sans"
+                >
+                  Proportionate Setup: Next Section →
+                </button>
+              </div>
+            ) : (
+              <div>
+                <h3 className="font-serif text-2xl font-light mb-4">What is your principal goal this quarter?</h3>
+                <p className="text-xs text-[#8A7F8D] mb-6">Select your initial functional priority tracker.</p>
+                <div className="grid grid-cols-1 gap-3 mb-8">
+                  {[
+                    "Build confidence and keep a list of daily wins",
+                    "Track daily battery levels and make time to recharge",
+                    "Beat brain block, procrastination, or feeling stuck",
+                    "Learn about your legal rights and adjustments you can ask for"
+                  ].map((g, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => setOnboardingAnswers(prev => ({ ...prev, primaryGoal: g }))}
+                      className={`p-4 rounded-xl border-2 text-left text-sm transition-all ${
+                        onboardingAnswers.primaryGoal === g 
+                          ? "border-mag bg-[#C45BAA]/10 text-[#3D1052]" 
+                          : "border-gray-200 bg-white hover:border-mag/30"
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => setOnboardingStep(1)}
+                    className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-all"
+                  >
+                    Back
+                  </button>
+                  <button 
+                    disabled={!onboardingAnswers.primaryGoal}
+                    onClick={handleCompleteOnboarding}
+                    className="flex-1 py-3 bg-gradient-to-r from-plum to-mag text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all"
+                  >
+                    Finish Profiles Configuration
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Auth Account / Login Modal dialogue */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#FAF6F0] rounded-3xl p-8 max-w-md w-full border border-mag/20 shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setShowAuthModal(false);
+                setResetSuccess(false);
+                setAuthError("");
+              }}
+              className="absolute top-4 right-4 text-[#8A7F8D] hover:text-[#1C0A2E] cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex justify-center mb-6">
+              <span className="font-serif italic text-plum text-2xl font-light">Flow<em className="text-mag not-italic font-sans">Her</em>™</span>
+            </div>
+
+            {resetSuccess ? (
+              <div className="space-y-5 text-center animate-fadeIn py-2">
+                <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-300">
+                  <Sparkles className="h-6 w-6 text-emerald-600 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-plum">Simulated Password Sent!</h3>
+                  <p className="text-xs text-[#8A7F8D] leading-relaxed">
+                    A recovery token has been simulated and dispatched to: <span className="block mt-1 font-semibold text-[#C45BAA] text-xs font-mono">{authForm.email}</span>
+                  </p>
+                  <div className="text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-left mt-2 leading-relaxed">
+                    <strong>💡 Testing Simulation:</strong> In a deployed production system, this triggers a secure credentials delivery. In this sandboxed prototype, feel free to sign in or register with any demo email.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetSuccess(false);
+                    setAuthMode("signin");
+                  }}
+                  className="w-full py-3 bg-[#C45BAA]/10 hover:bg-[#C45BAA]/20 border border-[#C45BAA]/40 text-plum hover:text-[#C45BAA] text-xs font-semibold rounded-xl font-mono tracking-wide transition-all cursor-pointer"
+                >
+                  ← Return to Secure Login
+                </button>
+              </div>
+            ) : authMode === "forgot" ? (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="border-b border-gray-200 pb-3 mb-2">
+                  <h3 className="text-sm font-semibold text-plum uppercase tracking-wider font-mono">Simulate Password Recovery</h3>
+                  <p className="text-[11px] text-[#8A7F8D] mt-1 leading-relaxed">Enter your registered email to receive simulated password reset instructions.</p>
+                </div>
+
+                {authError && <div className="text-xs text-[#E8845C] bg-[#E8845C]/10 p-3 rounded-lg mb-2 text-center">{authError}</div>}
+
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-mono text-plum tracking-wider block mb-1">Email</label>
+                    <input 
+                      type="email"
+                      required
+                      value={authForm.email}
+                      onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                      className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-mag text-plum"
+                      placeholder="name@company.com"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold rounded-xl hover:opacity-95 shadow-md transition-all font-sans cursor-pointer"
+                  >
+                    Send Recovery Instructions 📬
+                  </button>
+
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("signin");
+                        setAuthError("");
+                      }}
+                      className="text-xs text-mag hover:underline font-mono cursor-pointer"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-4 mb-6 border-b border-gray-200">
+                  <button 
+                    onClick={() => {
+                      setAuthMode("signup");
+                      setAuthError("");
+                    }}
+                    className={`flex-1 pb-3 text-sm font-medium cursor-pointer ${authMode === "signup" ? "text-mag border-b-2 border-mag" : "text-gray-400"}`}
+                  >
+                    Create Account
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setAuthMode("signin");
+                      setAuthError("");
+                    }}
+                    className={`flex-1 pb-3 text-sm font-medium cursor-pointer ${authMode === "signin" ? "text-mag border-b-2 border-mag" : "text-gray-400"}`}
+                  >
+                    Sign In
+                  </button>
+                </div>
+
+                {authError && <div className="text-xs text-[#E8845C] bg-[#E8845C]/10 p-3 rounded-lg mb-4 text-center">{authError}</div>}
+
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {authMode === "signup" && (
+                    <div>
+                      <label className="text-xs font-mono text-plum tracking-wider block mb-1">Your First Name</label>
+                      <input 
+                        type="text"
+                        required
+                        value={authForm.name}
+                        onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                        className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-mag text-plum"
+                        placeholder="Enter name"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-mono text-[#1C0A2E] tracking-wider block mb-1">Email</label>
+                    <input 
+                      type="email"
+                      required
+                      value={authForm.email}
+                      onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                      className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-mag text-plum"
+                      placeholder="name@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-[#1C0A2E] tracking-wider block mb-1">Password</label>
+                    <input 
+                      type="password"
+                      required
+                      minLength={4}
+                      value={authForm.password}
+                      onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                      className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-mag text-plum"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {authMode === "signup" && (
+                    <div>
+                      <label className="text-xs font-mono text-plum tracking-wider block mb-1">Optional Beta Code</label>
+                      <input 
+                        type="text"
+                        value={authForm.promo}
+                        onChange={e => setAuthForm({ ...authForm, promo: e.target.value })}
+                        className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-2.5 text-sm uppercase font-mono tracking-widest focus:outline-none focus:border-mag text-plum"
+                        placeholder="e.g. BETAFLOWHER2026"
+                      />
+                      <span className="text-[10px] text-[#8A7F8D] mt-1 block leading-relaxed">Entering standard beta promo codes grants immediate local simulated premium Core access.</span>
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold rounded-xl hover:opacity-95 shadow-md transition-all font-sans cursor-pointer"
+                  >
+                    {authMode === "signup" ? "Initiate Free Access" : "Secure System Login"}
+                  </button>
+
+                  {authMode === "signin" && (
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("forgot");
+                          setAuthError("");
+                        }}
+                        className="text-xs text-mag hover:underline font-mono cursor-pointer"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+           LANDING VIEW SCREEN
+         ========================================== */}
+      {currentView === "landing" && (
+        <div className="w-full max-w-7xl px-4 md:px-8 flex flex-col items-center">
+          
+          {/* Header navigation */}
+          <header className="w-full py-6 flex items-center justify-between border-b border-[#C45BAA]/10 sticky top-0 bg-[#FAF6F0] z-40 transition-all select-none">
+            <span className="font-serif italic text-3xl font-light text-[#3D1052] tracking-wider leading-none">
+              Flow<em className="text-mag not-italic font-sans font-medium">Her</em>™
+            </span>
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={() => setCurrentView("founding")}
+                className="text-xs font-sans text-mag font-semibold py-2 px-4 rounded-full border border-[#C45BAA]/65 hover:bg-mag/5 bg-gradient-to-r from-mag/5 to-transparent hover:shadow-sm transition-all hidden md:flex items-center gap-1.5 animate-pulse"
+              >
+                ★ Only {spotsRemaining} Spots Left
+              </button>
+              <button 
+                onClick={() => {
+                  if (user) {
+                    setCurrentView("app");
+                  } else {
+                    setAuthMode("signup");
+                    setShowAuthModal(true);
+                  }
+                }}
+                className="bg-[#3D1052] text-[#FAF6F0] hover:bg-mag hover:shadow-lg transition-all text-xs font-sans font-medium py-2 px-5 rounded-full"
+              >
+                Open Dashboard ➔
+              </button>
+            </div>
+          </header>
+
+          {/* Hero space */}
+          <section className="py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center w-full">
+            <div className="flex flex-col items-start space-y-6">
+              <span className="text-xs uppercase tracking-widest text-[#C45BAA] font-medium block">
+                ✦ Designed for warm, uncomplicated focus support
+              </span>
+              <h1 className="font-serif text-4xl md:text-5xl font-light leading-[1.2] text-plum">
+                FlowHer — <em className="italic text-mag font-serif not-italic">For women whose brains work differently.</em>
+              </h1>
+              <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-lg font-light">
+                A simple, comforting digital refuge and gentle wins tracker built specifically for women with ADHD, autism, or busy brains. Feel at peace, escape workday noise, and take kind steps at your own organic speed today.
+              </p>
+
+              {/* Tag system */}
+              <div className="flex flex-wrap gap-2 py-3">
+                {["ADHD Support", "Deep Focus Help", "Sensory Comfort", "Unstuck Methods", "Self-Doubt Busters"].map((t, i) => (
+                  <span key={i} className="text-xs font-sans py-1.5 px-3.5 rounded-full border border-mag/20 bg-mag/5 text-[#3D1052] font-semibold">
+                    {t}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <button 
+                  onClick={() => setCurrentView("founding")}
+                  className="bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold py-4 px-8 rounded-2xl hover:opacity-95 shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>Secure Core Founding Spot</span>
+                  <ArrowRight className="h-4.5 w-4.5" />
+                </button>
+                <button 
+                  onClick={() => {
+                    setAuthMode("signup");
+                    setShowAuthModal(true);
+                  }}
+                  className="bg-plum/10 text-plum border border-plum/15 text-sm font-medium py-4 px-8 rounded-2xl hover:bg-plum/15 transition-all text-center"
+                >
+                  Initiate Basic Demo Access
+                </button>
+              </div>
+
+              <span className="text-xs text-[#8A7F8D] font-light italic">
+                🔒 Free access includes daily check-ins, focus timer, and basic survival utilities. No card required.
+              </span>
+            </div>
+
+            {/* Simulated Desktop Preview Card mockup */}
+            <div className="bg-[#1C0A2E] rounded-[2.5rem] border-4 border-plum p-6 md:p-8 shadow-2xl space-y-6 text-[#FAF6F0] relative overflow-hidden transition-all duration-300">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-mag/10 rounded-full blur-[80px]" />
+              
+              <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div className="flex items-center gap-2 font-serif italic text-lg">
+                  <Brain className="text-mag h-5 w-5" />
+                  <span>FlowHer Workplace Console</span>
+                </div>
+                <span className="text-[10px] font-mono tracking-widest text-[#E8845C] bg-[#E8845C]/15 px-2.5 py-1 rounded-full uppercase">
+                  SIMULATION TERMINAL
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                  <span className="text-[10px] tracking-widest text-mag uppercase block mb-1">Reality-Checking Coach</span>
+                  <p className="text-xs leading-relaxed text-gray-300 italic font-light">
+                    "A delayed response from your manager is standard operational traffic, not indicative of any failure. Drop your shoulders 3 inches and focus purely on your next tiny action template."
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-center">
+                    <Zap className="h-5 w-5 text-[#E8845C] mx-auto mb-1" />
+                    <span className="block font-medium">Momentum Step</span>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-center">
+                    <Clock className="h-5 w-5 text-teal mx-auto mb-1" />
+                    <span className="block font-medium">Time Multiplier</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Social Proof Statistics Row */}
+          <section className="w-full bg-[#3D1052] text-[#FAF6F0] rounded-[2rem] py-12 px-6 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-8 justify-between text-center mt-6">
+            <div>
+              <span className="font-serif text-4xl block font-light text-[#E8845C]">1 in 5</span>
+              <span className="text-xs text-white/60 tracking-wider">Women whose brains work differently</span>
+            </div>
+            <div>
+              <span className="font-serif text-4xl block font-light text-mag">70%</span>
+              <span className="text-xs text-white/60 tracking-wider">Learned about their ADHD as adults</span>
+            </div>
+            <div>
+              <span className="font-serif text-4xl block font-light text-teal">100%</span>
+              <span className="text-xs text-white/60 tracking-wider">Kind, pressure-free support</span>
+            </div>
+            <div>
+              <span className="font-serif text-4xl block font-light text-gold">40+ Tabs</span>
+              <span className="text-xs text-white/60 tracking-wider">Peaceful offline minds</span>
+            </div>
+          </section>
+
+          {/* Why FlowHer sections */}
+          <section className="py-20 w-full">
+            <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
+              <span className="text-xs tracking-widest text-mag uppercase font-semibold">Interactive Grid Profiles</span>
+              <h2 className="font-serif text-4xl font-light text-plum">You fully belong here if...</h2>
+              <p className="text-xs text-[#8A7F8D]">Typical tools feel too rigid, overwhelming, or demanding for your brain.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  emoji: "⚡",
+                  title: "Focus Waves & Fluctuating Energy",
+                  body: "Tasks either slip right out of sight, or seem impossible to start, leading to procrastination stress and frantic rushes to finish."
+                },
+                {
+                  emoji: "🌊",
+                  title: "Worrying About Feedback",
+                  body: "A brief or neutral message from a teammate makes you feel anxious, triggering heavy doubts and completely draining your focus for hours."
+                },
+                {
+                  emoji: "🎭",
+                  title: "Putting on a 'Work Face'",
+                  body: "Spending all your energy trying to look relaxed, cheerful, and active in meetings, leaving you completely exhausted before the workday even finishes."
+                }
+              ].map((c, i) => (
+                <div key={i} className="bg-white border border-mag/10 p-6 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <span className="text-3xl block mb-3">{c.emoji}</span>
+                  <h3 className="font-serif text-xl font-medium text-plum mb-2">{c.title}</h3>
+                  <p className="text-xs text-gray-600 leading-relaxed font-light">{c.body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Essential Features of the FlowHer app */}
+          <section className="bg-plum text-[#FAF6F0] py-16 px-6 md:px-12 rounded-[2.5rem] w-full relative overflow-hidden">
+            <div className="absolute -top-12 -left-12 w-64 h-64 bg-mag/20 rounded-full blur-[100px]" />
+            <div className="max-w-3xl mx-auto space-y-12">
+              <div className="text-center space-y-3">
+                <span className="text-xs text-mag tracking-widest uppercase font-mono block">Complete Toolbox Map</span>
+                <h2 className="font-serif text-4xl font-light">Engineered for Your Brain's Operating System</h2>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-1.5">
+                  <span className="text-mag text-sm block">⚡ Smallest Step Assistant</span>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    Beat procrastination and get unstuck instantly. Type in any big, scary task, and let our helper break it down into tiny steps of under 2 minutes so you can start easily.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-teal text-sm block">⏱ Realistic Time Planner</span>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    Typical schedulers assume everyone works at the exact same pace. We help you learn how long things actually take you, so you can plan realistic, stress-free daily buffers.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[#E8845C] text-sm block">🛡️ Self-Doubt Rejection Shield</span>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    Separate facts from anxious worries. Get gentle, helpful reality checks instantly to calm self-doubt, critique, or feedback panic and find your footing.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[#D4A843] text-sm block">⭐ My Win Journal</span>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    Don't let self-doubt make you forget how skilled you are. Keep a private list of daily wins and download them as a beautiful, clean PDF document whenever you need a boost.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Pricing Tiers and Limits FAQ accordion list */}
+          <section className="py-20 w-full max-w-4xl">
+            <div className="text-center mb-12 space-y-2">
+              <h2 className="font-serif text-4xl font-light text-plum">Essential Clarifications</h2>
+              <p className="text-xs text-[#8A7F8D]">Transparent alignments for sustainable development.</p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: "Who is the designer behind FlowHer?",
+                  a: "FlowHer is designed by Silvella Strain (MBA, ADHD Inattentive) who was tired of typical daily planners neglecting how our actual brains work and lose energy. It is built entirely to empower minds that think differently."
+                },
+                {
+                  q: "How does the simulated trial operate?",
+                  a: "Entering this demo gives you full access to battery check-ins, calm-down breathing exercises, and your private Win Journal. No payments are required to test out these tools."
+                },
+                {
+                  q: "Are the AI functions safe and private?",
+                  a: "Yes. All processed items are proxied server-side via Gemini API under strict privacy parameters and never submitted to general indices for training."
+                }
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white border border-mag/10 rounded-2xl p-6 transition-all">
+                  <button 
+                    onClick={() => setFaqOpenIdx(faqOpenIdx === idx ? null : idx)}
+                    className="w-full text-left font-serif text-lg text-plum flex items-center justify-between"
+                  >
+                    <span>{item.q}</span>
+                    <ChevronDown className={`h-5 w-5 text-mag transition-transform ${faqOpenIdx === idx ? "rotate-180" : ""}`} />
+                  </button>
+                  {faqOpenIdx === idx && (
+                    <p className="text-xs text-gray-600 mt-4 leading-relaxed font-light">{item.a}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Simple CTA footer */}
+          <footer className="w-full py-12 border-t border-mag/10 text-center space-y-4 text-xs text-[#8A7F8D]">
+            <p className="font-serif italic text-lg text-[#3D1052]">FlowHer™ © 2026</p>
+            <p className="font-light">FlowHer — For women whose brains work differently.</p>
+          </footer>
+        </div>
+      )}
+
+      {/* ==========================================
+           FOUNDING SPOTS PAGE VIEW
+         ========================================== */}
+      {currentView === "founding" && (() => {
+        // Dynamic Pricing parameters
+        const isFoundingActive = foundingStatus === "active";
+        const isAnnual = billingCycle === "annual";
+
+        const planTag = isFoundingActive 
+          ? "✦ Exclusive Core Founding Rate" 
+          : "✦ Standard Public Core Plans";
+
+        const mainPrice = isFoundingActive 
+          ? (isAnnual ? "19" : "24") 
+          : (isAnnual ? "24" : "39");
+
+        const centsCode = ".99";
+
+        const billIntervalLabel = isAnnual 
+          ? (isFoundingActive ? "Billed annually as $239.88/yr (Save 20% over Monthly)" : "Billed annually as $299.88/yr (Save 37.5% over Monthly!)")
+          : "Billed monthly. Cancel securely anytime";
+
+        const spotsRemainingDisplay = isFoundingActive ? spotsRemaining : 0;
+
+        return (
+          <div className="w-full max-w-4xl px-4 py-12 space-y-8">
+            
+            <button 
+              onClick={() => setCurrentView("landing")}
+              className="text-xs text-[#8A7F8D] hover:text-[#3D1052] font-semibold flex items-center gap-2"
+            >
+              ← Back to main lobby
+            </button>
+
+            <div className="text-center space-y-4">
+              <span className="text-xs px-3 py-1 bg-[#C45BAA]/15 text-mag uppercase rounded-full tracking-widest font-mono">
+                {planTag}
+              </span>
+              <h1 className="font-serif text-5xl font-light text-plum">
+                {isFoundingActive ? (
+                  <>Secure Your Lifetime Rate. <em className="italic text-mag font-serif">Forever.</em></>
+                ) : (
+                  <>Standard Workspace Memberships. <em className="italic text-mag font-serif">Optimized.</em></>
+                )}
+              </h1>
+              <p className="text-gray-600 font-light max-w-md mx-auto text-sm leading-relaxed">
+                {isFoundingActive ? (
+                  `We are reserving exactly 200 Core Founding spots at $24.99/month (or $19.99/month billed annually). Locked indefinitely and guaranteed never to increase.`
+                ) : (
+                  "The early founding slot registry has closed. Register at standard rates to activate full, unlimited neuro-support mechanisms."
+                )}
+              </p>
+            </div>
+
+            {/* INTERACTIVE COMPLIANCE PLAN SWITCHES */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/60 border border-black/5 rounded-2xl p-4 max-w-2xl mx-auto backdrop-blur-xs shadow-xs select-none">
+              <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                <span className="text-[10px] font-mono tracking-wider text-[#A2488E] uppercase font-bold">1. BILLING CYCLE</span>
+                <span className="text-[10px] text-gray-500 font-light">Choose preferred invoice rhythm</span>
+              </div>
+              
+              <div className="flex bg-[#1C0A2E]/5 rounded-xl p-1 border border-black/5 shrink-0">
+                <button 
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                    billingCycle === "monthly" 
+                      ? "bg-[#1C0A2E] text-white shadow-xs" 
+                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button 
+                  onClick={() => setBillingCycle("annual")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer relative ${
+                    billingCycle === "annual" 
+                      ? "bg-[#1C0A2E] text-white shadow-xs" 
+                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
+                  }`}
+                >
+                  Annual Billing
+                  <span className="absolute -top-2.5 -right-1 px-1 bg-[#C45BAA] text-white text-[7px] font-mono rounded-full uppercase tracking-tight scale-90">
+                    Save
+                  </span>
+                </button>
+              </div>
+
+              <div className="hidden sm:block border-l border-black/10 h-8 mx-1" />
+
+              <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                <span className="text-[10px] font-mono tracking-wider text-[#A2488E] uppercase font-bold">2. REGISTER STATUS SIMULATOR</span>
+                <span className="text-[10px] text-gray-500 font-light">Toggle state after all 200 spots chosen</span>
+              </div>
+
+              <div className="flex bg-[#1C0A2E]/5 rounded-xl p-1 border border-black/5 shrink-0">
+                <button 
+                  onClick={() => {
+                    setFoundingStatus("active");
+                    triggerToast("Simulating: Active Founding Window");
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-wide transition-all cursor-pointer ${
+                    foundingStatus === "active" 
+                      ? "bg-teal text-white shadow-xs" 
+                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
+                  }`}
+                >
+                  Slots Open
+                </button>
+                <button 
+                  onClick={() => {
+                    setFoundingStatus("filled");
+                    triggerToast("Simulating: Post-Founding Rates (Fills closed)");
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-wide transition-all cursor-pointer ${
+                    foundingStatus === "filled" 
+                      ? "bg-red-700 text-white shadow-xs" 
+                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
+                  }`}
+                >
+                  All 200 Chosen
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white border-2 border-[#C45BAA]/35 rounded-[2rem] p-8 md:p-12 shadow-xl space-y-8">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div className="space-y-6">
+                  <span className="text-xs tracking-wider text-teal font-mono uppercase block">What is unlocked instantly</span>
+                  <ul className="space-y-3.5 text-xs text-gray-700 font-light">
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                      <span>Unlimited Smallest Step Breakdown queries (AI-driven)</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                      <span>RSD reality tracker metrics de-escalator</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                      <span>All automated survival scripts drafting models</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
+                      <span>Private, device-encrypted Win Logs repository exports</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Pricing breakdown box */}
+                <div className="bg-[#1C0A2E] text-white p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden">
+                  {/* Subtle top light flare */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-teal via-[#E8845C] to-[#C45BAA]" />
+                  
+                  <span className="text-xs uppercase tracking-widest text-[#E8845C] font-mono">
+                    {isFoundingActive ? "Lifetime Core Founding Rate" : "Standard Professional Rate"}
+                  </span>
+                  <div className="font-serif text-6xl block text-white font-light">
+                    ${mainPrice}<span className="text-2xl">{centsCode}</span>
+                  </div>
+                  <span className="text-xs text-white/70 tracking-wide font-sans">{billIntervalLabel}</span>
+
+                  {/* Urgency Counter / Standard Notice indicator */}
+                  <div className="w-full bg-[#270E40] border border-[#C45BAA]/40 rounded-xl p-3.5 space-y-2 text-left">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${isFoundingActive ? "bg-[#E8845C] animate-pulse" : "bg-red-500"}`} />
+                        <span className="text-[10px] font-mono tracking-wider text-orange-200 uppercase font-bold">
+                          {isFoundingActive ? "Urgent Intake Notice" : "FOUNDING CYCLE CONCLUDED"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-gray-300 font-semibold">
+                        {isFoundingActive ? `${200 - spotsRemainingDisplay} / 200 Claimed` : "200 / 200 Spots Claimed"}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-xs">
+                        {isFoundingActive ? (
+                          <strong className="text-white font-medium text-[11px]">Only {spotsRemainingDisplay} founding spots left!</strong>
+                        ) : (
+                          <strong className="text-white font-medium text-[11px]">🔴 General Public Registrations Active</strong>
+                        )}
+                        <span className="text-[9px] text-[#E8845C] font-mono">
+                          {isFoundingActive ? "Intake closing soon" : "Legacy pricing secure"}
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-[#E8845C] to-[#C45BAA] h-full transition-all duration-1000" 
+                          style={{ width: isFoundingActive ? `${((200 - spotsRemainingDisplay) / 200) * 100}%` : "100%" }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <p className="text-[9px] text-gray-400 font-sans leading-normal">
+                      {isFoundingActive ? (
+                        "Due to local device caching resources and private vector memory sandboxes, we cap physical beta groups to maintain sub-100ms response timelines. Secure your place now."
+                      ) : (
+                        "The priority 200 slots have been fully populated and locked in perpetuity. Registration remains open under our standard enterprise pricing modules to support general server capacity."
+                      )}
+                    </p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => {
+                      setUserPlan("core");
+                      setCurrentView("app");
+                      triggerCelebrationConfetti();
+                      triggerToast(`Successfully registered under ${isFoundingActive ? "Founding" : "Standard"} (${isAnnual ? "Annual" : "Monthly"}) plan! 🎉`);
+                    }}
+                    className="w-full py-4 bg-gradient-to-r from-[#E8845C] to-[#C45BAA] text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all cursor-pointer"
+                  >
+                    {isFoundingActive ? "Secure Lifetime Rate ➔" : "Activate Standard Premium Plan ➔"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-[#8A7F8D] italic font-light">
+              Silvella Strain · Founder, FlowHer LLC · Creator of FlowHer
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* ==========================================
+           MAIN APP VIEW (Dashboard space)
+         ========================================== */}
+      {currentView === "app" && (
+        <div className="w-full min-h-screen bg-[#130620] text-[#FAF6F0] flex flex-col justify-between items-center relative overflow-x-hidden">
+          
+          {/* Header toolbar */}
+          <header className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between border-b border-white/5 sticky top-0 bg-[#130620]/90 backdrop-blur-md z-35 font-sans">
+            <div className="flex flex-col items-start select-none">
+              <span className="font-serif text-xl font-light">Flow<em className="text-mag not-italic font-sans">Her</em>™</span>
+              <span className="text-[9px] tracking-wide text-[#E085C9] font-sans font-light">
+                For women whose brains work differently.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => {
+                  setEditName(user?.name || "Professional User");
+                  setEditBio(profileBio);
+                  setIsEditingProfile(false);
+                  setShowProfileModal(true);
+                }}
+                className="h-8 w-8 rounded-full border border-[#C45BAA]/40 bg-white/5 text-[#C45BAA] overflow-hidden flex items-center justify-center hover:bg-[#C45BAA]/10 hover:border-mag transition-all cursor-pointer relative group"
+                title="View & Edit User Profile"
+              >
+                {profilePic ? (
+                  <img src={profilePic} alt="Profile" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-plum to-[#E085C9] text-white flex items-center justify-center text-xs font-mono font-bold select-none uppercase">
+                    {(user?.name || "U")[0]}
+                  </div>
+                )}
+              </button>
+              <button 
+                onClick={handleRestartTour}
+                className="bg-[#C45BAA]/15 border border-[#C45BAA]/45 text-[#E085C9] text-[10px] tracking-wider font-mono uppercase px-2.5 py-1 rounded-full hover:bg-[#C45BAA]/25 transition-all font-semibold cursor-pointer select-none shrink-0"
+                title="Launch Onboarding tour"
+              >
+                ✨ Tour
+              </button>
+              <button 
+                onClick={() => setIsSosActive(true)}
+                className="bg-[#E8845C]/15 border border-[#E8845C]/45 text-[#E8845C] text-[10px] tracking-wider font-mono uppercase px-3 py-1 rounded-full hover:bg-[#E8845C]/25 transition-all text-sm font-semibold"
+              >
+                🚨 SOS Help
+              </button>
+              <button 
+                onClick={handleSignOut}
+                className="p-1.5 rounded-full hover:bg-white/5 text-[#8A7F8D]"
+                title="Sign out of workspace"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
+
+          {/* MAIN DYNAMIC TAB CONTENT DISPLAY CONTAINER */}
+          <main className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-6 space-y-6 flex-grow pb-24">
+            
+            {/* SIMULATED WORKSPACE TOP NOTIFICATIONS */}
+            <div className="bg-plum/20 border border-mag/20 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl select-none">🔥</span>
+                <div className="text-xs">
+                  <div className="font-medium text-[#FAF7FF] font-sans">Strategic Streak Checkin</div>
+                  <div className="text-[#8A7F8D]">{streakCount} sequential days recorded</div>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setStreakCount(prev => prev + 1);
+                  triggerToast("Organic checkin logged. Day preservation saved! 🌱");
+                }}
+                className="text-[10px] uppercase font-mono bg-teal/15 border border-teal/30 text-teal py-1 px-3 rounded-full hover:bg-teal/20"
+              >
+                Check In
+              </button>
+            </div>
+
+            {/* NOT TODAY INTERACTIVES */}
+            {isNotTodayActive ? (
+              <div className="bg-teal/10 border-2 border-teal/30 rounded-2xl p-5 text-center space-y-3">
+                <span className="text-2xl block">🌿</span>
+                <h4 className="font-serif text-lg font-light text-[#FAF7FF]">Day alignment accepted.</h4>
+                <p className="text-xs text-gray-300 font-light leading-relaxed">
+                  "You are not behind. You are working with the real physiological battery reserves you possess. Rest is not the opposite of productivity; it is the source."
+                </p>
+                <div className="text-[10px] text-teal font-mono tracking-widest uppercase">STREAK PROTECTED ⚡</div>
+              </div>
+            ) : (
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between text-xs font-sans">
+                <div className="space-y-1">
+                  <span className="font-medium block text-gray-200">Feeling completely overwhelmed?</span>
+                  <span className="text-[10px] text-[#8A7F8D] block leading-relaxed max-w-xs">Lock in simple recovery status and declare zero demand safely.</span>
+                </div>
+                <button 
+                  onClick={() => setIsNotTodayActive(true)}
+                  className="bg-teal/10 hover:bg-teal/15 border border-teal/25 text-teal text-[10px] uppercase px-3 py-1.5 rounded-xl transition-all"
+                >
+                  Not Today 🌿
+                </button>
+              </div>
+            )}
+
+            {/* TAB RENDERS */}
+            
+            {/* 1. HOME TAB SCREEN */}
+            {appTab === "home" && (
+              <div className="space-y-6">
+                
+                {/* Integrated user bio / profile quick-view card */}
+                <div className="bg-gradient-to-br from-[#3D1052]/20 via-[#130620] to-[#C45BAA]/5 border border-[#C45BAA]/15 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="h-16 w-16 rounded-2xl border-2 border-[#C45BAA]/40 bg-[#130620] flex-shrink-0 overflow-hidden relative group">
+                      {profilePic ? (
+                        <img src={profilePic} alt="Profile" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-tr from-[#3D1052] to-[#C45BAA] text-white flex items-center justify-center text-2xl font-mono font-black select-none uppercase">
+                          {(user?.name || "U")[0]}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          setEditName(user?.name || "Professional User");
+                          setEditBio(profileBio);
+                          setIsEditingProfile(true);
+                          setShowProfileModal(true);
+                        }}
+                        className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-[10px] text-white font-mono cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    </div>
+
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-serif text-lg text-[#FAF7FF] truncate leading-none">
+                          {user?.name || "Professional User"}
+                        </h3>
+                        <button
+                          onClick={() => {
+                            setEditName(user?.name || "Professional User");
+                            setEditBio(profileBio);
+                            setIsEditingProfile(true);
+                            setShowProfileModal(true);
+                          }}
+                          className="text-[9px] font-mono tracking-widest text-[#C45BAA] hover:text-[#FAF7FF] uppercase transition-all cursor-pointer"
+                        >
+                          Edit Profile
+                        </button>
+                      </div>
+                      
+                      <p className="text-xs text-gray-300 leading-relaxed font-sans font-light italic">
+                        "{profileBio}"
+                      </p>
+
+                      <div className="flex items-center gap-1.5 pt-1.5">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal animate-pulse"></span>
+                        <span className="text-[9px] font-mono tracking-wider text-teal uppercase">
+                          Bio Signature Saved Offline
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* VISUAL BANNER CARD FOR THE NEW CONTEMPORARY ADHD GLOSSARY & NEURO-HUB */}
+                <div 
+                  onClick={() => {
+                    setAppTab("glossary");
+                    setSelectedWorkTool(null);
+                  }}
+                  className="bg-gradient-to-br from-[#1E293B]/60 via-[#130620] to-[#C45BAA]/10 border border-[#C45BAA]/30 rounded-2xl p-5 cursor-pointer hover:border-teal/60 hover:shadow-[0_0_20px_rgba(20,184,166,0.15)] transition-all flex items-center justify-between text-left group duration-300 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-radial from-teal/10 to-transparent blur-xl group-hover:from-teal/20 transition-all" />
+                  <div className="space-y-1.5 pr-2 z-10">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-teal/15 text-teal text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-teal/20">
+                        Interactive Hub 📖
+                      </span>
+                      <span className="bg-plum/20 text-[#E085C9] text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-[#C45BAA]/25">
+                        New
+                      </span>
+                    </div>
+                    <h4 className="font-serif text-[#FAF7FF] font-medium text-base group-hover:text-teal transition-colors">
+                      ADHD Glossary & Neuro-Hub
+                    </h4>
+                    <p className="text-xs text-gray-300 font-light leading-relaxed max-w-md">
+                      A simple, fun, and warm space to learn relatable neurodivergent concepts. Packed with customized survival strategies for students and professionals!
+                    </p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-teal/10 border border-teal/20 flex items-center justify-center text-teal font-serif text-lg group-hover:bg-teal group-hover:text-[#130620] group-hover:border-teal shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all flex-shrink-0 z-10">
+                    →
+                  </div>
+                </div>
+
+                {/* Mood picker check-in */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">How is your brain energy level today?</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {MOODS.map((m, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => {
+                          setSelectedMoodIndex(idx);
+                          localStorage.setItem("fh_selected_mood", String(idx));
+                          triggerToast(`Mood checked in as ${m.name} ✓`);
+                        }}
+                        className={`p-3 rounded-xl border text-center transition-all ${
+                          selectedMoodIndex === idx 
+                            ? "border-mag bg-[#C45BAA]/10 text-white" 
+                            : "border-white/5 bg-white/2"
+                        }`}
+                      >
+                        <span className="text-xl block">{m.emoji}</span>
+                        <span className="text-[10px] text-gray-300 block mt-1">{m.name}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Emotional state optional descriptive note */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] tracking-wider text-gray-400 block font-mono uppercase">
+                      Current Emotional State Note (Optional)
+                    </label>
+                    <textarea
+                      value={moodNote}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMoodNote(val);
+                        localStorage.setItem("fh_mood_note", val);
+                      }}
+                      className="w-full bg-[#1C0A2E]/50 border border-[#C45BAA]/20 rounded-xl px-4 py-2.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-mag"
+                      placeholder="Type a brief snapshot, e.g., low energy from early meetings, but feeling determined..."
+                      rows={2}
+                    />
+                  </div>
+
+                  {selectedMoodIndex !== null && (
+                    <div className="bg-plum/20 rounded-xl p-3 border border-mag/20 text-xs text-gray-200 leading-relaxed font-light italic">
+                      {MOODS[selectedMoodIndex].tips}
+                    </div>
+                  )}
+                </div>
+
+                {/* Affirmation slider card */}
+                <div className="bg-gradient-to-r from-plum/20 to-[#130620] border border-mag/20 rounded-2xl p-5 space-y-3 relative overflow-hidden text-center">
+                  <span className="text-[10px] tracking-widest text-mag uppercase block font-mono">Dynamic Alignment Truth</span>
+                  <p className="font-serif italic text-lg text-gray-200 select-none min-h-[50px] flex items-center justify-center">
+                    "{AFFIRMATIONS[affirmationIdx]}"
+                  </p>
+                  <button 
+                    onClick={() => setAffirmationIdx(prev => (prev + 1) % AFFIRMATIONS.length)}
+                    className="text-xs text-mag hover:text-[#FAF7FF] font-semibold"
+                  >
+                    Next Alignment →
+                  </button>
+                </div>
+
+                {/* Simple pomodoro block */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-center gap-5">
+                  <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.06)" strokeWidth="4" fill="none" />
+                      <circle 
+                        cx="48" 
+                        cy="48" 
+                        r="40" 
+                        stroke="var(--color-teal)" 
+                        strokeWidth="4" 
+                        fill="none" 
+                        strokeDasharray="251.2"
+                        strokeDashoffset={251.2 * (1 - timerSeconds / (25 * 60))}
+                        className="transition-all duration-300"
+                      />
+                    </svg>
+                    <span className="absolute text-sm font-mono tracking-widest">{Math.floor(timerSeconds / 60)}:00</span>
+                  </div>
+
+                  <div className="space-y-3 flex-1">
+                    <div>
+                      <span className="text-[10px] uppercase font-mono tracking-widest text-teal block">Single Focus Frame</span>
+                      <span className="text-xs text-[#8A7F8D] block mt-0.5">Commit to exactly one tab block safely.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setTimerActive(!timerActive)}
+                        className="bg-teal py-1.5 px-4 rounded-xl text-xs font-sans text-plum hover:opacity-90 transition-all font-semibold"
+                      >
+                        {timerActive ? "Pause" : "Start"}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setTimerActive(false);
+                          setTimerSeconds(25 * 60);
+                        }}
+                        className="bg-white/5 py-1.5 px-4 rounded-xl text-xs font-sans text-gray-300 hover:bg-white/10 transition-all"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mindful Resets & Sensory Recharge Menu */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-teal block uppercase font-mono font-bold">MINDFUL RESETS & SENSORY RECHARGE</span>
+                  <p className="text-[11px] text-[#8A7F8D] leading-relaxed">Need a gentle pause or a physical refresh? Select one of our favorite little sensory recharge moments to help steady and soften your focus.</p>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {DOPAMINE_ITEMS.map((item, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => {
+                          triggerQuickConfetti();
+                          triggerToast(`Reset: ${item.detail}`);
+                        }}
+                        className="bg-white/2 border border-white/5 p-3 rounded-xl hover:bg-white/5 transition-all text-left flex items-start gap-2"
+                      >
+                        <span>{item.emoji}</span>
+                        <div>
+                          <strong className="block text-gray-200">{item.label}</strong>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Audio and Notification Settings Panel */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-widest text-[#E085C9] block uppercase font-mono font-bold">🔊 FOCUS AUDIO & NOTIFICATION SETTINGS</span>
+                    <button 
+                      onClick={() => {
+                        playAudioCue();
+                        triggerToast("Test sound triggered! ✓");
+                      }}
+                      className="text-[9px] font-mono tracking-wider text-[#FAF6F0] bg-teal/25 border border-teal/40 px-2.5 py-0.5 rounded-full hover:bg-teal/35 cursor-pointer uppercase transition-all"
+                    >
+                      Test Cue
+                    </button>
+                  </div>
+                  
+                  <p className="text-[11px] text-[#8A7F8D] leading-relaxed font-light">
+                    Select a relaxing audio signature and adjust the volume feedback for your focus sessions, time blindness checks, and completion notifications.
+                  </p>
+
+                  {/* Volume Slider */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between font-mono text-[10px] text-gray-400">
+                      <span>AUDIO VOLUME</span>
+                      <span className="text-teal font-semibold">{Math.round(audioVolume * 100)}%</span>
+                    </div>
+                    <input 
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={audioVolume}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setAudioVolume(v);
+                        localStorage.setItem("fh_audio_volume", String(v));
+                        // Play quick water-drop sound on change to give instant volume feedback
+                        playAudioCue("water-drop", v);
+                      }}
+                      className="w-full accent-teal bg-white/5 h-1.5 rounded-lg cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Audio Cues Selection List */}
+                  <div className="space-y-2 pt-1">
+                    <label className="text-[10px] uppercase tracking-wider font-mono text-gray-400 block font-bold">SELECT AUDIO CUE SIGNATURE</label>
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: "gentle-chime",
+                          name: "Gentle Chime",
+                          desc: "Harmonious C-Major pure fifth chords. Perfect for standard, peaceful transitions with zero startle.",
+                          emoji: "🌿"
+                        },
+                        {
+                          id: "singing-bowl",
+                          name: "Tranquil Bowl",
+                          desc: "A deep, resonant Tibetan singing bowl with long, sub-600Hz filtered metallic overtones.",
+                          emoji: "🥣"
+                        },
+                        {
+                          id: "water-drop",
+                          name: "Soft Water Drop",
+                          desc: "An organic, upward frequency sweep simulating a peaceful dewdrop. Fast and light-hearted.",
+                          emoji: "💧"
+                        },
+                        {
+                          id: "cosmic-bell",
+                          name: "Cosmic Bell",
+                          desc: "A shimmering, high-frequency reverberant chord designed to clear mental noise immediately.",
+                          emoji: "✨"
+                        },
+                        {
+                          id: "digital-beep",
+                          name: "Digital Beep",
+                          desc: "A clean, straightforward electronic tone for direct, simple focus structure notifications.",
+                          emoji: "📟"
+                        }
+                      ].map((cue) => {
+                        const isSelected = selectedSoundCue === cue.id;
+                        return (
+                          <div 
+                            key={cue.id}
+                            onClick={() => {
+                              setSelectedSoundCue(cue.id);
+                              localStorage.setItem("fh_selected_sound_cue", cue.id);
+                              // Immediately preview selected sound cue
+                              playAudioCue(cue.id);
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3 hover:bg-white/5 relative overflow-hidden ${
+                              isSelected 
+                                ? "border-teal bg-teal/10 text-white" 
+                                : "border-white/5 bg-white/2 text-gray-400 font-light"
+                            }`}
+                          >
+                            <span className="text-lg bg-white/5 p-1.5 rounded-lg block shrink-0">{cue.emoji}</span>
+                            <div className="space-y-0.5">
+                              <span className="font-semibold block text-xs text-gray-100">{cue.name}</span>
+                              <span className="text-[10px] leading-relaxed block text-gray-400 font-light">{cue.desc}</span>
+                            </div>
+                            {isSelected && (
+                              <span className="absolute top-2 right-3 text-[10px] font-mono tracking-widest text-teal font-semibold">
+                                SELECTED
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* SOS Calming Support Settings Customizer */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-widest text-teal block uppercase font-mono">🚨 SOS BREAK & CALMING CUSTOMIZER</span>
+                    <button 
+                      onClick={() => setIsSosActive(true)}
+                      className="text-[9px] font-mono tracking-wider text-[#FAF6F0] bg-[#E8845C]/25 border border-[#E8845C]/40 px-2.5 py-0.5 rounded-full hover:bg-[#E8845C]/35 cursor-pointer uppercase transition-all"
+                    >
+                      Launch Preview
+                    </button>
+                  </div>
+                  
+                  <p className="text-[11px] text-[#8A7F8D] leading-relaxed">
+                    Personalize your emergency breathing timers and calming step options based on what feels easiest for you to focus on.
+                  </p>
+
+                  {/* Grounding technique selections */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-wider font-mono text-gray-400 block">Calming Exercise Style</label>
+                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                      <button 
+                        onClick={() => {
+                          setSosGroundingType("54321");
+                          localStorage.setItem("fh_sos_grounding_type", "54321");
+                          triggerToast("Grounding set to Sensory 5-4-3-2-1 ✓");
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all ${
+                          sosGroundingType === "54321" 
+                            ? "border-teal bg-teal/10 text-white" 
+                            : "border-white/5 bg-white/2 text-gray-400"
+                        }`}
+                      >
+                        <span className="font-semibold block text-gray-100">Sensory 5-4-3-2-1</span>
+                        <span className="text-[9px] opacity-75 text-gray-300">5 objects, 4 touch, 3 noise...</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          setSosGroundingType("333");
+                          localStorage.setItem("fh_sos_grounding_type", "333");
+                          triggerToast("Grounding set to 3-3-3 Spotting ✓");
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all ${
+                          sosGroundingType === "333" 
+                            ? "border-teal bg-teal/10 text-white" 
+                            : "border-white/5 bg-white/2 text-gray-400"
+                        }`}
+                      >
+                        <span className="font-semibold block text-gray-100">3-3-3 Spotting</span>
+                        <span className="text-[9px] opacity-75 text-gray-300">3 shapes, 3 sounds, 3 moves</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          setSosGroundingType("posture");
+                          localStorage.setItem("fh_sos_grounding_type", "posture");
+                          triggerToast("Grounding set to Posture Alignment ✓");
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all ${
+                          sosGroundingType === "posture" 
+                            ? "border-teal bg-teal/10 text-white" 
+                            : "border-white/5 bg-white/2 text-gray-400"
+                        }`}
+                      >
+                        <span className="font-semibold block text-gray-100">Posture Alignment</span>
+                        <span className="text-[9px] opacity-75 text-gray-300">Feet, spine, jaw, shoulders</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          setSosGroundingType("anchor");
+                          localStorage.setItem("fh_sos_grounding_type", "anchor");
+                          triggerToast("Grounding set to Quiet Focus Anchors ✓");
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all ${
+                          sosGroundingType === "anchor" 
+                            ? "border-teal bg-teal/10 text-white" 
+                            : "border-white/5 bg-white/2 text-gray-400"
+                        }`}
+                      >
+                        <span className="font-semibold block text-gray-100">Quiet Focus Anchors</span>
+                        <span className="text-[9px] opacity-75 text-gray-300">3 off-call affirmations</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* SOS Calm Breathing Timers */}
+                  <div className="space-y-3 pt-1 border-t border-white/5">
+                    <label className="text-[10px] uppercase tracking-wider font-mono text-gray-400 block">Breath Stage Timings (Seconds)</label>
+                    <div className="space-y-2 text-xs">
+                      {/* Inhale */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between font-mono text-[10px] text-gray-300">
+                          <span>1. Breathe In</span>
+                          <span className="text-teal font-bold">{sosInhaleTime}s</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="1"
+                          max="10"
+                          step="1"
+                          value={sosInhaleTime}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSosInhaleTime(v);
+                            localStorage.setItem("fh_sos_inhale_time", String(v));
+                          }}
+                          className="w-full accent-teal bg-white/5 h-1.5 rounded-lg cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Hold */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between font-mono text-[10px] text-gray-300">
+                          <span>2. Hold Breath</span>
+                          <span className="text-teal font-bold">{sosHoldTime}s</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="0"
+                          max="10"
+                          step="1"
+                          value={sosHoldTime}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSosHoldTime(v);
+                            localStorage.setItem("fh_sos_hold_time", String(v));
+                          }}
+                          className="w-full accent-teal bg-white/5 h-1.5 rounded-lg cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Exhale */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between font-mono text-[10px] text-gray-300">
+                          <span>3. Breathe Out</span>
+                          <span className="text-teal font-bold">{sosExhaleTime}s</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="1"
+                          max="12"
+                          step="1"
+                          value={sosExhaleTime}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSosExhaleTime(v);
+                            localStorage.setItem("fh_sos_exhale_time", String(v));
+                          }}
+                          className="w-full accent-teal bg-white/5 h-1.5 rounded-lg cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Pause */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between font-mono text-[10px] text-gray-300">
+                          <span>4. Empty Pause</span>
+                          <span className="text-teal font-bold">{sosPauseTime}s</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="0"
+                          max="10"
+                          step="1"
+                          value={sosPauseTime}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSosPauseTime(v);
+                            localStorage.setItem("fh_sos_pause_time", String(v));
+                          }}
+                          className="w-full accent-teal bg-white/5 h-1.5 rounded-lg cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* End Of Day Wind Down Routine Panel */}
+                {showWindDown && (
+                  <div className="bg-[#1C0A2E] border-2 border-[#C45BAA]/30 rounded-2xl p-5 space-y-4">
+                    <span className="text-[10px] tracking-widest text-mag uppercase block font-mono">End of Day Wind Down Triage</span>
+                    
+                    {windDownStep === "form" ? (
+                      <div className="space-y-3">
+                        <p className="text-xs text-gray-300 font-light leading-relaxed">
+                          Close your tabs. Ground your energy before leaving the corporate mental loop.
+                        </p>
+                        <div>
+                          <label className="text-[10px] font-mono tracking-wider text-mag block mb-1 uppercase">What small wins actually happened today?</label>
+                          <textarea 
+                            value={windDownForm.did}
+                            onChange={e => setWindDownForm({ ...windDownForm, did: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-xl p-2 focus:outline-none focus:border-mag"
+                            rows={2}
+                            placeholder="I made it to lunch, I resolved that draft..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-mono tracking-wider text-mag block mb-1 uppercase">What can you release accountability for tonight?</label>
+                          <input 
+                            value={windDownForm.letGo}
+                            onChange={e => setWindDownForm({ ...windDownForm, letGo: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-xl p-2 focus:outline-none focus:border-mag animate-none"
+                            placeholder="The unanswered email from a client..."
+                          />
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setWindDownStep("done");
+                            triggerQuickConfetti();
+                            if (windDownForm.did) {
+                              // Log as simple win automatically
+                              const item: Win = {
+                                id: crypto.randomUUID(),
+                                text: `Day Wind Down Win: ${windDownForm.did}`,
+                                category: "Daily Win",
+                                date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                              };
+                              setWinsList(prev => [item, ...prev]);
+                            }
+                          }}
+                          className="w-full py-2.5 bg-[#3D1052] border border-mag text-[#FAF6F0] rounded-xl text-xs font-semibold hover:bg-[#C45BAA]/20"
+                        >
+                          Safely Close Day 🌙
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 space-y-3">
+                        <span className="text-3xl block">🌙</span>
+                        <h5 className="font-serif">Day completed safely.</h5>
+                        <p className="text-xs text-gray-300 leading-relaxed font-light">
+                          You contributed what you could. Rest is fully deserved now. Shut down your workstation safely.
+                        </p>
+                        <button 
+                          onClick={() => {
+                            setWindDownStep("form");
+                            setWindDownForm({ did: "", letGo: "", tomorrow: "" });
+                            setShowWindDown(false);
+                          }}
+                          className="text-[11px] font-mono uppercase text-mag underline tracking-widest block"
+                        >
+                          Modify logging draft
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* FlowHer System Guide & Help Section */}
+                <div className="bg-[#1C0A2E]/50 border border-[#C45BAA]/15 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[9px] tracking-widest text-[#C45BAA] font-mono block uppercase">Interactive System Manual</span>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mt-0.5">FlowHer Guide & Help Section</h4>
+                    </div>
+                    <span className="text-sm">💡</span>
+                  </div>
+                  
+                  <p className="text-[11px] text-gray-300 leading-relaxed font-light">
+                    Learn how FlowHer helps you get unstuck, take pressure-free breaks, and track your daily wins.
+                  </p>
+
+                  {/* Guided Tour Promotional Launch Card */}
+                  <div className="bg-gradient-to-r from-[#3D1052]/40 to-[#C45BAA]/10 border border-[#C45BAA]/30 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="space-y-1">
+                      <strong className="text-xs text-white block">✨ Onboarding Guided Tour</strong>
+                      <span className="text-[10px] text-gray-300 block">Let us walk you through how our kind, relaxing tools work!</span>
+                    </div>
+                    <button
+                      onClick={handleRestartTour}
+                      className="whitespace-nowrap px-3.5 py-1.5 bg-[#C45BAA] hover:bg-[#C45BAA]/90 text-white font-mono rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-md select-none"
+                    >
+                      🚀 Start Tour
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      {
+                        title: "🎭 Putting on a Face & Energy Drain",
+                        body: "Trying to fit in, mask over-stimulation, or constantly pretend everything is okay at work takes a massive amount of energy. Our Battery Tracker lets you quickly score how exhausting a meeting or a workflow was, and gives you instant, simple ways to recharge (like having 2 minutes of complete quiet or splashing cool water on your hands) to help you avoid reaching empty."
+                      },
+                      {
+                        title: "⚡ Smallest Step Assistant (Getting Unstuck)",
+                        body: "When your brain blocks you, or you feel too overwhelmed to start, taking that first step is the hardest part. The 'Smallest Step Assistant' on the Focus tab uses smart AI to break down large, intimidating tasks into tiny, effortless, 2-minute starting points so you can begin without any pressure."
+                      },
+                      {
+                        title: "🛡️ Self-Doubt Shield & Wins List",
+                        body: "It is extremely common to struggle with heavy self-doubt or feel overwhelmed by feedback. The Win tab lets you record concrete, everyday wins of your progress, so you can easily review them or export a simple text file when performance review time comes or when you need a gentle confidence boost."
+                      },
+                      {
+                        title: "🚨 Quick Calming Support",
+                        body: "If you feel an anxious spiral, panic, or sensory overload coming on, tapping the floating '🚨 SOS Help' button in the bottom corner starts a simple breathing visual and sensory grounding pattern to help you feel safe, centered, and steady right away."
+                      },
+                      {
+                        title: "⚙️ Customizing Your Profile & Complete Privacy",
+                        body: "Clicking 'Edit Profile' on your top identity card lets you name your profile and write customized signature blocks. For your absolute peace of mind, all your notes, wins, and entries are stored entirely on your own device — nobody else can see them."
+                      }
+                    ].map((faq, idx) => {
+                      const isOpen = appHelpOpenIdx === idx;
+                      return (
+                        <div key={idx} className="border-b border-white/5 pb-2 last:border-none last:pb-0">
+                          <button
+                            onClick={() => setAppHelpOpenIdx(isOpen ? null : idx)}
+                            className="w-full text-left py-1.5 flex items-center justify-between text-xs font-semibold text-gray-200 hover:text-white transition-all cursor-pointer"
+                          >
+                            <span>{faq.title}</span>
+                            <ChevronDown className={`h-3 w-3 text-[#C45BAA] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          {isOpen && (
+                            <p className="text-[11px] text-gray-400 leading-relaxed font-light pt-1.5 pb-2 px-1 animate-fadeIn">
+                              {faq.body}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditName(user?.name || "Professional User");
+                        setEditBio(profileBio);
+                        setIsEditingProfile(true);
+                        setShowProfileModal(true);
+                      }}
+                      className="flex-1 py-1.8 text-center bg-[#C45BAA]/10 hover:bg-[#C45BAA]/20 border border-[#C45BAA]/30 text-[#E085C9] rounded-xl text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      ✏️ Edit Biography & Name
+                    </button>
+                    <button
+                      onClick={() => {
+                        triggerToast("To save your workspace settings permanently, just bookmark this browser session. ✓");
+                      }}
+                      className="flex-1 py-1.8 text-center bg-white/5 hover:bg-white/10 border border-white/5 text-gray-400 rounded-xl text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      🛡️ Safe Offline Lock Info
+                    </button>
+                  </div>
+
+                  {/* Aesthetic Compliance & Safety Panel Footer */}
+                  <div className="pt-3.5 mt-1 border-t border-white/5 text-center">
+                    <p className="text-[10px] text-gray-400 font-sans leading-relaxed">
+                      FlowHer respects your privacy and works with your natural focus style. Everything is kept safely on your device with no trackers whatsoever.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setLegalTab("medical");
+                        setShowLegalModal(true);
+                      }}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-[#C45BAA]/10 hover:bg-[#C45BAA]/15 border border-[#C45BAA]/20 hover:border-[#C45BAA]/45 hover:text-white text-[#E085C9] rounded-lg text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      ⚕️ Legal Disclosures & Privacy Policy
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2. FOCUS TAB SCREEN */}
+            {appTab === "focus" && (
+              <div className="space-y-6">
+                
+                {/* Priorities Setup */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">Strategic Priorities — Limit 3</span>
+                  <p className="text-[11px] text-[#8A7F8D]">What strictly demands your reserves today? Everything else is auxiliary noise.</p>
+                  
+                  <div className="space-y-3">
+                    {priorities.map((p, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[#C45BAA]/15 text-mag flex items-center justify-center font-mono text-xs font-bold leading-none shrink-0">{idx + 1}</span>
+                        <input 
+                          type="text"
+                          value={p}
+                          onChange={e => {
+                            const copy = [...priorities];
+                            copy[idx] = e.target.value;
+                            setPriorities(copy);
+                            if (!e.target.value.trim()) {
+                              const newCompleted = [...prioritiesCompleted];
+                              newCompleted[idx] = false;
+                              setPrioritiesCompleted(newCompleted);
+                            }
+                          }}
+                          className={`flex-1 bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-mag text-gray-200 transition-all ${
+                            prioritiesCompleted[idx] && p.trim() ? "line-through opacity-50 decoration-teal text-[#8A7F8D] border-teal/10" : ""
+                          }`}
+                          placeholder={`Enter Priority ${idx + 1}`}
+                        />
+                        <button
+                          onClick={e => {
+                            if (!p.trim()) return;
+                            const newCompleted = [...prioritiesCompleted];
+                            const nextState = !newCompleted[idx];
+                            newCompleted[idx] = nextState;
+                            setPrioritiesCompleted(newCompleted);
+                            if (nextState) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const x = (rect.left + rect.width / 2) / window.innerWidth;
+                              const y = (rect.top + rect.height / 2) / window.innerHeight;
+                              triggerLocalizedConfetti(x, y);
+                            }
+                          }}
+                          disabled={!p.trim()}
+                          title={p.trim() ? "Toggle Priority Status" : "Enter a task first to complete it"}
+                          className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-300 shrink-0 cursor-pointer ${
+                            !p.trim() 
+                              ? "border-white/5 text-white/5 cursor-not-allowed opacity-20" 
+                              : prioritiesCompleted[idx]
+                                ? "bg-teal/20 border-teal text-teal shadow-[0_0_12px_rgba(45,212,191,0.2)] scale-105"
+                                : "bg-white/5 border-white/10 text-[#8A7F8D] hover:border-teal/50 hover:text-white"
+                          }`}
+                        >
+                          <Check className={`h-4 w-4 transition-transform ${prioritiesCompleted[idx] ? "scale-110 stroke-[2.5]" : "scale-100 opacity-60"}`} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Smallest Step Engine breakdown tool */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-teal shrink-0" />
+                    <span className="text-[10px] tracking-widest text-teal font-mono block uppercase">Smallest Step AI Breakdown</span>
+                  </div>
+                  <p className="text-[11px] text-[#8A7F8D]">Paralyzed by a complex corporate task? Give FlowHer the context, we will carve out the tiniest item.</p>
+
+                  <textarea 
+                    value={smallestStepInput}
+                    onChange={e => setSmallestStepInput(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-teal text-gray-200"
+                    rows={3}
+                    placeholder="Enter daunting task (e.g., complete performance review layout, file Q3 reports...)"
+                  />
+
+                  <button 
+                    disabled={smallestStepLoading || !smallestStepInput.trim()}
+                    onClick={() => executeCoreAction("Smallest Step AI Engine", handleFetchSmallestStep)}
+                    className="w-full py-2.5 bg-[#3D1052] hover:bg-teal/20 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans flex items-center justify-center gap-2 border border-teal/40 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    {smallestStepLoading ? "Processing safe steps..." : "Break Down into Micro-Steps →"}
+                  </button>
+
+                  {smallestStepResult && (
+                    <div className="bg-white/5 rounded-xl p-4 border border-teal/20 text-xs leading-relaxed space-y-2 text-gray-300 font-light whitespace-pre-line">
+                      {smallestStepResult}
+                    </div>
+                  )}
+                </div>
+
+                {/* Time Blindness Corrector Panel */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#D4A843] font-mono block uppercase">⏱ Time Blindness Multiplier Triage</span>
+                  <p className="text-[11px] text-[#8A7F8D]">Your brain lies about planning duration rates. Compare estimates with real actual timings to locate your precise organizational multiplier.</p>
+
+                  {tbcTimerActive ? (
+                    <div className="bg-plum/20 rounded-xl p-4 border border-[#D4A843]/35 text-center space-y-4">
+                      <span className="text-xs font-mono uppercase text-[#D4A843]">Operational Duration Running</span>
+                      <div className="font-mono text-4xl block text-white tracking-widest animate-pulse">
+                        {Math.floor(tbcSeconds / 60)}:{(tbcSeconds % 60).toString().padStart(2, "0")}
+                      </div>
+                      <span className="text-xs font-light text-gray-300 block">Current Task: "{tbcTask}"</span>
+
+                      {/* TBC Real-Time Assist Active Indicators */}
+                      {tbcAssistEnabled && (
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          {/* Active pulsing check-in box */}
+                          {pulseCueActive && (
+                            <div className="bg-gradient-to-r from-[#D4A843]/10 to-[#E8845C]/10 border border-[#D4A843]/30 rounded-xl p-3 text-left animate-pulse space-y-1">
+                              <span className="text-[10px] uppercase font-mono tracking-wider text-[#D4A843] block">🌿 Time Blindness Check-in</span>
+                              <p className="text-xs text-white leading-relaxed font-light">{pulseCueMessage}</p>
+                            </div>
+                          )}
+
+                          {/* Dynamic Adjusted Progress Track */}
+                          {tbcEstimate && (
+                            <div className="space-y-1 mr-0 text-left">
+                              <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                                <span>Support-Adjusted Cushion Target: {Math.round(Number(tbcEstimate) * getMultiplierAvg())} mins ({getMultiplierAvg()}x safety)</span>
+                                <span>{Math.min(100, Math.round((tbcSeconds / (Math.round(Number(tbcEstimate) * getMultiplierAvg()) * 60)) * 100))}%</span>
+                              </div>
+                              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                                <div 
+                                  className="bg-gradient-to-r from-[#D4A843] to-[#E8845C] h-full transition-all duration-300" 
+                                  style={{ width: `${Math.min(100, (tbcSeconds / (Math.round(Number(tbcEstimate) * getMultiplierAvg()) * 60)) * 100)}%` }} 
+                                />
+                              </div>
+                              <span className="text-[9px] text-[#8A7F8D] block leading-normal">
+                                Next gentle checking prompt waves every {tbcAssistInterval} minutes.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={handleStopTbcTimer}
+                        className="py-2.5 px-5 bg-[#E8845C] hover:opacity-90 rounded-xl text-xs font-sans text-white font-medium shadow-md cursor-pointer w-full"
+                      >
+                        Complete Task & Generate Multiplier Metrics ✓
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 text-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1 text-left">
+                          <label className="text-[9px] font-mono text-gray-400 uppercase tracking-wide block">Task Name:</label>
+                          <input 
+                            type="text"
+                            value={tbcTask}
+                            onChange={e => setTbcTask(e.target.value)}
+                            className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 focus:outline-none focus:border-[#D4A843]/50 text-gray-200"
+                            placeholder="e.g. Code Review"
+                          />
+                        </div>
+                        <div className="space-y-1 text-left">
+                          <label className="text-[9px] font-mono text-gray-400 uppercase tracking-wide block">Initial Estimate (mins):</label>
+                          <input 
+                            type="number"
+                            value={tbcEstimate}
+                            onChange={e => setTbcEstimate(e.target.value ? Number(e.target.value) : "")}
+                            className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 focus:outline-none focus:border-[#D4A843]/50 text-gray-200 font-mono"
+                            placeholder="e.g. 15"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Time Blindness Assist Config Division */}
+                      <div className="bg-black/25 border border-[#D4A843]/20 rounded-xl p-4.5 space-y-3.5 text-left">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Volume2 className="h-4 w-4 text-[#D4A843]" />
+                            <div>
+                              <strong className="text-xs text-white block">🌸 Time Blindness Assist</strong>
+                              <span className="text-[9px] text-gray-400 block font-light">Real-time sensory awareness prompts & planning projection</span>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={tbcAssistEnabled} 
+                              onChange={e => setTbcAssistEnabled(e.target.checked)} 
+                              className="sr-only peer" 
+                            />
+                            <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#D4A843]/80"></div>
+                          </label>
+                        </div>
+
+                        {tbcAssistEnabled && (
+                          <div className="space-y-3 pt-2.5 border-t border-white/5 text-xs">
+                            {/* Adjusted Forecast Projection Banner */}
+                            {tbcEstimate ? (
+                              <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-2.5 space-y-1">
+                                <span className="text-[8px] font-mono uppercase text-emerald-400 block tracking-wider font-semibold">📈 Multiplier forecast projection</span>
+                                <p className="text-[11px] text-gray-200 leading-normal">
+                                  Your brain expects <span className="font-mono text-emerald-300">{tbcEstimate}m</span>. Based on your personal <span className="font-mono text-emerald-400 font-bold">{getMultiplierAvg()}x</span> multiplier, you actually need a safe, stress-free window of <span className="font-mono text-emerald-300 font-bold">{Math.round(Number(tbcEstimate) * getMultiplierAvg())} mins</span> to work organically.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="bg-[#D4A843]/5 border border-[#D4A843]/10 rounded-lg p-2 text-[10px] text-gray-400 leading-normal font-sans">
+                                💡 Enter an estimate above to see your customized multiplier safety forecast in real-time.
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3 pt-1">
+                              {/* Interval selection */}
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-mono text-gray-400 uppercase tracking-wide block">Gentle Cue Every:</label>
+                                <select
+                                  value={tbcAssistInterval}
+                                  onChange={e => setTbcAssistInterval(Number(e.target.value))}
+                                  className="w-full bg-white/5 border border-white/10 text-xs text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#D4A843]"
+                                >
+                                  <option value={1} className="bg-[#1C0A2E]">1 Minute</option>
+                                  <option value={2} className="bg-[#1C0A2E]">2 Minutes</option>
+                                  <option value={3} className="bg-[#1C0A2E]">3 Minutes</option>
+                                  <option value={5} className="bg-[#1C0A2E]">5 Minutes</option>
+                                  <option value={10} className="bg-[#1C0A2E]">10 Minutes</option>
+                                </select>
+                              </div>
+
+                              {/* Cue style */}
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-mono text-gray-400 uppercase tracking-wide block">Sensory Feedback:</label>
+                                <select
+                                  value={tbcAssistType}
+                                  onChange={e => setTbcAssistType(e.target.value as any)}
+                                  className="w-full bg-white/5 border border-white/10 text-xs text-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#D4A843]"
+                                >
+                                  <option value="both" className="bg-[#1C0A2E]">Visual & Sound (Both)</option>
+                                  <option value="pulse" className="bg-[#1C0A2E]">Visual Pulse Only</option>
+                                  <option value="chime" className="bg-[#1C0A2E]">Ambient Note Chime</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Manual Sound test button */}
+                            <div className="flex justify-end pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  playAudioCue();
+                                  triggerToast("Selected audio cue played! Configure this sound anytime in the customizable settings. 🌱");
+                                }}
+                                className="text-[9px] font-mono text-[#D4A843] hover:text-[#FAF6F0] hover:underline transition-all cursor-pointer flex items-center gap-1 select-none"
+                              >
+                                🔊 Tap to test selected sound
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <button 
+                        disabled={!tbcTask.trim() || !tbcEstimate}
+                        onClick={() => executeCoreAction("Time Blindness Regulator", handleStartTbcTimer)}
+                        className="w-full py-2.5 bg-[#3D1052] hover:bg-[#D4A843]/10 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans border border-[#D4A843]/35 disabled:opacity-50 cursor-pointer"
+                      >
+                        Begin timed task session
+                      </button>
+                    </div>
+                  )}
+
+                  {tbcHistory.length > 0 && (
+                    <div className="space-y-2 border-t border-white/5 pt-3">
+                      <div className="flex justify-between text-xs font-mono text-[#E8845C]">
+                        <span>Tipping multiplier factor average</span>
+                        <span>{getMultiplierAvg()}x</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 leading-relaxed font-light font-sans">
+                        When you plan any task you assume takes <strong className="text-[#D4A843]">30 mins</strong>, schedule your outlook calendar for <strong className="text-[#D4A843]">{Math.round(30 * getMultiplierAvg())} mins</strong> instead.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Body Double Timer setup module */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#E8845C] font-mono block uppercase">👥 Interactive Body Double Co-Focus</span>
+                  <p className="text-[11px] text-[#8A7F8D]">You are never isolated in your workspace. Define your task and focus securely alongside our simple simulated co-worker.</p>
+
+                  {bdTimerActive ? (
+                    <div className="bg-white/2 rounded-2xl p-4 text-center border border-teal/30 space-y-2">
+                      <span className="text-xs font-mono uppercase text-teal">Co-Working Workspace Active</span>
+                      <p className="text-xs text-gray-300 italic font-mono font-light">"I've got my head down and is tracking my spreadsheet blocks. Let us stay focused together."</p>
+                      <div className="font-mono text-3xl font-light text-white tracking-widest py-2">
+                        {Math.floor(bdTimerSeconds / 60)}:{(bdTimerSeconds % 60).toString().padStart(2, "0")}
+                      </div>
+                      <div className="flex gap-2 justify-center">
+                        <button 
+                          onClick={() => setBdTimerActive(false)}
+                          className="bg-white/10 text-xs px-4 py-1.5 rounded-xl hover:bg-white/20"
+                        >
+                          Pause Co-Focus
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setBdTimerActive(false);
+                            setBdTimerSeconds(25 * 60);
+                            setBdTask("");
+                          }}
+                          className="bg-[#E8845C] text-xs px-4 py-1.5 rounded-xl hover:opacity-90"
+                        >
+                          Cancel focus session
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <input 
+                        type="text"
+                        value={bdTask}
+                        onChange={e => setBdTask(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal text-gray-200"
+                        placeholder="What are we aligning on together right now?"
+                      />
+                      <button 
+                        disabled={!bdTask.trim()}
+                        onClick={() => {
+                          setBdTimerSeconds(25 * 60);
+                          setBdTimerActive(true);
+                          triggerToast("Let's focus together! I'm structured.");
+                        }}
+                        className="w-full py-2.5 bg-[#3D1052] border border-teal/40 text-teal text-xs font-semibold rounded-xl hover:bg-teal/5 disabled:opacity-50 cursor-pointer"
+                      >
+                        Activate body double block
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 3. WORK TAB SCREEN */}
+            {appTab === "work" && (
+              <div className="space-y-6">
+                
+                {/* Survival picker widget list */}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <button 
+                    onClick={() => setSelectedWorkTool("email")}
+                    className={`p-4 rounded-xl border flex flex-col items-start text-left space-y-2 ${selectedWorkTool === "email" ? "border-mag bg-[#C45BAA]/10" : "border-white/5 bg-white/5"}`}
+                  >
+                    <Sparkles className="h-5 w-5 text-mag" />
+                    <span className="font-serif text-sm font-medium">Kind Email Drafter</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedWorkTool("script")}
+                    className={`p-4 rounded-xl border flex flex-col items-start text-left space-y-2 ${selectedWorkTool === "script" ? "border-teal bg-teal/10" : "border-white/5 bg-white/5"}`}
+                  >
+                    <Heart className="h-5 w-5 text-teal" />
+                    <span className="font-serif text-sm font-medium">Peaceful Comms Presets</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedWorkTool("rsd")}
+                    className={`p-4 rounded-xl border flex flex-col items-start text-left space-y-2 ${selectedWorkTool === "rsd" ? "border-[#E8845C] bg-[#E8845C]/10" : "border-white/5 bg-white/5"}`}
+                  >
+                    <ShieldCheck className="h-5 w-5 text-[#E8845C]" />
+                    <span className="font-serif text-sm font-medium">Gentle Perspective Checker</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedWorkTool("ada")}
+                    className={`p-4 rounded-xl border flex flex-col items-start text-left space-y-2 ${selectedWorkTool === "ada" ? "border-[#D4A843] bg-[#D4A843]/10" : "border-white/5 bg-white/5"}`}
+                  >
+                    <FileText className="h-5 w-5 text-[#D4A843]" />
+                    <span className="font-serif text-sm font-medium">Friendly Workplace Rights</span>
+                  </button>
+                  <button 
+                    onClick={() => setSelectedWorkTool("meeting")}
+                    className={`p-4 rounded-xl border flex flex-col items-start text-left space-y-2 col-span-2 ${selectedWorkTool === "meeting" ? "border-mag bg-[#C45BAA]/10" : "border-white/5 bg-white/5"}`}
+                  >
+                    <Calendar className="h-4 w-4 text-[#FAF7FF]" />
+                    <span className="font-serif text-sm font-medium">Calm Meeting Companion</span>
+                  </button>
+                </div>
+
+                {/* Sub features display panels based on tool selection */}
+                
+                {/* 3a. Email drafting helper */}
+                {selectedWorkTool === "email" && (
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-6 space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                      <div>
+                        <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">Interactive Boundary Station</span>
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider mt-1">Confident Email Drafting Assistant</h3>
+                      </div>
+                      <span className="p-2 bg-[#C45BAA]/10 rounded-xl border border-[#C45BAA]/25">
+                        <Sparkles className="h-4 w-4 text-[#E8845C]" />
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#8A7F8D] leading-relaxed">
+                      Many of us struggle with being direct at work or find ourselves over-apologizing and over-explaining just to feel safe. This helper is designed to help you write elegant, polite, and firm emails with absolute ease and confidence.
+                    </p>
+
+                     {/* Sub Tab selection */}
+                     <div className="flex bg-[#110122] rounded-xl p-1 border border-white/5 gap-1">
+                       <button
+                         onClick={() => setEmailSubTab("ai")}
+                         className={`flex-1 py-1.5 text-center text-xs font-mono rounded-lg transition-all cursor-pointer ${emailSubTab === "ai" ? "bg-[#3D1052] text-[#FAF6F0] font-semibold border border-[#C45BAA]/45 shadow-sm" : "text-gray-400 hover:text-white"}`}
+                       >
+                         🤖 AI Boundary Coach
+                       </button>
+                       <button
+                         onClick={() => {
+                           setEmailSubTab("scan");
+                           // Sync initial scanner state if there is already an AI result
+                           if (emailResult && !scannerInput) {
+                             setScannerInput(emailResult);
+                           }
+                         }}
+                         className={`flex-1 py-1.5 text-center text-xs font-mono rounded-lg transition-all cursor-pointer ${emailSubTab === "scan" ? "bg-[#3D1052] text-[#FAF6F0] font-semibold border border-[#C45BAA]/45 shadow-sm" : "text-gray-400 hover:text-white"}`}
+                       >
+                         🛡️ Self-Scan & Refine
+                       </button>
+                       <button
+                         onClick={() => setEmailSubTab("signatures")}
+                         className={`flex-1 py-1.5 text-center text-xs font-mono rounded-lg transition-all cursor-pointer ${emailSubTab === "signatures" ? "bg-[#3D1052] text-[#FAF6F0] font-semibold border border-[#C45BAA]/45 shadow-sm" : "text-gray-400 hover:text-white"}`}
+                       >
+                         ✍️ Custom Signatures
+                       </button>
+                     </div>
+
+                    {/* Sub Tab: AI DRAFTING WITH TONE MODULATION */}
+                    {emailSubTab === "ai" && (
+                      <div className="space-y-5 animate-fadeIn">
+                        
+                        {/* 1. Situation presets */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-mono tracking-wider font-semibold text-[#E8845C]">
+                            Quick Boundary Scenario Presets (Click to pre-fill):
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {allEmailPresets.map((p, idx) => {
+                              const isCustom = idx >= EMAIL_PRESETS.length;
+                              return (
+                                <div key={idx} className="relative group">
+                                  <button
+                                    onClick={() => {
+                                      setEmailSelectedTemplate(p.template);
+                                      setEmailSituation(p.situation);
+                                      triggerToast(`Pre-filled scenario: ${p.label}`);
+                                    }}
+                                    className="w-full h-full p-2 pr-6 border border-white/5 hover:border-[#C45BAA]/30 bg-white/2 hover:bg-[#C45BAA]/5 text-left rounded-xl transition-all cursor-pointer block"
+                                  >
+                                    <span className="text-[11px] text-gray-200 block font-semibold truncate">{p.label}</span>
+                                    <span className="text-[9px] text-[#8A7F8D] block font-light truncate mt-0.5">{p.situation}</span>
+                                  </button>
+                                  {isCustom && (
+                                    <button
+                                      onClick={(e) => handleDeleteEmailPreset(p.label, e)}
+                                      className="absolute top-1 right-1 p-0.5 text-gray-400 hover:text-rose-400 bg-black/40 hover:bg-black/60 rounded-md transition-all z-10 cursor-pointer"
+                                      title="Delete custom preset"
+                                    >
+                                      <X className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 2. Tone selection */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-mono tracking-wider font-semibold text-[#E8845C]">
+                            Draft Tone Modulator:
+                          </label>
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                            {EMAIL_TONES.map((tone) => (
+                              <button
+                                key={tone.key}
+                                onClick={() => setEmailSelectedTone(tone.key)}
+                                className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${emailSelectedTone === tone.key ? "border-[#C45BAA] bg-[#C45BAA]/10 text-white" : "border-white/5 bg-white/2 text-gray-400"}`}
+                              >
+                                <span className="text-[10px] font-mono font-bold block">{tone.label}</span>
+                                <span className="text-[8px] text-[#8A7F8D] font-light mt-0.5 block leading-normal">{tone.tag}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* 3. Text Area detail details */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-mono">
+                            <span className="uppercase text-[#E8845C]">Custom Situation Context & Goals:</span>
+                            <span className="text-gray-500">{emailSituation.length} chars</span>
+                          </div>
+                          <textarea
+                            value={emailSituation}
+                            onChange={(e) => setEmailSituation(e.target.value)}
+                            className="w-full bg-[#110122]/70 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-[#C45BAA] text-gray-200 transition-all placeholder:text-gray-600 font-sans"
+                            rows={4}
+                            placeholder="Type details in your own words (e.g., 'My manager wants me to work over the weekend to finish reports before a board meeting, but I have sensory burnout.')"
+                          />
+                        </div>
+
+                        {/* Save Custom Template Preset Inline Widget */}
+                        <div className="bg-white/2 border border-white/5 rounded-xl p-3.5 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">Save Current Scenario as Custom Preset</span>
+                              <p className="text-[9px] text-[#8A7F8D] mt-0.5">Quickly save your custom situation context above as a reusable template item.</p>
+                            </div>
+                            <Sparkles className="h-3.5 w-3.5 text-[#E8845C]/60" />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="space-y-1">
+                              <label className="text-[9px] uppercase font-mono tracking-wider text-[#8A7F8D]">Preset Title & Emoji:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g., Extra Leave Request 🤒"
+                                value={newEmailPresetLabel}
+                                onChange={(e) => setNewEmailPresetLabel(e.target.value)}
+                                className="w-full bg-[#110122]/70 border border-white/10 text-[11px] rounded-lg p-2 focus:outline-none focus:border-[#C45BAA] text-gray-200"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] uppercase font-mono tracking-wider text-[#8A7F8D]">Template Category / Theme Name:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g., Out of office boundaries"
+                                value={newEmailPresetTemplate}
+                                onChange={(e) => setNewEmailPresetTemplate(e.target.value)}
+                                className="w-full bg-[#110122]/70 border border-white/10 text-[11px] rounded-lg p-2 focus:outline-none focus:border-[#C45BAA] text-gray-200"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleSaveEmailPreset}
+                            disabled={!newEmailPresetLabel.trim() || !newEmailPresetTemplate.trim() || !emailSituation.trim()}
+                            className="w-full py-1.5 bg-[#C45BAA]/20 hover:bg-[#C45BAA]/30 border border-[#C45BAA]/45 disabled:border-white/5 disabled:bg-white/2 disabled:text-gray-500 text-white rounded-xl text-xs font-semibold font-mono flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-all"
+                          >
+                            Save Active Draft to Presets Grid 📥
+                          </button>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                          disabled={emailLoading || !emailSituation.trim()}
+                          onClick={() => executeCoreAction("Boundary-Setting AI Coach", handleFetchEmailDraft)}
+                          className="w-full py-2.5 bg-[#3D1052] hover:bg-[#C45BAA]/20 border border-[#C45BAA]/40 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {emailLoading ? "Sculpting confident phrasing..." : "Assemble Completely Unapologetic Draft →"}
+                        </button>
+
+                        {/* Result Output Card with Mailto & Copy */}
+                        {emailResult && (
+                          <div className="bg-[#1C0A2E]/50 border border-[#C45BAA]/20 rounded-2xl p-5 space-y-4 animate-scaleUp">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
+                              <span className="text-[10px] font-mono text-[#FAF6F0] flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                High-Confidence Output Drafted
+                              </span>
+                              <div className="flex gap-1.5 self-end">
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(emailResult);
+                                    triggerToast("Copied email draft to clipboard! 📋");
+                                  }}
+                                  className="px-2.5 py-1 text-[9px] font-mono uppercase bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded border border-white/10 transition-all cursor-pointer"
+                                >
+                                  Copy To Clipboard
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    let subject = "Status update / project alignment";
+                                    let body = emailResult;
+                                    const match = emailResult.match(/Subject:\s*(.*)/i);
+                                    if (match) {
+                                      subject = match[1].trim();
+                                      body = emailResult.replace(/Subject:\s*(.*)/i, "").trim();
+                                    }
+                                    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                                    window.open(mailtoUrl, "_blank");
+                                  }}
+                                  className="px-2.5 py-1 text-[9px] font-mono uppercase bg-[#C45BAA]/20 hover:bg-[#C45BAA]/30 text-[#FAF6F0] rounded border border-[#C45BAA]/40 transition-all cursor-pointer"
+                                >
+                                  📨 Open In Mail Client
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="bg-[#110122]/80 rounded-xl p-4 border border-white/5 font-sans text-xs text-gray-200 leading-relaxed max-h-72 overflow-y-auto whitespace-pre-wrap select-text">
+                              {emailResult}
+                            </div>
+
+                            {/* Verification Badge */}
+                            <div className="bg-[#1E112E] p-3 rounded-xl border border-[#C45BAA]/10 flex items-start gap-2 text-[10px] text-gray-400 leading-normal">
+                              <span className="text-sm">🛡️</span>
+                              <div>
+                                <strong className="text-gray-300">Apology-Free Assertiveness Audit:</strong>
+                                <p className="mt-0.5 font-light">
+                                  Checked for "just checking", "sorry to bother", and over-explanations. Verified clean, resilient communication borders.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Sub Tab: TEXT MINIMIZER SCANNER */}
+                    {emailSubTab === "scan" && (
+                      <div className="space-y-6 animate-fadeIn">
+                        <div className="bg-[#1E112E] border border-[#E8845C]/15 rounded-2xl p-4 space-y-2">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#E8845C] block">Executive Self-Scan & Tone Audit</span>
+                          <p className="text-[11px] text-[#A697AA] leading-relaxed">
+                            Paste or type your draft email below. Our Real-Time Self-Scan Engine scans for minimizing words, evaluates overall tone consistency, identifies emotional resonance overloads, and provides direct replacements.
+                          </p>
+                        </div>
+
+                        {/* Scanner Input Textarea */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-mono">
+                            <span className="uppercase text-[#FAF6F0]">Own Draft Sandbox:</span>
+                            <div className="flex gap-2.5">
+                              {scannerInput.length > 0 && (
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(scannerInput);
+                                    triggerToast("Copied draft to clipboard! 📋");
+                                  }}
+                                  className="text-gray-400 hover:text-white transition-all cursor-pointer"
+                                >
+                                  Copy All
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setScannerInput("")}
+                                className="text-gray-500 hover:text-white transition-all cursor-pointer"
+                              >
+                                Clear Text
+                              </button>
+                            </div>
+                          </div>
+                          <textarea
+                            value={scannerInput}
+                            onChange={(e) => setScannerInput(e.target.value)}
+                            className="w-full bg-[#110122]/70 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-[#E8845C] text-gray-200 transition-all placeholder:text-gray-600 font-sans"
+                            rows={5}
+                            placeholder="Paste your drafted email here (e.g., 'Hi there, I was just checking if you had time to look. Sorry to bother you, I know you are super busy! I feel very stressed because this is hard for me...')"
+                          />
+                        </div>
+
+                        {/* Real-time Scanner Report */}
+                        {scannerInput.length > 0 && (
+                          <div className="space-y-6">
+                            
+                            {/* Heuristic Tone & Consistency Assessment Panel */}
+                            {(() => {
+                              const report = memoizedScannerReport;
+                              const found = memoizedScannerMinimizers;
+                              const numMatches = found.length;
+                              return (
+                                <div className="space-y-5">
+                                  
+                                  {/* Tone Class Block */}
+                                  <div className={`border rounded-2xl p-4 space-y-3 relative overflow-hidden transition-all ${report.toneColor}`}>
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/2 rounded-full translate-x-8 -translate-y-8 blur-lg pointer-events-none"></div>
+                                    <div className="flex items-start justify-between">
+                                      <div>
+                                        <span className="text-[9px] font-mono tracking-widest uppercase text-gray-400">Detected Tone Profile & Resonance</span>
+                                        <h4 className="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5">
+                                          <span>{report.toneEmoji}</span>
+                                          {report.toneType}
+                                        </h4>
+                                      </div>
+                                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 bg-black/45 rounded-md border border-white/5">
+                                        {report.resonanceRating}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-200 leading-relaxed font-light">
+                                      {report.description}
+                                    </p>
+                                  </div>
+
+                                  {/* Score Bars Bento Grid */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {/* Score 1: Assertiveness Index */}
+                                    <div className="bg-[#130620]/60 border border-white/5 rounded-xl p-3 space-y-2">
+                                      <div className="flex justify-between items-center text-[10px] font-mono text-gray-400">
+                                        <span>Assertiveness:</span>
+                                        <span className={`font-bold ${report.scores.assertiveness > 75 ? "text-emerald-400" : "text-[#FF9E7D]"}`}>
+                                          {report.scores.assertiveness}%
+                                        </span>
+                                      </div>
+                                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-gradient-to-r from-[#C45BAA] to-emerald-400 transition-all duration-300"
+                                          style={{ width: `${report.scores.assertiveness}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-[8px] font-mono text-gray-500 block leading-tight">
+                                        Presence of boundary boundaries & declarative statements.
+                                      </span>
+                                    </div>
+
+                                    {/* Score 2: Clarity & Sparing */}
+                                    <div className="bg-[#130620]/60 border border-white/5 rounded-xl p-3 space-y-2">
+                                      <div className="flex justify-between items-center text-[10px] font-mono text-gray-400">
+                                        <span>Cognitive Clarity:</span>
+                                        <span className={`font-bold ${report.scores.clarity > 75 ? "text-emerald-400" : "text-[#FF9E7D]"}`}>
+                                          {report.scores.clarity}%
+                                        </span>
+                                      </div>
+                                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-gradient-to-r from-teal to-[#C45BAA] transition-all duration-300"
+                                          style={{ width: `${report.scores.clarity}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-[8px] font-mono text-gray-500 block leading-tight">
+                                        Measures short phrasing and lack of over-explaining fatigue.
+                                      </span>
+                                    </div>
+
+                                    {/* Score 3: Emotional Load */}
+                                    <div className="bg-[#130620]/60 border border-white/5 rounded-xl p-3 space-y-2">
+                                      <div className="flex justify-between items-center text-[10px] font-mono text-gray-400">
+                                        <span>Emotional Load:</span>
+                                        <span className={`font-bold ${report.scores.emotionalLoad > 45 ? "text-[#FF9E7D]" : "text-emerald-400"}`}>
+                                          {report.scores.emotionalLoad}%
+                                        </span>
+                                      </div>
+                                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-gradient-to-r from-emerald-400 to-[#FF9E7D] transition-all duration-300"
+                                          style={{ width: `${report.scores.emotionalLoad}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-[8px] font-mono text-gray-500 block leading-tight">
+                                        Expressed exhaustion, anxiety or high stress indicators.
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Flagged Visual Highlight Section */}
+                                  <div className="bg-[#110122] border border-white/5 rounded-xl p-4 space-y-1.5">
+                                    <span className="text-[9px] font-mono text-[#897E8C] uppercase block">Real-time Boundary Scan:</span>
+                                    <div className="bg-white/2 border border-white/5 p-3 rounded-lg text-xs font-sans text-gray-300 leading-relaxed font-light select-text">
+                                      {renderHighlightedText(scannerInput)}
+                                    </div>
+                                  </div>
+
+                                  {/* Strategic Tone Insights Feed */}
+                                  <div className="space-y-2 border-t border-white/5 pt-4">
+                                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#E8845C] block">Cognitive Resonance Recommendations:</span>
+                                    
+                                    <div className="space-y-2.5">
+                                      {report.insights.map((insight, idx) => (
+                                        <div 
+                                          key={idx} 
+                                          className={`rounded-xl p-3.5 border text-xs leading-relaxed font-light ${
+                                            insight.type === "alert" 
+                                              ? "bg-[#E8845C]/5 border-[#E8845C]/20 text-gray-300" 
+                                              : insight.type === "success"
+                                              ? "bg-emerald-950/20 border-emerald-500/20 text-gray-300"
+                                              : "bg-[#1E112E] border-white/5 text-gray-300"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-1.5 font-semibold text-gray-200 mb-1">
+                                            <span>
+                                              {insight.type === "alert" ? "⚠️" : insight.type === "success" ? "✓" : "💡"}
+                                            </span>
+                                            <span className="text-[11px] font-mono tracking-wide uppercase">{insight.title}</span>
+                                          </div>
+                                          <p className="text-[11px] text-gray-400">{insight.body}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Weasel Term Replacements List */}
+                                  {numMatches > 0 && (
+                                    <div className="space-y-2.5">
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-[#C45BAA] block">Weasel Word Dilution Replacements:</span>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {found.map((item, idx) => (
+                                          <div key={idx} className="bg-[#E8845C]/5 border border-[#E8845C]/15 rounded-xl p-3 space-y-1">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-xs font-mono text-[#FF9E7D] font-bold">" {item.word} "</span>
+                                              <span className="text-[9px] font-mono text-emerald-300 bg-emerald-950/40 border border-emerald-500/20 px-1.5 rounded-md">Try: {item.replacement}</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 leading-normal font-light">
+                                              <strong>Reason:</strong> {item.reason}
+                                            </p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {numMatches === 0 && (
+                                    <div className="bg-emerald-955/25 border border-emerald-500/25 rounded-2xl p-4 flex gap-3 text-xs leading-relaxed text-emerald-300">
+                                      <span>🎉</span>
+                                      <div className="font-light">
+                                        <strong>Absolute Boundary Guard!</strong>
+                                        <p className="mt-0.5 text-[11px] text-[#A6DCAE]">
+                                          None of the standard corporate apologies, softeners, or passive minimizing terms were discovered. This is robust, secure, and confident executive presence! Feel fully comfortable copy-pasting this directly.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Signature Selector Section embedded within Self-Scan tab */}
+                                  <div className="space-y-3 bg-[#130620]/60 rounded-xl p-4 border border-white/5 mt-4">
+                                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                      <div>
+                                        <span className="text-[9px] tracking-widest text-[#E085C9] font-mono block uppercase">Confidence Anchors</span>
+                                        <h4 className="text-xs font-bold text-white">Soft Boundaries & Kind Closing Blocks</h4>
+                                      </div>
+                                      <span className="text-xs">✉️</span>
+                                    </div>
+                                    <p className="text-[10px] text-[#8A7F8D] leading-normal font-light">
+                                      Attach a friendly, protective closing line to your email. These presets help set warm, calm boundaries and save you from over-explaining your schedule.
+                                    </p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                                      {signaturePresets.map((preset) => (
+                                        <div key={preset.id} className="bg-[#110122] border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                                          {editingPresetId === preset.id ? (
+                                            <div className="space-y-3 w-full text-left">
+                                              <div className="text-[10px] font-mono font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1 flex justify-between items-center">
+                                                <span>✏️ Tweak Preset Context</span>
+                                                <span className="text-[8px] text-[#C45BAA]">Inline Editing</span>
+                                              </div>
+                                              
+                                              <div className="space-y-2 text-left">
+                                                <div>
+                                                  <label className="text-[8px] font-mono text-gray-400 uppercase block">Label:</label>
+                                                  <input
+                                                    type="text"
+                                                    value={presetEditLabel}
+                                                    onChange={(e) => setPresetEditLabel(e.target.value)}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#C45BAA]"
+                                                  />
+                                                </div>
+
+                                                <div>
+                                                  <label className="text-[8px] font-mono text-gray-400 uppercase block">Short Tag Line:</label>
+                                                  <input
+                                                    type="text"
+                                                    value={presetEditTag}
+                                                    onChange={(e) => setPresetEditTag(e.target.value)}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#C45BAA]"
+                                                  />
+                                                </div>
+
+                                                <div>
+                                                  <label className="text-[8px] font-mono text-gray-400 uppercase block">Why this helps your brain:</label>
+                                                  <textarea
+                                                    value={presetEditBenefit}
+                                                    onChange={(e) => setPresetEditBenefit(e.target.value)}
+                                                    rows={2}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-[#C45BAA] resize-none leading-normal"
+                                                  />
+                                                </div>
+
+                                                <div>
+                                                  <label className="text-[8px] font-mono text-gray-400 uppercase block">Body [Supports '[Your Name]']:</label>
+                                                  <textarea
+                                                    value={presetEditText}
+                                                    onChange={(e) => setPresetEditText(e.target.value)}
+                                                    rows={4}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white focus:outline-none focus:border-[#C45BAA] leading-normal"
+                                                  />
+                                                </div>
+                                              </div>
+
+                                              <div className="flex gap-2 justify-end pt-1">
+                                                <button
+                                                  onClick={() => setEditingPresetId(null)}
+                                                  className="px-2 py-1 text-[8px] font-mono uppercase bg-gray-750 hover:bg-gray-700 text-white rounded transition-all cursor-pointer"
+                                                >
+                                                  Cancel
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    if (!presetEditLabel.trim() || !presetEditText.trim() || !presetEditBenefit.trim()) {
+                                                      triggerToast("Label, Benefit, and Signature body are required! ⚠️");
+                                                      return;
+                                                    }
+                                                    const updated = signaturePresets.map(p => 
+                                                      p.id === preset.id 
+                                                        ? { ...p, label: presetEditLabel, tag: presetEditTag, benefit: presetEditBenefit, text: presetEditText }
+                                                        : p
+                                                    );
+                                                    setSignaturePresets(updated);
+                                                    localStorage.setItem("fh_signature_presets", JSON.stringify(updated));
+                                                    setEditingPresetId(null);
+                                                    triggerToast("Preset signature updated successfully! ✍️");
+                                                  }}
+                                                  className="px-2 py-1 text-[8px] font-mono uppercase bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all cursor-pointer"
+                                                >
+                                                  Save Preset ✓
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div className="flex flex-col h-full justify-between space-y-2">
+                                              <div>
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-[10px] font-mono font-bold text-gray-200 block">{preset.label}</span>
+                                                  <button
+                                                    onClick={() => {
+                                                      setEditingPresetId(preset.id);
+                                                      setPresetEditLabel(preset.label);
+                                                      setPresetEditTag(preset.tag);
+                                                      setPresetEditBenefit(preset.benefit);
+                                                      setPresetEditText(preset.text);
+                                                    }}
+                                                    className="text-[9px] text-[#C45BAA] hover:text-white hover:underline transition-all cursor-pointer"
+                                                    title="Edit configuration of this preset"
+                                                  >
+                                                    ✏️ Edit Preset
+                                                  </button>
+                                                </div>
+                                                <span className="text-[9px] text-[#817786] block font-light leading-normal mt-0.5">{preset.tag}</span>
+                                                
+                                                {/* Strategic ND Benefit Highlight and description */}
+                                                <div className="text-[9px] bg-purple-950/40 text-[#E085C9] border border-[#C45BAA]/15 rounded-lg p-2 mt-2 leading-relaxed">
+                                                  <strong className="font-mono text-[8px] uppercase tracking-wider block text-teal-400">💡 Why this helps:</strong>
+                                                  {preset.benefit}
+                                                </div>
+
+                                                <pre className="text-[8px] font-mono text-gray-400 bg-white/2 p-2 rounded-lg border border-white/5 mt-2 overflow-x-auto whitespace-pre-wrap leading-tight select-all">
+                                                  {preset.text.replace("[Your Name]", user?.name || "Professional User")}
+                                                </pre>
+                                              </div>
+                                              <div className="flex gap-1.5 justify-end pt-1">
+                                                <button
+                                                  onClick={() => {
+                                                    navigator.clipboard.writeText(preset.text.replace("[Your Name]", user?.name || "Professional User"));
+                                                    triggerToast("Copied signature block to clipboard! 📋");
+                                                  }}
+                                                  className="px-2 py-1 text-[8px] font-mono uppercase bg-white/5 hover:bg-white/10 text-gray-300 rounded border border-white/10 transition-all cursor-pointer"
+                                                >
+                                                  Copy Block
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    const textToAppend = preset.text.replace("[Your Name]", user?.name || "Professional User");
+                                                    setScannerInput(prev => {
+                                                      const cleaned = prev.trim();
+                                                      return cleaned + textToAppend;
+                                                    });
+                                                    triggerToast("Appended signature tag successfully! ✓");
+                                                  }}
+                                                  className="px-2 py-1 text-[8px] font-mono uppercase bg-[#C45BAA]/20 hover:bg-[#C45BAA]/30 text-[#FAF6F0] rounded border border-[#C45BAA]/40 transition-all cursor-pointer"
+                                                >
+                                                  ➕ Append To Draft
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {scannerInput.length === 0 && (
+                          <div className="space-y-4">
+                            <div className="bg-white/2 border border-dashed border-white/5 rounded-2xl p-8 text-center space-y-2">
+                              <span className="text-2xl block text-gray-600">🛡️</span>
+                              <span className="text-xs font-mono font-semibold text-gray-400 uppercase block">Audit Canvas Empty</span>
+                              <p className="text-[11px] text-gray-500 leading-relaxed max-w-sm mx-auto">
+                                Pasting your draft automatically runs the real-time analyzer, assessing tone profiles, high cognitive explanations, and emotional load indexes instantly.
+                              </p>
+                            </div>
+
+                            {/* Signatures still accessible even when sandbox is empty */}
+                            <div className="space-y-3 bg-[#130620]/60 rounded-xl p-4 border border-white/5">
+                              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                <div>
+                                  <span className="text-[9px] tracking-widest text-[#E085C9] font-mono block uppercase">Confidence Anchors</span>
+                                  <h4 className="text-xs font-bold text-white">Prefabs Signatures & Closing Blocks</h4>
+                                </div>
+                                <span className="text-xs">✉️</span>
+                              </div>
+                              <p className="text-[10px] text-[#8A7F8D] leading-normal font-light">
+                                Copy standalone high-boundary signatures to place at the bottom of standard email chains:
+                              </p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                                {signaturePresets.map((preset) => (
+                                  <div key={preset.id} className="bg-[#110122] border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                                    {editingPresetId === preset.id ? (
+                                      <div className="space-y-3 w-full text-left">
+                                        <div className="text-[10px] font-mono font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1 flex justify-between items-center">
+                                          <span>✏️ Tweak Preset Context</span>
+                                          <span className="text-[8px] text-[#C45BAA]">Inline Editing</span>
+                                        </div>
+                                        
+                                        <div className="space-y-2 text-left">
+                                          <div>
+                                            <label className="text-[8px] font-mono text-gray-400 uppercase block">Label:</label>
+                                            <input
+                                              type="text"
+                                              value={presetEditLabel}
+                                              onChange={(e) => setPresetEditLabel(e.target.value)}
+                                              className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#C45BAA]"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="text-[8px] font-mono text-gray-400 uppercase block">Short Tag Line:</label>
+                                            <input
+                                              type="text"
+                                              value={presetEditTag}
+                                              onChange={(e) => setPresetEditTag(e.target.value)}
+                                              className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#C45BAA]"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="text-[8px] font-mono text-gray-400 uppercase block">Why this helps your brain:</label>
+                                            <textarea
+                                              value={presetEditBenefit}
+                                              onChange={(e) => setPresetEditBenefit(e.target.value)}
+                                              rows={2}
+                                              className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-[#C45BAA] resize-none leading-normal"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="text-[8px] font-mono text-gray-400 uppercase block">Body [Supports '[Your Name]']:</label>
+                                            <textarea
+                                              value={presetEditText}
+                                              onChange={(e) => setPresetEditText(e.target.value)}
+                                              rows={4}
+                                              className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white focus:outline-none focus:border-[#C45BAA] leading-normal"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end pt-1">
+                                          <button
+                                            onClick={() => setEditingPresetId(null)}
+                                            className="px-2 py-1 text-[8px] font-mono uppercase bg-gray-750 hover:bg-gray-700 text-white rounded transition-all cursor-pointer"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              if (!presetEditLabel.trim() || !presetEditText.trim() || !presetEditBenefit.trim()) {
+                                                triggerToast("Label, Benefit, and Signature body are required! ⚠️");
+                                                return;
+                                              }
+                                              const updated = signaturePresets.map(p => 
+                                                p.id === preset.id 
+                                                  ? { ...p, label: presetEditLabel, tag: presetEditTag, benefit: presetEditBenefit, text: presetEditText }
+                                                  : p
+                                              );
+                                              setSignaturePresets(updated);
+                                              localStorage.setItem("fh_signature_presets", JSON.stringify(updated));
+                                              setEditingPresetId(null);
+                                              triggerToast("Preset signature updated successfully! ✍️");
+                                            }}
+                                            className="px-2 py-1 text-[8px] font-mono uppercase bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all cursor-pointer"
+                                          >
+                                            Save Preset ✓
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-col h-full justify-between space-y-2">
+                                        <div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-mono font-bold text-gray-200 block">{preset.label}</span>
+                                            <button
+                                              onClick={() => {
+                                                setEditingPresetId(preset.id);
+                                                setPresetEditLabel(preset.label);
+                                                setPresetEditTag(preset.tag);
+                                                setPresetEditBenefit(preset.benefit);
+                                                setPresetEditText(preset.text);
+                                              }}
+                                              className="text-[9px] text-[#C45BAA] hover:text-white hover:underline transition-all cursor-pointer"
+                                              title="Edit configuration of this preset"
+                                            >
+                                              ✏️ Edit Preset
+                                            </button>
+                                          </div>
+                                          <span className="text-[9px] text-[#817786] block font-light leading-normal mt-0.5">{preset.tag}</span>
+                                          
+                                          {/* Strategic ND Benefit Highlight and description */}
+                                          <div className="text-[9px] bg-purple-950/40 text-[#E085C9] border border-[#C45BAA]/15 rounded-lg p-2 mt-2 leading-relaxed">
+                                            <strong className="font-mono text-[8px] uppercase tracking-wider block text-teal-400">💡 Why this helps:</strong>
+                                            {preset.benefit}
+                                          </div>
+
+                                          <pre className="text-[8px] font-mono text-gray-400 bg-white/2 p-2 rounded-lg border border-white/5 mt-2 overflow-x-auto whitespace-pre-wrap leading-tight select-all">
+                                            {preset.text.replace("[Your Name]", user?.name || "Professional User")}
+                                          </pre>
+                                        </div>
+                                        <div className="flex gap-1.5 justify-end pt-1">
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(preset.text.replace("[Your Name]", user?.name || "Professional User"));
+                                              triggerToast("Copied signature block to clipboard! 📋");
+                                            }}
+                                            className="w-full py-1 text-[8px] font-mono uppercase bg-white/5 hover:bg-white/10 text-gray-300 rounded border border-white/10 transition-all cursor-pointer text-center"
+                                          >
+                                            Copy Closing Block
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Sub Tab: CUSTOM EMAIL SIGNATURES LIBRARY */}
+                    {emailSubTab === "signatures" && (
+                      <div className="space-y-6 animate-fadeIn text-gray-200">
+                        {/* Shorthand Context Summary */}
+                        <div className="bg-[#1E112E] border border-[#C45BAA]/15 rounded-2xl p-4 space-y-2">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-[#E085C9] block">Personalized Clarity Libraries</span>
+                          <p className="text-[11px] text-[#A697AA] leading-relaxed">
+                            Create, customize, and save different personal email signatures. Each card sets simple, warm boundaries — like batch-processing morning messages or blocking out offline rest times — to keep your schedule feeling calm and relaxing.
+                          </p>
+                        </div>
+
+                        {/* Interactive Create / Edit Form Card */}
+                        <div className="bg-white/2 border border-[#C45BAA]/10 rounded-2xl p-4.5 space-y-4">
+                          <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <span>{sigEditId ? "✏️ Edit Signature Context" : "⚙️ Create Personalized Signature"}</span>
+                            </h4>
+                            {sigEditId && (
+                              <button
+                                onClick={() => {
+                                  setSigFormLabel("");
+                                  setSigFormTag("");
+                                  setSigFormText("");
+                                  setSigEditId(null);
+                                  triggerToast("Form reset to creation. ✓");
+                                }}
+                                className="text-[10px] text-[#E8845C] hover:underline cursor-pointer"
+                              >
+                                Cancel Edit ↺
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {/* Input: Context Label */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-[#8A7F8D] uppercase block">Context Label (e.g., Client Work, Inner Team):</label>
+                              <input 
+                                type="text"
+                                value={sigFormLabel}
+                                onChange={(e) => setSigFormLabel(e.target.value)}
+                                className="w-full bg-[#110122]/80 border border-white/10 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#C45BAA] transition-all placeholder:text-gray-650"
+                                placeholder="e.g., Development Rest Lockout"
+                              />
+                            </div>
+
+                            {/* Input: Tag Description Context */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-[#8A7F8D] uppercase block">Subtag / Limit description:</label>
+                              <input 
+                                type="text"
+                                value={sigFormTag}
+                                onChange={(e) => setSigFormTag(e.target.value)}
+                                className="w-full bg-[#110122]/80 border border-white/10 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#C45BAA] transition-all placeholder:text-gray-655"
+                                placeholder="e.g., Minimizes expectation ambiguity"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Input: Text block */}
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[9px] font-mono text-[#8A7F8D] uppercase block">Signature Body Text (Supports '[Your Name]'):</label>
+                              <span className="text-[8px] font-mono text-gray-500 italic">Prepend '\n\n' for nice vertical spacing</span>
+                            </div>
+                            <textarea 
+                              value={sigFormText}
+                              onChange={(e) => setSigFormText(e.target.value)}
+                              rows={4}
+                              className="w-full bg-[#110122]/80 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-[#C45BAA] transition-all placeholder:text-gray-660 font-mono leading-relaxed"
+                              placeholder={`\n\nKind regards,\n[Your Name]\n\n---\n*Note: To limit digital communication noise...*`}
+                            />
+                          </div>
+
+                          {/* Action Button to Save */}
+                          <button
+                            onClick={() => {
+                              if (!sigFormLabel.trim() || !sigFormText.trim()) {
+                                triggerToast("Context Label and Signature Text are required to compile! ⚠️");
+                                return;
+                              }
+                              let updatedSignatures;
+                              if (sigEditId) {
+                                updatedSignatures = customSignatures.map(sig => 
+                                  sig.id === sigEditId 
+                                    ? { ...sig, label: sigFormLabel, tag: sigFormTag || "Personalized context block", text: sigFormText }
+                                    : sig
+                                );
+                                triggerToast("Signature context updated successfully! ✍️");
+                              } else {
+                                const newId = "sig-" + Date.now();
+                                const newSig = {
+                                  id: newId,
+                                  label: sigFormLabel,
+                                  tag: sigFormTag || "Personalized context block",
+                                  text: sigFormText
+                                };
+                                updatedSignatures = [...customSignatures, newSig];
+                                triggerToast("New personalized context signature added to library! ✨");
+                              }
+                              setCustomSignatures(updatedSignatures);
+                              localStorage.setItem("fh_custom_signatures", JSON.stringify(updatedSignatures));
+                              setSigFormLabel("");
+                              setSigFormTag("");
+                              setSigFormText("");
+                              setSigEditId(null);
+                            }}
+                            className="w-full py-2 bg-gradient-to-r from-[#3D1052] to-[#C45BAA]/60 hover:opacity-95 text-white font-mono rounded-xl text-xs font-bold transition-all cursor-pointer border border-[#C45BAA]/20"
+                          >
+                            {sigEditId ? "Save Changes Context ✓" : "➕ Compile and Save Signature to Library"}
+                          </button>
+                        </div>
+
+                        {/* Existing Personalized Signatures Grid */}
+                        <div className="space-y-3.5">
+                          <div className="flex justify-between items-center text-[10px] font-mono text-[#897E8C] uppercase tracking-wider">
+                            <span>Your Personalized Library ({customSignatures.length} saved):</span>
+                            <span>Supports Direct Action Integration</span>
+                          </div>
+
+                          {customSignatures.length === 0 ? (
+                            <div className="bg-white/2 border border-dashed border-white/5 rounded-2xl p-6 text-center select-none text-gray-500">
+                              No personalized signatures declared. Create one above to tailor your limits!
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                              {customSignatures.map((sig) => {
+                                const renderedName = user?.name || "Professional User";
+                                const resolvedText = sig.text.replace("[Your Name]", renderedName);
+                                return (
+                                  <div key={sig.id} className="bg-[#110122]/90 border border-white/5 rounded-xl p-4.5 flex flex-col justify-between space-y-4">
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <span className="text-[10px] font-mono font-bold text-gray-200 block">{sig.label}</span>
+                                          <span className="text-[9px] text-[#C45BAA] block font-light mt-0.5">{sig.tag}</span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                          <button
+                                            onClick={() => {
+                                              setSigFormLabel(sig.label);
+                                              setSigFormTag(sig.tag);
+                                              setSigFormText(sig.text);
+                                              setSigEditId(sig.id);
+                                              triggerToast("Ready to tweak context. Tweak parameters above! ✓");
+                                            }}
+                                            className="p-1.5 hover:bg-white/10 text-[#C45BAA] hover:text-white rounded transition-all cursor-pointer"
+                                            title="Edit Context"
+                                          >
+                                            ✏️
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              const updated = customSignatures.filter(s => s.id !== sig.id);
+                                              setCustomSignatures(updated);
+                                              localStorage.setItem("fh_custom_signatures", JSON.stringify(updated));
+                                              triggerToast("Removed signature block. ✓");
+                                              if (sigEditId === sig.id) {
+                                                setSigFormLabel("");
+                                                setSigFormTag("");
+                                                setSigFormText("");
+                                                setSigEditId(null);
+                                              }
+                                            }}
+                                            className="p-1.5 hover:bg-[#FF9E7D]/20 text-[#FF9E7D] rounded transition-all cursor-pointer"
+                                            title="Delete Signature"
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <pre className="text-[9px] font-mono text-gray-400 bg-white/2 p-2.5 rounded-lg border border-white/5 overflow-x-auto whitespace-pre-wrap leading-tight select-all">
+                                        {resolvedText}
+                                      </pre>
+                                    </div>
+
+                                    {/* Action Integrations */}
+                                    <div className="flex flex-col sm:flex-row gap-1.5 pt-1.5 border-t border-white/5 justify-between items-center">
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(resolvedText);
+                                          triggerToast("Copied signature closing to clipboard! 📋");
+                                        }}
+                                        className="w-full sm:w-auto px-2 py-1 text-[8px] font-mono uppercase bg-white/5 hover:bg-white/10 text-gray-300 rounded border border-white/10 transition-all cursor-pointer text-center"
+                                      >
+                                        📋 Copy Block
+                                      </button>
+                                      
+                                      <div className="flex gap-1.5 w-full sm:w-auto justify-end">
+                                        <button
+                                          onClick={() => {
+                                            if (!emailResult) {
+                                              triggerToast("No generated AI email draft found! Draft an email first. 🤖");
+                                              return;
+                                            }
+                                            setEmailResult(prev => {
+                                              const clean = prev.trim();
+                                              return clean + resolvedText;
+                                            });
+                                            triggerToast("Appended to active AI Draft! ✓");
+                                          }}
+                                          className="flex-1 sm:flex-none px-2 py-1 text-[8px] font-mono uppercase bg-[#C45BAA]/10 hover:bg-[#C45BAA]/20 text-[#E085C9] rounded border border-[#C45BAA]/25 transition-all cursor-pointer text-center"
+                                          title="Append this ending to the generated AI draft"
+                                        >
+                                          🤖 Append AI Close
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setScannerInput(prev => {
+                                              const clean = prev.trim();
+                                              return clean + resolvedText;
+                                            });
+                                            triggerToast("Appended signature to Sandbox draft! ✓");
+                                          }}
+                                          className="flex-1 sm:flex-none px-2 py-1 text-[8px] font-mono uppercase bg-emerald-950/40 hover:bg-emerald-950/60 text-emerald-300 rounded border border-emerald-500/25 transition-all cursor-pointer text-center"
+                                          title="Append this ending to the active Sandbox Draft"
+                                        >
+                                          🛡️ Append Sandbox
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3b. Script Generator */}
+                {selectedWorkTool === "script" && (
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <span className="text-[10px] tracking-widest text-teal font-mono block uppercase">Vocal Boundary Generators</span>
+                    <p className="text-[11px] text-[#8A7F8D]">Construct clean verbatim dialogue loops for high pressure verbal checkpoints safely.</p>
+
+                    {/* Quick Script Presets */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-mono tracking-wider font-semibold text-teal">
+                        Quick Boundary Scenario Presets (Click to pre-fill):
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {allScriptPresets.map((p, idx) => {
+                          const isCustom = idx >= SCRIPT_PRESETS.length;
+                          return (
+                            <div key={idx} className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setScriptSelectedTemplate(p.template);
+                                  setScriptSituation(p.situation);
+                                  triggerToast(`Pre-filled scenario: ${p.label}`);
+                                }}
+                                className="w-full h-full p-2 pr-6 border border-white/5 hover:border-teal/30 bg-white/2 hover:bg-teal/5 text-left rounded-xl transition-all cursor-pointer block text-xs"
+                              >
+                                <span className="text-[11px] text-gray-200 block font-semibold truncate">{p.label}</span>
+                                <span className="text-[9px] text-[#8A7F8D] block font-light truncate mt-0.5">{p.situation}</span>
+                              </button>
+                              {isCustom && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteScriptPreset(p.label, e)}
+                                  className="absolute top-1 right-1 p-0.5 text-gray-400 hover:text-rose-450 bg-black/45 hover:bg-black/65 rounded-md transition-all z-10 cursor-pointer"
+                                  title="Delete custom preset"
+                                >
+                                  <X className="h-2.5 w-2.5" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-mono tracking-wider font-semibold text-teal mb-1 block">
+                        Template Grouping / Voice Category:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                        {[
+                          "Explain delay confidently",
+                          "Reject last-minute demand",
+                          "Ask for written briefing summary",
+                          "Decline structural meeting overloads"
+                        ].map((t, idx) => (
+                          <button 
+                            key={idx}
+                            onClick={() => setScriptSelectedTemplate(t)}
+                            className={`p-2 rounded-lg border text-left cursor-pointer transition-all ${scriptSelectedTemplate === t ? "border-teal text-white bg-teal/10" : "border-white/5 text-gray-400 bg-white/2 hover:bg-white/5"}`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-[10px] font-mono">
+                        <span className="uppercase text-teal">Communication Checkpoint Context & Goals:</span>
+                        <span className="text-gray-500">{scriptSituation.length} chars</span>
+                      </div>
+                      <textarea 
+                        value={scriptSituation}
+                        onChange={e => setScriptSituation(e.target.value)}
+                        className="w-full bg-[#110122]/70 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-teal text-gray-200"
+                        rows={3}
+                        placeholder="Type details in your own words (e.g., 'A colleague pinged me asking to hop on a call to review code, but I need written specs first.')"
+                      />
+                    </div>
+
+                    {/* Save Custom Template Preset Inline Widget */}
+                    <div className="bg-white/2 border border-white/5 rounded-xl p-3.5 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-[10px] tracking-widest text-teal font-mono block uppercase">Save Current Scenario as Custom Preset</span>
+                          <p className="text-[9px] text-[#8A7F8D] mt-0.5">Quickly save your custom script context above as a reusable template item.</p>
+                        </div>
+                        <Sparkles className="h-3.5 w-3.5 text-teal/60" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="space-y-1">
+                          <label className="text-[9px] uppercase font-mono tracking-wider text-[#8A7F8D]">Preset Title & Emoji:</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Extended Spec Request 📝"
+                            value={newScriptPresetLabel}
+                            onChange={(e) => setNewScriptPresetLabel(e.target.value)}
+                            className="w-full bg-[#110122]/70 border border-white/10 text-[11px] rounded-lg p-2 focus:outline-none focus:border-teal text-gray-200"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] uppercase font-mono tracking-wider text-[#8A7F8D]">Voice Category (Template mapping):</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Ask for written briefing summary"
+                            value={newScriptPresetTemplate}
+                            onChange={(e) => setNewScriptPresetTemplate(e.target.value)}
+                            className="w-full bg-[#110122]/70 border border-white/10 text-[11px] rounded-lg p-2 focus:outline-none focus:border-teal text-gray-200"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveScriptPreset}
+                        disabled={!newScriptPresetLabel.trim() || !newScriptPresetTemplate.trim() || !scriptSituation.trim()}
+                        className="w-full py-1.5 bg-teal/20 hover:bg-teal/30 border border-teal/45 disabled:border-white/5 disabled:bg-white/2 disabled:text-gray-500 text-white rounded-xl text-xs font-semibold font-mono flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-all"
+                      >
+                        Save Active Draft to Scripts Grid 📥
+                      </button>
+                    </div>
+
+                    <button 
+                      disabled={scriptLoading || !scriptSituation.trim()}
+                      onClick={() => executeCoreAction("Adaptive Advisor AI", handleFetchScript)}
+                      className="w-full py-2.5 bg-[#3D1052] hover:bg-teal/20 border border-teal/40 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {scriptLoading ? "Formulating dialogue models..." : "Synthesize Dialogue Scripts (2 versions) →"}
+                    </button>
+
+                    {scriptResult && (
+                      <div className="bg-white/5 rounded-xl p-4 border border-teal/20 text-xs leading-relaxed font-light whitespace-pre-line text-gray-300">
+                        {scriptResult}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3c. RSD Reality de-escalator */}
+                {selectedWorkTool === "rsd" && (
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <span className="text-[10px] tracking-widest text-[#E8845C] font-mono block uppercase">RSD Toolkit Reality Check</span>
+                    <p className="text-[11px] text-[#8A7F8D]">Input facts, get de-escalations. De-conflict catastrophic mental scenarios automatically.</p>
+
+                    <textarea 
+                      value={rsdSpiral}
+                      onChange={e => setRsdSpiral(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-[#E8845C] text-gray-200"
+                      rows={3}
+                      placeholder="What is the internal catastrophic worry?"
+                    />
+
+                    <button 
+                      disabled={rsdLoading || !rsdSpiral.trim()}
+                      onClick={() => executeCoreAction("Reframing Advisor AI", handleFetchRSDCheck)}
+                      className="w-full py-2.5 bg-[#3D1052] hover:bg-[#E8845C]/20 border border-[#E8845C]/40 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {rsdLoading ? "Reframing objective facts..." : "Reality Check This Spiral →"}
+                    </button>
+
+                    {rsdResult && (
+                      <div className="bg-[#E8845C]/10 rounded-xl p-4 border border-[#E8845C]/35 text-xs leading-relaxed text-gray-300 font-light font-sans">
+                        {rsdResult}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3d. ADA list section */}
+                {selectedWorkTool === "ada" && (
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <span className="text-[10px] tracking-widest text-[#D4A843] font-mono block uppercase">Legal Protections plain language</span>
+                    
+                    <div className="space-y-3">
+                      {ADA_RIGHTS.map((item, idx) => (
+                        <div key={idx} className="border-b border-white/5 pb-3">
+                          <h4 className="text-sm font-serif font-semibold text-gray-200 flex items-center gap-2">
+                            <span>✦</span> {item.title}
+                          </h4>
+                          <p className="text-xs text-[#8A7F8D] leading-relaxed mt-1 font-sans font-light">
+                            {item.body}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3e. Meeting Mode Prep Builder */}
+                {selectedWorkTool === "meeting" && (
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <span className="text-[10px] tracking-widest text-mag font-mono block uppercase">Meeting Mode Prep Guide</span>
+                    <p className="text-[11px] text-[#8A7F8D]">Prepare efficiently. Generate structured walk-in alignments to retain steady workspace composure.</p>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <label className="text-[10px] font-mono tracking-wider gray-400 block mb-1">Topic / Agenda Target</label>
+                        <input 
+                          type="text"
+                          value={meetingTopic}
+                          onChange={e => setMeetingTopic(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-gray-200 focus:outline-none"
+                          placeholder="Performance review, weekly followups..."
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-mono tracking-wider gray-400 block mb-1">Key Attendee Profiles</label>
+                        <input 
+                          type="text"
+                          value={meetingPeople}
+                          onChange={e => setMeetingPeople(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-gray-200 focus:outline-none"
+                          placeholder="e.g., Team lead and product manager"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-mono tracking-wider gray-400 block mb-1">Ideal Output Target</label>
+                        <input 
+                          type="text"
+                          value={meetingGoal}
+                          onChange={e => setMeetingGoal(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-gray-200 focus:outline-none"
+                          placeholder="Establish resource priorities alignments..."
+                        />
+                      </div>
+
+                      {/* Anxiety levels check */}
+                      <div>
+                        <label className="text-[10px] font-mono tracking-wider block mb-1 uppercase">Anxiety Levels Assessed</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {["Calm / Ready", "Nervous / Alert", "Significant Anxiety"].map((v, i) => (
+                            <button 
+                              key={i}
+                              type="button"
+                              onClick={() => setMeetingAnxiety(i + 1)}
+                              className={`p-2.5 rounded-xl border-2 text-center text-[10px] font-medium transition-all ${
+                                meetingAnxiety === i + 1 
+                                  ? "border-mag bg-[#C45BAA]/10 text-white" 
+                                  : "border-gray-200 bg-white hover:border-mag/30"
+                              }`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button 
+                        disabled={meetingLoading || !meetingTopic.trim()}
+                        onClick={() => executeCoreAction("Tactical Meeting Coach", handleFetchMeetingPrep)}
+                        className="w-full py-2.5 bg-[#3D1052] hover:bg-mag/20 text-[#FAF6F0] rounded-xl text-xs font-semibold font-sans border border-mag/40 disabled:opacity-50 transition-all cursor-pointer"
+                      >
+                        {meetingLoading ? "Building alignments documentation..." : "Formulate Pre-Meeting Checklist →"}
+                      </button>
+
+                      {meetingResult && (
+                        <div className="bg-white/5 rounded-xl p-4 border border-mag/20 text-xs leading-relaxed font-light whitespace-pre-line text-gray-300">
+                          {meetingResult}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4. WINS JOURNAL TAB SCREEN */}
+            {appTab === "wins" && (
+              <div className="space-y-6">
+                
+                {/* Wins statistics trackers */}
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                    <span className="text-2xl text-mag block font-mono font-bold">{winsList.length}</span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Evidence Logged</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                    <span className="text-2xl text-teal block font-mono font-bold">
+                      {professionalWinsCount}
+                    </span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Professional Wins</span>
+                  </div>
+                </div>
+
+                {/* Create win card */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">Save New Win</span>
+                  <p className="text-[11px] text-[#8A7F8D]">Wins help build simple confidence. Record even small items safely.</p>
+                  
+                  <div className="flex gap-2 text-[10px] font-mono">
+                    {["Professional", "Personal", "Brave Moment"].map((c, i) => (
+                      <button 
+                        key={i}
+                        type="button"
+                        onClick={() => setNewWinCat(c)}
+                        className={`px-3 py-1 rounded-full border ${newWinCat === c ? "border-mag text-white bg-mag/10" : "border-white/5 text-gray-400"}`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea 
+                    value={newWinText}
+                    onChange={e => setNewWinText(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded-xl p-3 focus:outline-none focus:border-mag text-gray-200"
+                    rows={2}
+                    placeholder="Describe exactly what happened (e.g., cleared that inbox, aligned client priorities safely...)"
+                  />
+
+                  <button 
+                    disabled={!newWinText.trim()}
+                    onClick={() => executeCoreAction("Evidence Log", handleAddWinObj)}
+                    className="w-full py-2.5 bg-gradient-to-r from-plum to-mag text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  >
+                    Lock Wins in Receipts List ★
+                  </button>
+                </div>
+
+                {/* Wins Log listings */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs font-sans text-gray-200 px-1">
+                    <span>Evidence Receipts Registered</span>
+                    {winsList.length > 0 && (
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={downloadWinJournalTxt}
+                          className="text-mag hover:underline flex items-center gap-1 font-sans cursor-pointer text-[11px]"
+                          title="Export as Text File"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>TXT Log</span>
+                        </button>
+                        <span className="text-white/20">|</span>
+                        <button 
+                          onClick={downloadWinJournalPdf}
+                          className="text-teal hover:underline flex items-center gap-1 font-sans cursor-pointer text-[11px]"
+                          title="Export as beautifully formatted PDF document"
+                        >
+                          <FileText className="h-3 w-3" />
+                          <span>PDF Document</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {winsList.length === 0 ? (
+                    <div className="bg-white/2 border border-white/5 rounded-2xl p-8 text-center text-xs text-gray-400 italic">
+                      Zero entries mapped today. Take courage, any small checkpoint counts.
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {winsList.map((w, idx) => (
+                        <div key={w.id || idx} className="bg-white/5 border border-white/5 rounded-xl p-4 flex items-start justify-between gap-4">
+                          <div className="space-y-1 pr-2">
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-mag bg-mag/10 px-2 py-0.5 rounded-full block w-fit mb-1">
+                              {w.category}
+                            </span>
+                            <p className="text-xs text-gray-200 leading-relaxed font-sans">{w.text}</p>
+                            <span className="text-[9px] text-[#8A7F8D] block">{w.date}</span>
+                          </div>
+                          <button 
+                            onClick={() => handleDeleteWin(w.id)}
+                            className="p-1 text-gray-500 hover:text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 5. UNMASK SPACE TAB SCREEN */}
+            {appTab === "unmask" && (
+              <div className="space-y-6">
+                
+                {/* Writing decomp area */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-teal font-mono block uppercase font-bold">Gentle Thought Sanctuary (Watch it Drift Away)</span>
+                  <p className="text-[11px] text-[#8A7F8D]">A private, warm space to write out your feelings, worries, or busy thoughts. Watch your words gently fade as you type, physicalizing the act of letting them go. Everything stays entirely private and is never stored anywhere.</p>
+
+                  <div className="relative bg-white/2 border border-[#C45BAA]/15 rounded-xl p-3 min-h-[160px] cursor-text">
+                    <textarea 
+                      value={unmaskText}
+                      onChange={e => {
+                        setUnmaskText(e.target.value);
+                      }}
+                      className="w-full bg-transparent border-none text-xs text-gray-200 leading-relaxed focus:outline-none focus:ring-0 select-none pb-12 resize-none"
+                      rows={6}
+                      placeholder="Pour out your heart here, release any busy thoughts or heavy feelings... Let it all peacefully drift away."
+                    />
+
+                    {/* Fading overlay list */}
+                    <div className="absolute bottom-2 left-3 right-3 flex flex-wrap gap-1 pointer-events-none select-none text-[10px] opacity-75">
+                      {getFadingWords().map((w, i) => (
+                        <span key={i} className="text-[#C45BAA] transition-all px-1 bg-[#C45BAA]/10 rounded font-sans italic" style={{ opacity: 0.15 + (i / 7) * 0.45 }}>
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-teal block font-mono tracking-widest">MINDFUL PRIVATE BUFFER</span>
+                    <button 
+                      onClick={() => setUnmaskText("")}
+                      className="text-xs font-mono text-mag underline hover:text-[#FAF7FF]"
+                    >
+                      Clear Thought Stream
+                    </button>
+                  </div>
+                </div>
+
+                {/* Gentle Breathing & Reset Path */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-teal font-mono block uppercase font-bold">GENTLE BREATHING & CALMING STEPS</span>
+                  
+                  <div className="bg-[#1C0A2E]/50 rounded-xl p-4 border border-teal/20 space-y-2">
+                    <span className="text-xs font-mono uppercase tracking-wider text-teal block">{BREATH_STAGES[somaticStep].title}</span>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">{BREATH_STAGES[somaticStep].instruction}</p>
+                    
+                    <div className="flex gap-2 pt-2 justify-between items-center">
+                      <div className="flex gap-1.5">
+                        {BREATH_STAGES.map((_, i) => (
+                          <span key={i} className={`w-1.5 h-1.5 rounded-full ${somaticStep === i ? "bg-teal" : "bg-white/10"}`} />
+                        ))}
+                      </div>
+                      <button 
+                        onClick={() => setSomaticStep(prev => (prev + 1) % BREATH_STAGES.length)}
+                        className="py-1 px-3 bg-teal hover:opacity-90 rounded-lg text-[10px] uppercase font-mono text-plum font-semibold"
+                      >
+                        Next Step
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 6. MASKING DEBT TAB SCREEN */}
+            {appTab === "mask" && (
+              <div className="space-y-6">
+                
+                {/* Mask indicators */}
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                    <span className="text-2xl text-[#E8845C] block font-mono font-bold">
+                      {getCombinedDailyDebt()}
+                    </span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Today's accumulated Mask Debt</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                    <span className="text-2xl text-teal block font-mono font-bold">
+                      {Math.round(getCombinedDailyDebt() * 2.5)} min
+                    </span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Recovery Decompression required</span>
+                  </div>
+                </div>
+
+                {/* Immediate Recovery Advice after Log */}
+                {showRecoveryAlert && (
+                  <div className="bg-[#E8845C]/10 border border-[#E8845C]/40 rounded-2xl p-5 space-y-3 relative overflow-hidden animate-fadeIn">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[9px] tracking-widest text-[#E8845C] font-mono block uppercase">🎯 Recovery Strategy Activated</span>
+                        <h4 className="text-xs font-bold text-white mt-1">Recommended Decompression protocol</h4>
+                      </div>
+                      <button 
+                        onClick={() => setShowRecoveryAlert(null)}
+                        className="text-[9px] font-mono bg-white/10 hover:bg-white/20 text-gray-200 px-2 py-1 rounded transition-all"
+                      >
+                        Dismiss ✓
+                      </button>
+                    </div>
+
+                    <div className="bg-[#130620]/75 rounded-xl p-3 border border-white/5 space-y-2">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-mono text-[#8A7F8D]">Logged Stress Factor:</span>
+                        <span className="font-mono font-bold text-[#E8845C]">{showRecoveryAlert.cost} pts</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-mono text-[#8A7F8D]">Target Session Duration:</span>
+                        <span className="font-mono font-bold text-teal">{showRecoveryAlert.advice.duration} minutes</span>
+                      </div>
+                      <div className="flex flex-col text-[11px] pt-1 border-t border-white/5 gap-1">
+                        <span className="font-mono text-[#8A7F8D]">Recommended Sensory Action:</span>
+                        <span className={`font-semibold ${showRecoveryAlert.advice.color}`}>{showRecoveryAlert.advice.activity}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-200 leading-relaxed font-light italic bg-white/2 p-3 rounded-xl border border-white/5">
+                      "{showRecoveryAlert.advice.tip}"
+                    </p>
+
+                    <div className="text-[9px] text-[#8A7F8D] font-mono leading-tight pt-1">
+                      Based on masked elements: {showRecoveryAlert.types.join(", ")}.
+                    </div>
+                  </div>
+                )}
+
+                {/* Moment logging setup widget */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <span className="text-[10px] tracking-widest text-[#E8845C] font-mono block uppercase">Record mask exhaustion fatigue block</span>
+                  
+                  <div className="grid grid-cols-2 gap-1.5 text-[9px] font-mono">
+                    {[
+                      "Code-switching style blocks",
+                      "Suppressed reactions parameters",
+                      "Pretended to be linear",
+                      "Over-compensated timing estimates",
+                      "Absorbed heavy open-space office noise",
+                      "Minimized physiological fatigue margins"
+                    ].map((m, idx) => (
+                      <button 
+                        key={idx}
+                        type="button"
+                        onClick={() => handleToggleMaskType(m)}
+                        className={`p-2 rounded-lg border text-left leading-relaxed ${
+                          selectedMaskTypes.includes(m) ? "border-[#E8845C] text-white bg-[#E8845C]/15" : "border-white/5 text-gray-400"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono tracking-wider text-gray-300 block mb-1">Fatigue Extraction Intensity Checked (1-10)</label>
+                    <input 
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={maskIntensity}
+                      onChange={e => setMaskIntensity(Number(e.target.value))}
+                      className="w-full accent-[#E8845C] cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[9px] font-mono text-[#8A7F8D] mt-0.5">
+                      <span>Low drainage factor</span>
+                      <span>Severe central fatigue</span>
+                    </div>
+                  </div>
+
+                  <input 
+                    type="text"
+                    value={maskNote}
+                    onChange={e => setMaskNote(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded-xl px-3 py-2 text-gray-200 focus:outline-none focus:border-[#E8845C]"
+                    placeholder="Context notes (e.g. Q3 alignments sync)"
+                  />
+
+                  <button 
+                    disabled={selectedMaskTypes.length === 0}
+                    onClick={() => executeCoreAction("Social Masking Analyst", handleLogMaskMoment)}
+                    className="w-full py-2.5 bg-gradient-to-r from-plum to-[#E8845C] text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  >
+                    Log Masking Exhaustion Metric
+                  </button>
+                </div>
+
+                {/* Recover aligns logic */}
+                {allMaskMoments.length > 0 && (
+                  (() => {
+                    const cumulativeDebt = getCombinedDailyDebt();
+                    const dailyAdvice = getRecoveryAdvice(cumulativeDebt);
+                    return (
+                      <div className="bg-[#1C0A2E] border border-[#E8845C]/20 rounded-2xl p-5 space-y-3">
+                        <span className="text-[10px] tracking-widest text-[#E8845C] uppercase block font-mono">Strategic Daily Recovery Recommendations</span>
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[11px] font-semibold text-gray-300">Daily Fatigue Status:</span>
+                          <span className={`text-xs font-mono font-black uppercase ${dailyAdvice.color}`}>{dailyAdvice.level}</span>
+                        </div>
+                        <p className="text-xs text-gray-300 font-light leading-relaxed font-sans">
+                          Your accumulated daily mask debt is <strong className="text-[#E8845C]">{cumulativeDebt} points</strong>. We suggest prioritizing at least <strong className="text-teal">{dailyAdvice.duration} minutes</strong> of cumulative sensory quietude.
+                        </p>
+                        <div className="p-3 bg-white/2 border border-white/5 rounded-xl space-y-1.5">
+                          <span className="text-[10px] font-mono text-teal block uppercase">Recommended Decompression Route:</span>
+                          <p className="text-xs text-gray-200 leading-relaxed font-light font-sans">{dailyAdvice.tip}</p>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+            )}
+
+            {/* 7. GLOSSARY & NEURO-HUB TAB SCREEN */}
+            {appTab === "glossary" && (
+              <div className="space-y-6">
+                
+                {/* Header Information Card */}
+                <div className="text-left space-y-2">
+                  <h3 className="font-serif text-2xl text-[#FAF7FF] font-light">
+                    Your ADHD <em className="text-teal not-italic font-sans">Neuro-Hub</em>™
+                  </h3>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    A simple, comforting, and validating companion dictionary for newly diagnosed brains, college students, and professionals. Select the terms you resonate with and download a customized environmental adaptation guide.
+                  </p>
+                </div>
+
+                {/* SENSORY DOAPMINE RECHARGE GAME-WIDGET */}
+                <div className="bg-gradient-to-br from-[#1E293B]/60 via-[#130620] to-teal/10 border border-teal/20 rounded-2xl p-5 relative overflow-hidden flex flex-col items-center text-center space-y-3.5 shadow-xl">
+                  <div className="absolute top-2 left-4 text-[8px] sm:text-[9.5px] text-gray-400 font-mono tracking-widest uppercase">
+                    Sensory Focus Anchor ⚡
+                  </div>
+                  <span className="text-3xl block pt-2.5">🧠✨</span>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold text-[#FAF7FF] font-sans">
+                      Satisfying Dopamine Spark Clicker
+                    </h4>
+                    <p className="text-[11px] text-gray-300 font-light max-w-xs leading-relaxed">
+                      Anxious, stuck, or facing executive block? Click below to spawn highly satisfying visual sparks and get a quick dose of pressure-free validation.
+                    </p>
+                  </div>
+                  
+                  <div className="relative w-full flex justify-center py-2.5">
+                    {/* Floating particle instances container */}
+                    {customSparkParticles.map(p => (
+                      <span 
+                        key={p.id}
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          marginLeft: '-10px',
+                          marginTop: '-10px',
+                          "--tw-float-x": `${p.x}px`,
+                          "--tw-float-y": `${p.y}px`,
+                        } as React.CSSProperties}
+                        className="absolute text-xl pointer-events-none z-40 select-none animate-fadeFloat"
+                      >
+                        {p.emoji}
+                      </span>
+                    ))}
+                    
+                    <button 
+                      type="button"
+                      onClick={handleDopamineClick}
+                      className="px-6 py-2.5 bg-gradient-to-r from-teal via-[#3D9E8C] to-[#E085C9] text-white font-semibold text-xs rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-teal/20 flex items-center gap-1.5 cursor-pointer select-none"
+                    >
+                      <span>Grab Dopamine Boost 🔋</span>
+                      <span className="bg-[#130620]/50 px-2 py-0.5 rounded-full text-[10px] text-teal font-mono">
+                        +{dopamineSparks}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* SEARCH AND FILTERS LAYER */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={glossarySearch}
+                      onChange={e => setGlossarySearch(e.target.value)}
+                      className="w-full bg-[#130620]/90 border border-white/10 text-xs rounded-xl pl-3 pr-8 py-2.5 text-gray-200 focus:outline-none focus:border-teal transition-all placeholder-gray-500"
+                      placeholder="Search relatable terms (e.g. RSD, hyperfocus)..."
+                    />
+                    {glossarySearch && (
+                      <button 
+                        onClick={() => setGlossarySearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs block font-mono"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Scrolling Tags */}
+                  <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-white/5 select-none font-sans">
+                    {["All", "Focus", "Energy", "Emotion", "Work & Study"].map((cat) => (
+                      <button 
+                        key={cat}
+                        onClick={() => setGlossaryCategory(cat as any)}
+                        className={`text-[9.5px] font-medium tracking-wider uppercase px-3 py-1.5 rounded-lg border transition-all shrink-0 cursor-pointer ${
+                          glossaryCategory === cat 
+                            ? "bg-teal/15 border-teal text-teal" 
+                            : "bg-white/5 border-white/5 text-gray-400 hover:border-white/10 hover:text-white"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* INTERACTIVE ALIGNMENT CARDS GRID list */}
+                <div className="space-y-4 text-left">
+                  {(() => {
+                    const filteredTerms = ADHD_GLOSSARY.filter(t => {
+                      const matchesCategory = glossaryCategory === "All" || t.category === glossaryCategory;
+                      const matchesSearch = t.word.toLowerCase().includes(glossarySearch.toLowerCase()) || 
+                                            t.simpleDef.toLowerCase().includes(glossarySearch.toLowerCase()) ||
+                                            t.strategy.toLowerCase().includes(glossarySearch.toLowerCase());
+                      return matchesCategory && matchesSearch;
+                    });
+
+                    if (filteredTerms.length === 0) {
+                      return (
+                        <div className="bg-white/2 border border-white/5 rounded-2xl p-8 text-center space-y-2">
+                          <span className="text-xl">🔍</span>
+                          <h5 className="text-xs font-semibold text-gray-300">No definitions found</h5>
+                          <p className="text-[11px] text-gray-400">Try clear filters or change terms.</p>
+                        </div>
+                      );
+                    }
+
+                    return filteredTerms.map((term, idx) => {
+                      const isSelected = selectedGlossaryTerm === term.word;
+                      const isResonating = resonatingTerms.includes(term.word);
+
+                      return (
+                        <div 
+                          key={idx}
+                          className={`border rounded-2xl p-5 hover:bg-[#1E112A]/35 transition-all duration-300 ${
+                            isSelected 
+                              ? "bg-[#1E112A] border-teal/50 shadow-[0_0_20px_rgba(20,184,166,0.12)]" 
+                              : "bg-white/3 border-white/5 hover:border-white/10"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div 
+                              onClick={() => setSelectedGlossaryTerm(isSelected ? null : term.word)}
+                              className="flex-1 cursor-pointer select-none space-y-1.5"
+                            >
+                              <div className="flex items-baseline gap-2 flex-wrap">
+                                <h4 className="font-serif text-base sm:text-lg text-[#FAF7FF] font-medium hover:text-teal transition-colors">
+                                  {term.word}
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono tracking-wide">
+                                  {term.pronunciation}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[8.5px] font-mono tracking-widest font-semibold uppercase bg-plum/30 border border-[#C45BAA]/25 text-[#E085C9] px-2.5 py-0.5 rounded-md">
+                                  {term.category}
+                                </span>
+                                {isResonating && (
+                                  <span className="text-[8.5px] font-mono tracking-widest font-semibold bg-teal/15 border border-teal/20 text-teal px-2.5 py-0.5 rounded-md uppercase">
+                                    Resonates✓
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                if (isResonating) {
+                                  setResonatingTerms(prev => prev.filter(w => w !== term.word));
+                                  triggerToast(`Removed ${term.word} from Custom Playbook`);
+                                } else {
+                                  setResonatingTerms(prev => [...prev, term.word]);
+                                  triggerToast(`Added ${term.word} to Custom Playbook! ✓`);
+                                }
+                              }}
+                              className={`p-2 rounded-xl border text-xs flex items-center justify-center gap-1 cursor-pointer transition-all shrink-0 ${
+                                isResonating 
+                                  ? "bg-teal/15 border-teal/40 text-teal shadow-[0_0_10px_rgba(20,184,166,0.1)]" 
+                                  : "border-white/10 text-gray-400 hover:border-teal/30 hover:text-white"
+                              }`}
+                              title={isResonating ? "Remove from custom playbook" : "Add to custom playbook"}
+                            >
+                              {isResonating ? <CheckCircle className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                              <span className="text-[9.5px] font-mono font-medium hidden sm:inline">Playbook</span>
+                            </button>
+                          </div>
+
+                          {/* Relatable human description */}
+                          <p className="text-xs sm:text-[13px] text-gray-200 font-light leading-relaxed mt-3">
+                            {term.simpleDef}
+                          </p>
+
+                          {/* Expanding Detail Section */}
+                          <div className={`overflow-hidden transition-all duration-300 ${isSelected ? "max-h-[600px] mt-4 pt-4 border-t border-white/5 space-y-3.5 animate-fadeIn" : "max-h-0 opacity-0"}`}>
+                            <div className="p-3.5 bg-white/2 border border-white/5 rounded-xl space-y-1">
+                              <span className="text-[9.5px] font-mono tracking-widest text-teal block uppercase font-medium">✨ Relatable Superpower</span>
+                              <p className="text-xs text-gray-300 leading-relaxed font-light">{term.superpower}</p>
+                            </div>
+                            
+                            <div className="p-3.5 bg-white/2 border border-white/5 rounded-xl space-y-1">
+                              <span className="text-[9.5px] font-mono tracking-widest text-[#E8845C] block uppercase font-medium">🎯 Cozy Strategy for Work & College</span>
+                              <p className="text-xs text-gray-300 leading-relaxed font-light">{term.strategy}</p>
+                            </div>
+
+                            <div className="text-[10px] text-gray-400 leading-relaxed italic font-sans font-light bg-black/15 p-3 rounded-lg border border-white/2">
+                              💡 <strong>Neurological Fun Fact:</strong> {term.funFact}
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-center mt-3 pt-2 border-t border-white/2">
+                            <button 
+                              type="button"
+                              onClick={() => setSelectedGlossaryTerm(isSelected ? null : term.word)}
+                              className="text-[9.5px] font-mono text-gray-400 hover:text-white transition-all underline decoration-dotted underline-offset-4 cursor-pointer"
+                            >
+                              {isSelected ? "Collapse survival playbook details ↑" : "Learn survival strategies & strengths ↓"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* PLAYBOOK GENERATOR EXPORTER PANEL CARD */}
+                {resonatingTerms.length > 0 && (
+                  <div className="p-5 bg-gradient-to-br from-teal/15 via-[#130620] to-[#C45BAA]/10 border border-teal/30 rounded-2xl text-center space-y-4 shadow-2xl relative overflow-hidden animate-fadeIn">
+                    <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-radial from-teal/10 to-transparent blur-xl" />
+                    <span className="text-[10.5px] tracking-widest text-teal font-mono block uppercase font-semibold">
+                      🎯 YOUR ADHD SURVIVAL PLAYBOOK IS READY
+                    </span>
+                    <p className="text-xs text-gray-300 font-light leading-relaxed max-w-md mx-auto">
+                      You've bookmarked <strong className="text-teal font-semibold font-mono">{resonatingTerms.length} relatable brain trait(s)</strong>. We will write these into a beautifully packaged PDF adaptation report detailing custom accommodation strategies to present to roommate(s), parent(s), professor(s), or employer(s).
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+                      <button 
+                        onClick={handleExportGlossaryPlaybook}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-teal text-[#130620] font-sans font-semibold text-xs rounded-xl hover:bg-[#4ddbbd] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-teal/15"
+                      >
+                        <Upload className="h-4 w-4 rotate-180" />
+                        <span>Export Custom Playbook PDF 📥</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setResonatingTerms([]);
+                          triggerToast("Playbook selections cleared.");
+                        }}
+                        className="w-full sm:w-auto px-4 py-2.5 bg-white/5 text-gray-400 font-medium text-xs rounded-xl hover:text-white transition-all cursor-pointer"
+                      >
+                        Clear Selection
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </main>
+
+          {/* DYNAMIC NAVIGATION CONTROL BAR TAB BUTTONSROW */}
+          <nav className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl bg-[#130620]/95 backdrop-blur-md rounded-t-3xl border-t border-white/5 fixed bottom-0 left-1/2 -translate-x-1/2 px-2 py-3 flex items-center justify-around z-30 select-none font-sans">
+            <button 
+              onClick={() => {
+                setAppTab("home");
+                setSelectedWorkTool(null);
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "home" ? "text-mag" : "text-gray-400"}`}
+            >
+              <Smile className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Home</span>
+            </button>
+            <button 
+              onClick={() => {
+                setAppTab("focus");
+                setSelectedWorkTool(null);
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "focus" ? "text-mag" : "text-gray-400"}`}
+            >
+              <Zap className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Focus</span>
+            </button>
+            <button 
+              onClick={() => {
+                setAppTab("work");
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "work" ? "text-mag" : "text-gray-400"}`}
+            >
+              <ShieldCheck className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Calm Guides</span>
+            </button>
+            <button 
+              onClick={() => {
+                executeCoreAction("My Wins Journal", () => {
+                  setAppTab("wins");
+                  setSelectedWorkTool(null);
+                });
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "wins" ? "text-mag" : "text-gray-400"}`}
+            >
+              <Award className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Wins</span>
+            </button>
+            <button 
+              onClick={() => {
+                executeCoreAction("Quiet Sanctuary Space", () => {
+                  setAppTab("unmask");
+                  setSelectedWorkTool(null);
+                });
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "unmask" ? "text-mag" : "text-gray-400"}`}
+            >
+              <Moon className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Unburden</span>
+            </button>
+            <button 
+              onClick={() => {
+                setAppTab("mask");
+                setSelectedWorkTool(null);
+              }}
+              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "mask" ? "text-mag" : "text-gray-400"}`}
+            >
+              <Lock className="h-5 w-5" />
+              <span className="text-[9px] font-sans">Energy Log</span>
+            </button>
+          </nav>
+
+          {/* GUIDED INTERACTIVE TOUR MODAL OVERLAY */}
+          {showGuidedTour && (
+            <div className="fixed inset-0 z-40 bg-[#1C0A2E]/65 backdrop-blur-sm flex flex-col justify-end items-center p-4">
+              <div className="w-full max-w-sm bg-[#130620] border-2 border-[#C45BAA]/60 rounded-3xl p-5 shadow-[0_0_30px_rgba(196,91,170,0.35)] space-y-4 mb-20 text-[#FAF6F0] text-left transition-all duration-300">
+                
+                {/* Top Info Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded-lg bg-[#C45BAA]/15 shrink-0">
+                      {renderTourIcon(TOUR_STEPS[tourStep].iconName)}
+                    </span>
+                    <div>
+                      <span className="text-[9px] font-mono tracking-widest text-[#C45BAA] block uppercase">Guided Workspace Tour</span>
+                      <span className="text-[10px] font-mono text-gray-400">Step {tourStep + 1} of {TOUR_STEPS.length}</span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={handleDismissTour}
+                    className="text-[10px] font-mono text-gray-400 hover:text-white uppercase transition-all tracking-wider px-2 py-1 hover:bg-white/5 rounded-lg cursor-pointer select-none"
+                    title="Dismiss and exit guide"
+                  >
+                    Skip ✕
+                  </button>
+                </div>
+
+                {/* Tour Text Content */}
+                <div className="space-y-1 text-left">
+                  <h4 className="font-serif text-lg font-light leading-tight text-[#FAF7FF]">
+                    {TOUR_STEPS[tourStep].title}
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed font-light font-sans">
+                    {TOUR_STEPS[tourStep].text}
+                  </p>
+                </div>
+
+                {/* Visual Highlight indicator box to help guide attention */}
+                <div className="bg-purple-950/30 border border-[#C45BAA]/20 rounded-xl p-3 flex items-center justify-between gap-3 text-left">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal animate-ping" />
+                    <span className="text-[9px] font-mono text-teal uppercase tracking-wider">Highlight Target:</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-white font-semibold uppercase bg-[#FAF6F0]/5 border border-white/10 px-2.5 py-0.5 rounded-md truncate max-w-[180px]">
+                    {TOUR_STEPS[tourStep].highlightIndicator}
+                  </span>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                  <button
+                    disabled={tourStep === 0}
+                    onClick={handlePrevTourStep}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-mono uppercase bg-white/5 disabled:opacity-30 hover:bg-white/10 text-gray-300 rounded-xl transition-all cursor-pointer disabled:cursor-not-allowed select-none"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" /> Back
+                  </button>
+
+                  {/* Step dots */}
+                  <div className="flex items-center gap-1.5 select-none">
+                    {TOUR_STEPS.map((_, idx) => (
+                      <span 
+                        key={idx} 
+                        className={`h-1.5 rounded-full transition-all duration-300 ${tourStep === idx ? "w-4 bg-[#C45BAA]" : "w-1.5 bg-white/20"}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleNextTourStep}
+                    className="flex items-center gap-1 px-3 py-1.8 text-[10px] font-mono uppercase bg-gradient-to-r from-[#C45BAA] to-[#D4A843] text-white font-bold rounded-xl shadow-md hover:opacity-95 transform active:scale-95 transition-all cursor-pointer select-none"
+                  >
+                    {tourStep === TOUR_STEPS.length - 1 ? "Finish Tour ✓" : <>Next <ChevronRight className="h-3.5 w-3.5" /></>}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 2. USER PROFILE MODAL */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn text-[#1C0A2E]">
+          <div className="bg-[#FAF6F0] border-2 border-[#C45BAA]/30 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative overflow-y-auto max-h-[92vh]">
+            <button 
+              onClick={() => {
+                setShowProfileModal(false);
+                setIsEditingProfile(false);
+              }}
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-black/5 text-[#8A7F8D] cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="bg-[#C45BAA]/10 text-mag px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest inline-block mb-3 select-none">
+              ✦ Personal Identity Hub
+            </div>
+            
+            <h3 className="font-serif text-2xl font-light leading-tight mb-1">
+              {isEditingProfile ? "Edit Spatial Identity" : "Your Cosmic Profile"}
+            </h3>
+            <p className="text-[11px] text-gray-500 mb-5 leading-relaxed">
+              Create a safe, authentic workspace signature. All profile data is saved entirely offline in your secure client local storage arrays.
+            </p>
+
+            {/* Profile Content View / Edit */}
+            <div className="space-y-4">
+              
+              {!isEditingProfile ? (
+                /* View Mode */
+                <div className="space-y-5 py-2 animate-fadeIn text-[#1C0A2E]">
+                  {/* Styled Avatar Display */}
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="h-20 w-20 rounded-full border-4 border-[#C45BAA]/30 bg-[#130620] overflow-hidden flex items-center justify-center shadow-md">
+                      {profilePic ? (
+                        <img src={profilePic} alt="Profile" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-tr from-[#3D1052] to-[#C45BAA] text-white flex items-center justify-center text-2xl font-mono font-black uppercase select-none">
+                          {(user?.name || "U")[0]}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-serif text-xl font-bold text-gray-900 leading-tight">
+                        {user?.name || "Professional User"}
+                      </h4>
+                      <p className="text-[10px] font-mono text-[#C45BAA] uppercase tracking-wider mt-0.5">
+                        Core Identity
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Alignment / Bio Detail Display */}
+                  <div className="bg-[#1C0A2E]/5 border border-[#C45BAA]/15 rounded-2xl p-4 space-y-2">
+                    <span className="text-[9px] font-mono text-[#C45BAA] uppercase tracking-widest font-semibold block">Alignment Bio & Intention:</span>
+                    <p className="text-xs text-gray-750 italic leading-relaxed font-light">
+                      {profileBio ? `"${profileBio}"` : '"No alignment bio declared yet. Set a bio to protect your executive capacity bounds."'}
+                    </p>
+                  </div>
+
+                  {/* Security/Storage Indicator */}
+                  <div className="flex items-center gap-2 px-1 text-[10px] text-gray-550 font-mono">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Saved Securely Offline</span>
+                  </div>
+
+                  {/* Action Operations for View Mode */}
+                  <div className="flex gap-2.5 pt-2 border-t border-black/5">
+                    <button 
+                      onClick={() => {
+                        setShowProfileModal(false);
+                      }}
+                      className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-semibold tracking-wider transition-all cursor-pointer text-center"
+                    >
+                      Close Window
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setEditName(user?.name || "Professional User");
+                        setEditBio(profileBio || "");
+                        setIsEditingProfile(true);
+                      }}
+                      className="flex-1 py-2 bg-gradient-to-r from-plum to-mag hover:opacity-95 text-white rounded-xl text-xs font-semibold tracking-wider shadow-sm transition-all cursor-pointer text-center"
+                    >
+                      Edit Profile ✏️
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Edit Mode */
+                <div className="space-y-4 animate-fadeIn">
+                  
+                  {/* Profile Pic Upload & Preset Selection */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono text-plum tracking-wider block uppercase font-medium">
+                      Profile Picture
+                    </label>
+                    
+                    <div className="flex gap-4 items-center">
+                      {/* Current Preview */}
+                      <div className="h-16 w-16 rounded-2xl border-2 border-[#C45BAA]/45 bg-[#130620] overflow-hidden flex-shrink-0 relative group flex items-center justify-center">
+                        {profilePic ? (
+                          <img src={profilePic} alt="Profile" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-tr from-[#3D1052] to-[#C45BAA] text-white flex items-center justify-center text-xl font-mono font-black uppercase select-none">
+                            {(editName || user?.name || "U")[0]}
+                          </div>
+                        )}
+                        {profilePic && (
+                          <button
+                            onClick={() => {
+                              setProfilePic("");
+                              localStorage.removeItem("fh_profile_pic");
+                              triggerToast("Profile photo cleared. Preset activated. ✓");
+                            }}
+                            className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-[9px] text-white font-mono cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Drag and Drop Zone / Manual Upload Trigger */}
+                      <div 
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => {
+                          const fileInput = document.getElementById("profile-pic-file-input");
+                          if (fileInput) fileInput.click();
+                        }}
+                        className={`flex-1 h-16 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all ${
+                          isDraggingFile 
+                            ? "border-mag bg-[#C45BAA]/10 text-mag" 
+                            : "border-[#C45BAA]/20 bg-black/2 text-[#8A7F8D] hover:border-mag/50 hover:bg-[#C45BAA]/5"
+                        }`}
+                      >
+                        <Upload className="h-4 w-4 mb-0.5 text-[#C45BAA]" />
+                        <span className="text-[9px] font-semibold leading-none text-plum">
+                          {isDraggingFile ? "Drop image" : "Drop photo / Click"}
+                        </span>
+                        <span className="text-[8px] text-gray-400 mt-0.5 font-mono">
+                          Square file (Max 1.5MB)
+                        </span>
+                        
+                        <input 
+                          id="profile-pic-file-input"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleFile(e.target.files[0]);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preset Geometric Avatar Selectors */}
+                    <div className="pt-1 space-y-1">
+                      <span className="text-[8px] font-mono text-gray-400 uppercase">Or Choose Space Gradient presets:</span>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {[
+                          { name: "Orchid", colors: ["#3D1052", "#C45BAA"] },
+                          { name: "Sunset", colors: ["#E8845C", "#C45BAA"] },
+                          { name: "Aurora", colors: ["#0F4C43", "#60BCB6"] },
+                          { name: "Cosmo", colors: ["#130620", "#E085C9"] },
+                          { name: "Solar", colors: ["#B43A12", "#F6AD55"] },
+                          { name: "Boreal", colors: ["#0D4F8B", "#4FD1C5"] },
+                          { name: "Lavender", colors: ["#44337A", "#B794F4"] },
+                          { name: "Hologram", colors: ["#701A75", "#FBBF24"] }
+                        ].map((preset, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              const canvas = document.createElement("canvas");
+                              canvas.width = 200;
+                              canvas.height = 200;
+                              const ctx = canvas.getContext("2d");
+                              if (ctx) {
+                                const grad = ctx.createLinearGradient(0, 0, 200, 200);
+                                grad.addColorStop(0, preset.colors[0]);
+                                grad.addColorStop(1, preset.colors[1]);
+                                ctx.fillStyle = grad;
+                                ctx.fillRect(0, 0, 200, 200);
+                                
+                                // Draw Initial of user Name
+                                ctx.fillStyle = "#ffffff";
+                                ctx.font = "bold 90px sans-serif";
+                                ctx.textAlign = "center";
+                                ctx.textBaseline = "middle";
+                                ctx.fillText((editName || user?.name || "U")[0].toUpperCase(), 100, 100);
+
+                                const dataUrl = canvas.toDataURL("image/png");
+                                setProfilePic(dataUrl);
+                                localStorage.setItem("fh_profile_pic", dataUrl);
+                                triggerToast(`Activated preset: ${preset.name} Gradient ✨`);
+                              }
+                            }}
+                            className="h-6 rounded-md overflow-hidden border border-black/10 text-[8px] text-white font-mono font-bold flex items-center justify-center hover:opacity-90 cursor-pointer shadow-xs"
+                            style={{ background: `linear-gradient(135deg, ${preset.colors[0]}, ${preset.colors[1]})` }}
+                          >
+                            {preset.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Editable Name & Bio Inputs */}
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="text-[10px] font-mono text-plum tracking-wider block mb-0.5 uppercase font-medium">Your Name</label>
+                      <input 
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full bg-white border border-[#C45BAA]/20 text-[#1C0A2E] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-mag"
+                        placeholder="Enter your profile name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-mono text-plum tracking-wider block mb-0.5 uppercase font-medium">Alignment Bio / Bio Intention</label>
+                      <textarea 
+                        value={editBio}
+                        onChange={(e) => setEditBio(e.target.value.slice(0, 160))}
+                        rows={3}
+                        className="w-full bg-white border border-[#C45BAA]/20 text-[#1C0A2E] text-xs rounded-xl px-3 py-2 leading-relaxed focus:outline-none focus:border-mag resize-none"
+                        placeholder="Describe your current communication limits or focus structure..."
+                      />
+                      <div className="flex justify-between items-center text-[8px] text-[#8A7F8D] mt-0.5 font-mono">
+                        <span>Describe focus limits.</span>
+                        <span>{editBio.length}/160</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Operations for Edit Mode */}
+                  <div className="flex gap-2.5 pt-2">
+                    <button 
+                      onClick={() => {
+                        // Revert inputs to original saved state
+                        setEditName(user?.name || "Professional User");
+                        setEditBio(profileBio || "");
+                        setIsEditingProfile(false);
+                        triggerToast("Changes reverted. ✓");
+                      }}
+                      className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-semibold tracking-wider transition-all cursor-pointer text-center"
+                    >
+                      Cancel / Revert ↺
+                    </button>
+                    <button 
+                      onClick={handleSaveProfile}
+                      className="flex-1 py-2 bg-gradient-to-r from-plum to-mag hover:opacity-95 text-white rounded-xl text-xs font-semibold tracking-wider shadow-sm transition-all cursor-pointer text-center"
+                    >
+                      Save Profile ✓
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. SAFETY AND COMPLIANCE DISCLOSURES MODAL */}
+      {showLegalModal && (
+        <div id="legal-disclosures-modal" className="fixed inset-0 z-50 bg-[#1C0A2E]/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn text-[#1C0A2E]">
+          <div className="bg-[#FAF6F0] border-2 border-[#C45BAA]/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative overflow-y-auto max-h-[92vh]">
+            <button 
+              onClick={() => setShowLegalModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-black/5 text-[#8A7F8D] cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="bg-[#C45BAA]/10 text-[#C45BAA] px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest inline-block mb-3 select-none">
+              🛡️ COMPLIANCE & SAFETY ASSURANCE
+            </div>
+            
+            <h3 className="font-serif text-2xl font-light leading-tight mb-1 text-[#1C0A2E]">
+              Legal Disclosures & Privacy
+            </h3>
+            <p className="text-[11px] text-gray-500 mb-4 leading-relaxed">
+              We value your mental well-being, trust, and privacy. Read how FlowHer protects your business, your identity, and your security under our legal framework.
+            </p>
+
+            {/* Legal modal sub-tabs directory */}
+            <div className="flex gap-1 border-b border-black/5 pb-2 mb-4">
+              <button
+                onClick={() => setLegalTab("medical")}
+                className={`flex-1 py-1.5 px-2 rounded-lg text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                  legalTab === "medical" 
+                    ? "bg-plum text-white shadow-xs" 
+                    : "bg-black/5 hover:bg-black/10 text-gray-650"
+                }`}
+              >
+                ⚕️ Medical Disclaimer
+              </button>
+              <button
+                onClick={() => setLegalTab("privacy")}
+                className={`flex-1 py-1.5 px-2 rounded-lg text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                  legalTab === "privacy" 
+                    ? "bg-plum text-white shadow-xs" 
+                    : "bg-black/5 hover:bg-black/10 text-gray-650"
+                }`}
+              >
+                🔒 Privacy Policy
+              </button>
+              <button
+                onClick={() => setLegalTab("terms")}
+                className={`flex-1 py-1.5 px-2 rounded-lg text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                  legalTab === "terms" 
+                    ? "bg-plum text-white shadow-xs" 
+                    : "bg-black/5 hover:bg-black/10 text-gray-650"
+                }`}
+              >
+                ⚖️ Terms of Use
+              </button>
+            </div>
+
+            {/* Content box based on active sub-tab */}
+            <div className="bg-white/50 border border-black/5 rounded-2xl p-4 overflow-y-auto max-h-[46vh] space-y-4 text-xs leading-relaxed text-gray-700">
+              {legalTab === "medical" && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 text-amber-900 text-[11px]">
+                    <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
+                    <div>
+                      <strong className="block font-semibold mb-0.5">NOT A MEDICAL OR THERAPEUTIC SERVICE</strong>
+                      This system does not replace psychiatry, counseling, clinical evaluation, diagnoses, or prescriptions.
+                    </div>
+                  </div>
+                  
+                  <h4 className="font-bold text-gray-950 font-serif">1. Safe Harbor & Support Bounds</h4>
+                  <p>
+                    FlowHer is designed purely as an administrative workspace organization companion and a cognitive micro-structuring assistant. It offers sensory decompression sequences, focus aids, and text optimization techniques to alleviate cognitive friction for busy women and neurodivergent professionals (inclusive of ADHD, Autism, Sensory Processing Disorders, and related profiles).
+                  </p>
+                  
+                  <h4 className="font-bold text-gray-950 font-serif">2. Critical Clinical Care Warning</h4>
+                  <p>
+                    No content, metrics, or answers generated by the workspace (including the "Battery Tracker" or "Daily Focus items") constitute clinical evaluation, diagnosis, medical advice, or therapeutic treatment. Always consult a qualified professional for any medical concerns.
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif">3. Self-Regulation Guidelines</h4>
+                  <p>
+                    Sensory recovery advice, visual/audio micro-pacing, and task pacing parameters are informational ideas designed to improve user awareness of their energetic capacity. Do not disregard clinical prescriptions or change behavioral health courses based solely on computer-generated suggestions.
+                  </p>
+                </div>
+              )}
+
+              {legalTab === "privacy" && (
+                <div className="space-y-3 animate-fadeIn">
+                  <div className="flex items-start gap-2.5 bg-emerald-50 border border-emerald-200/50 rounded-xl p-3 text-emerald-900 text-[11px]">
+                    <ShieldCheck className="h-5 w-5 shrink-0 mt-0.5 text-emerald-600" />
+                    <div>
+                      <strong className="block font-semibold mb-0.5">OFFLINE-FIRST HYBRID PRIVACY MODEL</strong>
+                      Your personal metrics, profile bio, notes, and local journals never touch our persistent servers.
+                    </div>
+                  </div>
+
+                  <h4 className="font-bold text-gray-950 font-serif">1. Client-Side Integrity & Sandboxing</h4>
+                  <p>
+                    FlowHer prioritizes localized data ownership. Your personal identity metadata, profile avatar custom creations, cumulative "Masking Debt" logs, customized dopamine tasks, daily streak counts, and local alignment settings are stored entirely within your browser's persistent sandboxed storage (<code>localStorage</code>).
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif">2. AI Request Payload Processing</h4>
+                  <p>
+                    To generate personalized scripts, analyze email tones, and write step-by-step task lists, the app securely routes text clips via an encrypted SSL protocol to our verified backend container proxies (under Google Cloud Run) which interface with the Google Gemini AI Platform. These payloads are processed transiently in-memory and are never stored, logged, or utilized for advertisement training.
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif">3. Disabling Tracking & Cookies</h4>
+                  <p>
+                    We do not deploy marketing tracers, cookies, tracking pixels, or intrusive telemetric analysis tools. Your workflow is yours alone. Standard storage parameters exist solely to remember your custom app colors and configuration lists.
+                  </p>
+                </div>
+              )}
+
+              {legalTab === "terms" && (
+                <div className="space-y-3 animate-fadeIn">
+                  <h4 className="font-bold text-gray-950 font-serif">1. Acceptance of Terms & Disclaimers</h4>
+                  <p>
+                    By activating and interacting with the FlowHer application, you agree to these Terms. The software is provided under a strict "AS IS" and "AS AVAILABLE" warranty limit, without any representations of flawless uptime or constant availability.
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif">2. AI Generation Indemnity & Communication Check</h4>
+                  <p>
+                    You retain 100% ownership and 100% legal and professional liability for any written records, email drafts, or communication scripts assembled by our generative helpers. Because AI can hallucinate or phrase suggestions imperfectly, you agree to carefully review and proofread all generated text outputs before executing client communication or corporate delivery.
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif">3. Liability Limits & Corporate Protection</h4>
+                  <p>
+                    Under no circumstances shall the creators, company owners, parent businesses, or affiliates of FlowHer be liable to you or any third party for any direct, indirect, consequential, punitive, or special damages. This includes but is not limited to lost profit margins, business downtime, mental fatigue outcomes, burnouts, or employment changes arising from your utilization of this administrative workspace. This limitation of liability forms an essential foundation of our software model.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Acknowledge Footer Action */}
+            <div className="pt-4 border-t border-black/5 flex gap-2">
+              <button 
+                onClick={() => {
+                  setShowLegalModal(false);
+                  triggerToast("Disclosures reviewed. All safety & privacy parameters active! ✓");
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-plum to-mag text-white rounded-xl text-xs font-semibold tracking-wider shadow-md hover:opacity-95 text-center cursor-pointer transition-all active:scale-98"
+              >
+                I Understand & Accept These Protections ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

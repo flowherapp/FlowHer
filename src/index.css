@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --color-plum: #3D1052;
+  --color-mag: #C45BAA;
+  --color-rose: #E8845C;
+  --color-teal: #3D9E8C;
+  --color-gold: #D4A843;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FAF6F0;
+  color: #1C0A2E;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom fade effects */
+.unmask-textarea {
+  transition: color 1s ease-in-out;
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 15px rgba(196, 91, 170, 0.35);
+}
+
+/* Custom satisfying particle float animations */
+@keyframes fadeFloat {
+  0% {
+    transform: translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tw-float-x, 0px), var(--tw-float-y, -100px)) scale(1.25);
+    opacity: 0;
+  }
+}
+
+.animate-fadeFloat {
+  animation: fadeFloat 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+
