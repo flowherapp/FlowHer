@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net Call
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Safety Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 3. Entity-Specific Validators
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 128
+        && data.username is string && data.username.size() <= 100
+        && (data.streakCount is int || data.streakCount is float)
+        && data.lastCheckInDate is string && data.lastCheckInDate.size() <= 50
+        && (data.bestStreak is int || data.bestStreak is float)
+        && data.profilePic is string && data.profilePic.size() <= 1500000
+        && data.profileBio is string && data.profileBio.size() <= 2000
+        && (data.dopamineSparks is int || data.dopamineSparks is float)
+        && data.userPlan is string && (data.userPlan == 'free' || data.userPlan == 'core')
+        && data.priorities is list && data.priorities.size() == 3
+        && data.prioritiesCompleted is list && data.prioritiesCompleted.size() == 3;
+    }
+
+    function isValidWin(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.text is string && data.text.size() <= 1000
+        && data.category is string && data.category.size() <= 100
+        && data.date is string && data.date.size() <= 50;
+    }
+
+    function isValidMaskMoment(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.types is list && data.types.size() <= 10
+        && (data.intensity is int || data.intensity is float) && data.intensity >= 1 && data.intensity <= 10
+        && (data.cost is int || data.cost is float) && data.cost >= 0
+        && data.note is string && data.note.size() <= 2000
+        && data.date is string && data.date.size() <= 50
+        && data.time is string && data.time.size() <= 50;
+    }
+
+    function isValidTbcTask(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.task is string && data.task.size() <= 1000
+        && (data.estimated is int || data.estimated is float) && data.estimated >= 0
+        && (data.actual is int || data.actual is float) && data.actual >= 0
+        && data.date is string && data.date.size() <= 50
+        && (data.ratio is int || data.ratio is float) && data.ratio >= 0;
+    }
+
+    function isValidCustomEmailPreset(data) {
+      return data.label is string && data.label.size() <= 200
+        && data.template is string && data.template.size() <= 5000
+        && data.situation is string && data.situation.size() <= 5000;
+    }
+
+    function isValidCustomScriptPreset(data) {
+      return data.label is string && data.label.size() <= 200
+        && data.template is string && data.template.size() <= 5000
+        && data.situation is string && data.situation.size() <= 5000;
+    }
+
+    function isValidCustomSignature(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.label is string && data.label.size() <= 200
+        && data.tag is string && data.tag.size() <= 200
+        && data.text is string && data.text.size() <= 5000;
+    }
+
+
+    // 4. Match Blocks (Strict ownership models)
+    
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().email == request.auth.token.email;
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+        && incoming().email == existing().email // Email cannot be changed
+        && (
+          incoming().diff(existing()).affectedKeys().hasAny([
+            'username', 'streakCount', 'lastCheckInDate', 'bestStreak', 
+            'profilePic', 'profileBio', 'dopamineSparks', 'userPlan', 
+            'priorities', 'prioritiesCompleted'
+          ])
+        );
+      allow delete: if false; // Profiles cannot be randomly purged
+
+      // Wins Subcollection
+      match /wins/{winId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(winId) && isValidWin(incoming());
+        allow delete: if isOwner(userId) && isValidId(winId);
+      }
+
+      // Sensory / Masking Debt Subcollection
+      match /maskMoments/{momentId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(momentId) && isValidMaskMoment(incoming());
+        allow delete: if isOwner(userId) && isValidId(momentId);
+      }
+
+      // Time Blindness Corrector Subcollection
+      match /tbcHistory/{tbcId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(tbcId) && isValidTbcTask(incoming());
+        allow delete: if isOwner(userId) && isValidId(tbcId);
+      }
+
+      // Custom Email Templates Subcollection
+      match /customEmailPresets/{presetId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(presetId) && isValidCustomEmailPreset(incoming());
+        allow delete: if isOwner(userId) && isValidId(presetId);
+      }
+
+      // Custom Script Presets Subcollection
+      match /customScriptPresets/{scriptId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(scriptId) && isValidCustomScriptPreset(incoming());
+        allow delete: if isOwner(userId) && isValidId(scriptId);
+      }
+
+      // Custom Email Signatures Subcollection
+      match /customSignatures/{signatureId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(signatureId) && isValidCustomSignature(incoming());
+        allow delete: if isOwner(userId) && isValidId(signatureId);
+      }
+    }
+  }
+}

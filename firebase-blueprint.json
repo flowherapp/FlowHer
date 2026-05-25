@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile, configuration, and state details",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "streakCount": { "type": "number" },
+        "lastCheckInDate": { "type": "string" },
+        "bestStreak": { "type": "number" },
+        "profilePic": { "type": "string" },
+        "profileBio": { "type": "string" },
+        "dopamineSparks": { "type": "number" },
+        "userPlan": { "type": "string" },
+        "priorities": { "type": "array" },
+        "prioritiesCompleted": { "type": "array" }
+      },
+      "required": ["email", "username"]
+    },
+    "Win": {
+      "title": "Win",
+      "description": "An entry in the My Win Journal",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["id", "text", "category", "date"]
+    },
+    "MaskMoment": {
+      "title": "MaskMoment",
+      "description": "An entry tracking ADHD masking debt",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "types": { "type": "array" },
+        "intensity": { "type": "number" },
+        "cost": { "type": "number" },
+        "note": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" }
+      },
+      "required": ["id", "types", "intensity", "cost", "date"]
+    },
+    "TbcTask": {
+      "title": "TbcTask",
+      "description": "An entry in the Time Blindness Corrector log history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "task": { "type": "string" },
+        "estimated": { "type": "number" },
+        "actual": { "type": "number" },
+        "date": { "type": "string" },
+        "ratio": { "type": "number" }
+      },
+      "required": ["id", "task", "estimated", "actual", "date", "ratio"]
+    },
+    "CustomEmailPreset": {
+      "title": "CustomEmailPreset",
+      "description": "Personalized email drafting templates",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "template": { "type": "string" },
+        "situation": { "type": "string" }
+      },
+      "required": ["label", "template", "situation"]
+    },
+    "CustomScriptPreset": {
+      "title": "CustomScriptPreset",
+      "description": "Personalized conversation scripts",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "template": { "type": "string" },
+        "situation": { "type": "string" }
+      },
+      "required": ["label", "template", "situation"]
+    },
+    "CustomSignature": {
+      "title": "CustomSignature",
+      "description": "Personalized email signature options",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "tag": { "type": "string" },
+        "text": { "type": "string" }
+      },
+      "required": ["id", "label", "text"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Root configuration document for individual user details"
+    },
+    "/users/{userId}/wins/{winId}": {
+      "schema": "Win",
+      "description": "Subcollection under user storing wins history"
+    },
+    "/users/{userId}/maskMoments/{momentId}": {
+      "schema": "MaskMoment",
+      "description": "Subcollection under user mapping sensory or behavioral ADHD masking logs"
+    },
+    "/users/{userId}/tbcHistory/{tbcId}": {
+      "schema": "TbcTask",
+      "description": "Subcollection tracking accurate task length calculations"
+    },
+    "/users/{userId}/customEmailPresets/{presetId}": {
+      "schema": "CustomEmailPreset",
+      "description": "Subcollection housing user's custom email draft settings"
+    },
+    "/users/{userId}/customScriptPresets/{scriptId}": {
+      "schema": "CustomScriptPreset",
+      "description": "Subcollection containing tailored scripting modules"
+    },
+    "/users/{userId}/customSignatures/{signatureId}": {
+      "schema": "CustomSignature",
+      "description": "Subcollection containing professional boundary signatures"
+    }
+  }
+}
