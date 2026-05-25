@@ -8,12 +8,21 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+export const isDummyConfig = 
+  !firebaseConfig || 
+  firebaseConfig.projectId === "dummy-project" || 
+  (firebaseConfig.apiKey && firebaseConfig.apiKey.includes("dummy"));
+
 export async function testConnection() {
+  if (isDummyConfig) {
+    console.info("Firebase is configured in Local/Guest-only development mode (dummy credentials).");
+    return;
+  }
   try {
     await getDocFromServer(doc(db, "test", "connection"));
   } catch (error) {
     if (error instanceof Error && error.message.includes("the client is offline")) {
-      console.error("Please check your Firebase configuration.");
+      console.warn("Firebase connection test: the client is offline or configuration is pending.");
     }
   }
 }
