@@ -4580,18 +4580,18 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           
           {/* Header navigation */}
           <header className="w-full py-6 flex items-center justify-between border-b border-[#C45BAA]/10 sticky top-0 bg-[#FAF6F0] z-40 transition-all select-none">
-            <span className="font-serif italic text-3xl md:text-4xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-4">
-              <svg className="w-20 h-20 md:w-28 md:h-28 drop-shadow-[0_4px_10px_rgba(196,91,170,0.4)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+            <span className="font-serif italic text-3xl md:text-4xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-1.5">
+              <svg className="w-10 h-10 md:w-14 md:h-14 drop-shadow-[0_4px_10px_rgba(196,91,170,0.4)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
                 <defs>
                   <linearGradient id="landingLogoOuter" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#3D1052" />
-                    <stop offset="60%" stop-color="#C45BAA" />
-                    <stop offset="100%" stop-color="#2DD4BF" />
+                    <stop offset="0%" stopColor="#3D1052" />
+                    <stop offset="60%" stopColor="#C45BAA" />
+                    <stop offset="100%" stopColor="#2DD4BF" />
                   </linearGradient>
                   <linearGradient id="landingLogoInner" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#A21CAF" />
-                    <stop offset="60%" stop-color="#E8845C" />
-                    <stop offset="100%" stop-color="#FCD34D" />
+                    <stop offset="0%" stopColor="#A21CAF" />
+                    <stop offset="60%" stopColor="#E8845C" />
+                    <stop offset="100%" stopColor="#FCD34D" />
                   </linearGradient>
                 </defs>
                 <g transform="translate(400, 400)">
@@ -4605,10 +4605,10 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   
                   {/* INNER PETALS */}
                   <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.7" /></g>
+                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
                   <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
                   <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.7" /></g>
+                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
                   <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
                   
                   <circle cx="0" cy="0" r="30" fill="#FAF6F0" />
@@ -5442,14 +5442,14 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           <header className="w-full py-6 flex items-center justify-between border-b border-[#C45BAA]/10 sticky top-0 bg-[#FAF6F0] z-40 transition-all select-none">
             <span 
               onClick={() => setCurrentView("landing")} 
-              className="font-serif italic text-2xl md:text-3xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-3 cursor-pointer hover:opacity-90 group"
+              className="font-serif italic text-2xl md:text-3xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-1.5 cursor-pointer hover:opacity-90 group"
             >
-              <svg className="w-12 h-12 drop-shadow-[0_2px_6px_rgba(196,91,170,0.25)] group-hover:scale-105 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+              <svg className="w-6 h-6 md:w-8 md:h-8 drop-shadow-[0_2px_6px_rgba(196,91,170,0.25)] group-hover:scale-105 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
                 <defs>
                   <linearGradient id="brandKitHeaderGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#3D1052" />
-                    <stop offset="60%" stop-color="#C45BAA" />
-                    <stop offset="100%" stop-color="#2DD4BF" />
+                    <stop offset="0%" stopColor="#3D1052" />
+                    <stop offset="60%" stopColor="#C45BAA" />
+                    <stop offset="100%" stopColor="#2DD4BF" />
                   </linearGradient>
                 </defs>
                 <g transform="translate(400, 400)">
@@ -5893,18 +5893,18 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           
           {/* Header toolbar */}
           <header className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between border-b border-white/5 sticky top-0 bg-[#130620]/90 backdrop-blur-md z-35 font-sans">
-            <div className="flex items-center gap-3 select-none cursor-pointer" onClick={() => setCurrentView("landing")}>
-              <svg className="w-16 h-16 md:w-20 md:h-20 drop-shadow-[0_0_15px_rgba(45,212,191,0.55)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+            <div className="flex items-center gap-1.5 select-none cursor-pointer" onClick={() => setCurrentView("landing")}>
+              <svg className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(45,212,191,0.55)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
                 <defs>
                   <linearGradient id="appLogoOuter" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#3D1052" />
-                    <stop offset="60%" stop-color="#C45BAA" />
-                    <stop offset="100%" stop-color="#2DD4BF" />
+                    <stop offset="0%" stopColor="#3D1052" />
+                    <stop offset="60%" stopColor="#C45BAA" />
+                    <stop offset="100%" stopColor="#2DD4BF" />
                   </linearGradient>
                   <linearGradient id="appLogoInner" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#A21CAF" />
-                    <stop offset="60%" stop-color="#E8845C" />
-                    <stop offset="100%" stop-color="#FCD34D" />
+                    <stop offset="0%" stopColor="#A21CAF" />
+                    <stop offset="60%" stopColor="#E8845C" />
+                    <stop offset="100%" stopColor="#FCD34D" />
                   </linearGradient>
                 </defs>
                 <g transform="translate(400, 400)">
