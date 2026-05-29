@@ -3527,54 +3527,54 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
   <g transform="translate(400, 310)" filter="url(#softShadow)">
     
     <!-- Concentric Breathing Orbits represent continuous pacing and self-regulation -->
-    <circle r="235" fill="none" stroke="#2DD4BF" stroke-width="1" stroke-dasharray="4 16" stroke-opacity="0.2" />
-    <circle r="202" fill="none" stroke="#C45BAA" stroke-width="1.5" stroke-dasharray="140 16" stroke-opacity="0.3" />
-    <circle r="170" fill="none" stroke="#E8845C" stroke-width="1" stroke-dasharray="2 8" stroke-opacity="0.25" />
+    <circle r="235" fill="none" stroke="#2DD4BF" stroke-width="1.5" stroke-dasharray="6 24" stroke-opacity="0.55" />
+    <circle r="202" fill="none" stroke="#C45BAA" stroke-width="2" stroke-dasharray="145 20" stroke-opacity="0.65" />
+    <circle r="170" fill="none" stroke="#E8845C" stroke-width="1.5" stroke-dasharray="3 10" stroke-opacity="0.5" />
 
     <!-- Pure circular nodes along focus paths -->
-    <circle r="4" cy="-235" fill="#2DD4BF" />
-    <circle r="3.5" cy="235" fill="#2DD4BF" stroke="#19062A" stroke-width="1" />
-    <circle r="3" cx="202" fill="#C45BAA" />
-    <circle r="3" cx="-202" fill="#C45BAA" />
+    <circle r="5.5" cy="-235" fill="#2DD4BF" />
+    <circle r="5" cy="235" fill="#2DD4BF" stroke="#19062A" stroke-width="1.5" />
+    <circle r="4.5" cx="202" fill="#C45BAA" />
+    <circle r="4.5" cx="-202" fill="#C45BAA" />
 
     <!-- OUTER PETALS (Symmetrical 6-axis rotation, translucency blends beautifully) -->
     <g transform="rotate(0)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
     <g transform="rotate(60)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
     <g transform="rotate(120)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
     <g transform="rotate(180)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
     <g transform="rotate(240)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
     <g transform="rotate(300)">
-      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.35" />
+      <path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#symmetricOuterGrad)" opacity="0.78" />
     </g>
 
     <!-- INNER PETALS (30 deg offset, smaller scale, creates gemstone lotus depth) -->
     <g transform="rotate(30)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
     <g transform="rotate(90)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
     <g transform="rotate(150)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
     <g transform="rotate(210)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
     <g transform="rotate(270)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
     <g transform="rotate(330)">
-      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.45" />
+      <path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#symmetricInnerGrad)" opacity="0.85" />
     </g>
 
     <!-- Micro delicate wind swirls outlining the core energy -->
@@ -4581,7 +4581,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           {/* Header navigation */}
           <header className="w-full py-6 flex items-center justify-between border-b border-[#C45BAA]/10 sticky top-0 bg-[#FAF6F0] z-40 transition-all select-none">
             <span className="font-serif italic text-3xl md:text-4xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-1.5">
-              <svg className="w-10 h-10 md:w-14 md:h-14 drop-shadow-[0_4px_10px_rgba(196,91,170,0.4)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
+              <svg className="w-14 h-14 md:w-20 md:h-20 drop-shadow-[0_4px_24px_rgba(45,212,191,0.55)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="150 150 500 500">
                 <defs>
                   <linearGradient id="landingLogoOuter" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stopColor="#3D1052" />
@@ -4593,26 +4593,51 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop offset="60%" stopColor="#E8845C" />
                     <stop offset="100%" stopColor="#FCD34D" />
                   </linearGradient>
+                  <radialGradient id="landingLogoCoreGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FAF6F0" />
+                    <stop offset="40%" stopColor="#2DD4BF" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="landingLogoBackGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
+                <circle cx="400" cy="400" r="180" fill="url(#landingLogoBackGlow)" />
                 <g transform="translate(400, 400)">
+                  {/* Concentric Breathing Orbits */}
+                  <circle r="235" fill="none" stroke="#2DD4BF" strokeWidth="1.5" strokeDasharray="6 24" strokeOpacity="0.55" />
+                  <circle r="202" fill="none" stroke="#C45BAA" strokeWidth="2" strokeDasharray="145 20" strokeOpacity="0.65" />
+                  <circle r="170" fill="none" stroke="#E8845C" strokeWidth="1.5" strokeDasharray="3 10" strokeOpacity="0.5" />
+
+                  {/* Pure circular nodes along focus paths */}
+                  <circle r="5.5" cy="-235" fill="#2DD4BF" />
+                  <circle r="5" cy="235" fill="#2DD4BF" stroke="#FAF6F0" strokeWidth="1.5" />
+                  <circle r="4.5" cx="202" fill="#C45BAA" />
+                  <circle r="4.5" cx="-202" fill="#C45BAA" />
+
                   {/* OUTER PETALS */}
-                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
-                  <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
-                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
-                  <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
-                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
-                  <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.6" /></g>
+                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#landingLogoOuter)" opacity="0.78" /></g>
                   
                   {/* INNER PETALS */}
-                  <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.7" /></g>
-                  
-                  <circle cx="0" cy="0" r="30" fill="#FAF6F0" />
-                  <circle cx="0" cy="0" r="10" fill="#2DD4BF" />
+                  <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#landingLogoInner)" opacity="0.85" /></g>
+
+                  {/* Wind swirls */}
+                  <circle r="44" fill="none" stroke="#FAF6F0" strokeWidth="0.75" strokeDasharray="100 10" strokeOpacity="0.3" transform="rotate(-45)" />
+
+                  <circle cx="0" cy="0" r="30" fill="url(#landingLogoCoreGlow)" />
+                  <circle cx="0" cy="0" r="8" fill="#FAF6F0" />
+                  <circle cx="0" cy="0" r="4" fill="#19062A" />
                 </g>
               </svg>
               <span className="text-3xl md:text-4xl">Flow<em className="text-mag not-italic font-sans font-medium">Her</em>™</span>
@@ -5229,20 +5254,63 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               onClick={() => setCurrentView("landing")} 
               className="font-serif italic text-2xl md:text-3xl font-light text-[#3D1052] tracking-wider leading-none flex items-center gap-1.5 cursor-pointer hover:opacity-90 group"
             >
-              <svg className="w-6 h-6 md:w-8 md:h-8 drop-shadow-[0_2px_6px_rgba(196,91,170,0.25)] group-hover:scale-105 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
+              <svg className="w-9 h-9 md:w-13 md:h-13 drop-shadow-[0_2px_12px_rgba(45,212,191,0.5)] group-hover:scale-105 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="150 150 500 500">
                 <defs>
-                  <linearGradient id="brandKitHeaderGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <linearGradient id="brandKitHeaderGradOuter" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stopColor="#3D1052" />
                     <stop offset="60%" stopColor="#C45BAA" />
                     <stop offset="100%" stopColor="#2DD4BF" />
                   </linearGradient>
+                  <linearGradient id="brandKitHeaderGradInner" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#A21CAF" />
+                    <stop offset="60%" stopColor="#E8845C" />
+                    <stop offset="100%" stopColor="#FCD34D" />
+                  </linearGradient>
+                  <radialGradient id="brandKitHeaderCoreGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FAF6F0" />
+                    <stop offset="40%" stopColor="#2DD4BF" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="brandKitHeaderBackGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
+                <circle cx="400" cy="400" r="180" fill="url(#brandKitHeaderBackGlow)" />
                 <g transform="translate(400, 400)">
-                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGrad)" opacity="0.65" /></g>
-                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGrad)" opacity="0.65" /></g>
-                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGrad)" opacity="0.65" /></g>
-                  <circle cx="0" cy="0" r="22" fill="#FAF6F0" />
-                  <circle cx="0" cy="0" r="8" fill="#2DD4BF" />
+                  {/* Concentric Breathing Orbits */}
+                  <circle r="235" fill="none" stroke="#2DD4BF" strokeWidth="1.5" strokeDasharray="6 24" strokeOpacity="0.55" />
+                  <circle r="202" fill="none" stroke="#C45BAA" strokeWidth="2" strokeDasharray="145 20" strokeOpacity="0.65" />
+                  <circle r="170" fill="none" stroke="#E8845C" strokeWidth="1.5" strokeDasharray="3 10" strokeOpacity="0.5" />
+
+                  {/* Pure circular nodes along focus paths */}
+                  <circle r="5.5" cy="-235" fill="#2DD4BF" />
+                  <circle r="5" cy="235" fill="#2DD4BF" stroke="#FAF6F0" strokeWidth="1.5" />
+                  <circle r="4.5" cx="202" fill="#C45BAA" />
+                  <circle r="4.5" cx="-202" fill="#C45BAA" />
+
+                  {/* OUTER PETALS */}
+                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#brandKitHeaderGradOuter)" opacity="0.78" /></g>
+                  
+                  {/* INNER PETALS */}
+                  <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+                  <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+                  <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+                  <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#brandKitHeaderGradInner)" opacity="0.85" /></g>
+
+                  {/* Wind swirls */}
+                  <circle r="44" fill="none" stroke="#FAF6F0" strokeWidth="0.75" strokeDasharray="100 10" strokeOpacity="0.3" transform="rotate(-45)" />
+
+                  <circle cx="0" cy="0" r="30" fill="url(#brandKitHeaderCoreGlow)" />
+                  <circle cx="0" cy="0" r="8" fill="#FAF6F0" />
+                  <circle cx="0" cy="0" r="4" fill="#19062A" />
                 </g>
               </svg>
               <span>Flow<em className="text-mag not-italic font-sans font-medium">Her</em>™ <span className="font-sans font-semibold text-xs text-mag tracking-widest uppercase ml-1.5 px-2 py-0.5 rounded-md bg-mag/5 border border-mag/10">Brand Center</span></span>
@@ -5679,7 +5747,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           {/* Header toolbar */}
           <header className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between border-b border-white/5 sticky top-0 bg-[#130620]/90 backdrop-blur-md z-35 font-sans">
             <div className="flex items-center gap-1.5 select-none cursor-pointer" onClick={() => setCurrentView("landing")}>
-              <svg className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(45,212,191,0.55)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="200 200 400 400">
+              <svg className="w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_20px_rgba(45,212,191,0.6)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="150 150 500 500">
                 <defs>
                   <linearGradient id="appLogoOuter" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stopColor="#3D1052" />
@@ -5691,26 +5759,51 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop offset="60%" stopColor="#E8845C" />
                     <stop offset="100%" stopColor="#FCD34D" />
                   </linearGradient>
+                  <radialGradient id="appLogoCoreGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FAF6F0" />
+                    <stop offset="40%" stopColor="#2DD4BF" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="appLogoBackGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
+                <circle cx="400" cy="400" r="180" fill="url(#appLogoBackGlow)" />
                 <g transform="translate(400, 400)">
+                  {/* Concentric Breathing Orbits */}
+                  <circle r="235" fill="none" stroke="#2DD4BF" strokeWidth="1.5" strokeDasharray="6 24" strokeOpacity="0.55" />
+                  <circle r="202" fill="none" stroke="#C45BAA" strokeWidth="2" strokeDasharray="145 20" strokeOpacity="0.65" />
+                  <circle r="170" fill="none" stroke="#E8845C" strokeWidth="1.5" strokeDasharray="3 10" strokeOpacity="0.5" />
+
+                  {/* Pure circular nodes along focus paths */}
+                  <circle r="5.5" cy="-235" fill="#2DD4BF" />
+                  <circle r="5" cy="235" fill="#2DD4BF" stroke="#FAF6F0" strokeWidth="1.5" />
+                  <circle r="4.5" cx="202" fill="#C45BAA" />
+                  <circle r="4.5" cx="-202" fill="#C45BAA" />
+
                   {/* OUTER PETALS */}
-                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
-                  <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
-                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
-                  <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
-                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
-                  <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.5" /></g>
+                  <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
+                  <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#appLogoOuter)" opacity="0.78" /></g>
                   
                   {/* INNER PETALS */}
-                  <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.6" /></g>
-                  
-                  <circle cx="0" cy="0" r="30" fill="#FAF6F0" />
-                  <circle cx="0" cy="0" r="10" fill="#2DD4BF" />
+                  <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+                  <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#appLogoInner)" opacity="0.85" /></g>
+
+                  {/* Wind swirls */}
+                  <circle r="44" fill="none" stroke="#FAF6F0" strokeWidth="0.75" strokeDasharray="100 10" strokeOpacity="0.3" transform="rotate(-45)" />
+
+                  <circle cx="0" cy="0" r="30" fill="url(#appLogoCoreGlow)" />
+                  <circle cx="0" cy="0" r="8" fill="#FAF6F0" />
+                  <circle cx="0" cy="0" r="4" fill="#19062A" />
                 </g>
               </svg>
               <div className="flex flex-col items-start select-none">
