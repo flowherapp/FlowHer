@@ -4950,221 +4950,6 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
             </div>
           </section>
 
-          {/* Complete FlowHer™ Brand Kit Center */}
-          <section className="py-16 border-t border-plum/10 mt-12 w-full max-w-5xl mx-auto space-y-12 select-none">
-            
-            <div className="text-center space-y-3">
-              <span className="text-xs text-mag tracking-widest uppercase font-mono block font-bold">✦ Media & Identity Assets</span>
-              <h2 className="font-serif text-3xl md:text-4xl font-light text-plum">FlowHer™ Complete Brand Kit</h2>
-              <p className="text-sm text-gray-550 max-w-2xl mx-auto font-light leading-relaxed">
-                Yes, our brand kit belongs right on our landing page! It serves as a visual testament to our design philosophy. Use these master colors, elegant fonts, and high-resolution vector emblem files to feature FlowHer™ in slide decks, articles, or social clips.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-12 gap-8 items-start">
-              
-              {/* Left Column: Symmetrical Emblem Showroom & Downloader */}
-              <div className="md:col-span-7 bg-[#1C0A2E] border border-white/5 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-2xl space-y-6">
-                <div className="absolute -top-12 -left-12 w-48 h-48 bg-teal/10 rounded-full blur-[80px] pointer-events-none" />
-                <div className="absolute bottom-0 right-0 w-36 h-36 bg-mag/10 rounded-full blur-[60px] pointer-events-none" />
-
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] tracking-widest text-[#2DD4BF] font-mono uppercase font-bold">Interactive Vector Showcase</span>
-                    <h3 className="font-serif text-xl font-light text-[#FAF6F0]">The Symmetrical Flower Emblem</h3>
-                  </div>
-                  <span className="text-[9px] font-mono bg-[#2DD4BF]/10 text-[#2DD4BF] px-2.5 py-1 rounded-full border border-[#2DD4BF]/20">
-                    MASTER SCALABLE VECTOR (.SVG)
-                  </span>
-                </div>
-
-                {/* Grid showing logo size variations */}
-                <div className="grid grid-cols-3 gap-4 bg-[#0E0317] rounded-2xl p-6 border border-white/5 items-center justify-center">
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-24 h-24 flex items-center justify-center bg-white/5 rounded-xl p-1 border border-white/10 relative">
-                      <svg className="w-20 h-20 drop-shadow-[0_4px_10px_rgba(45,212,191,0.3)] animate-spin-slow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
-                        <defs>
-                          <linearGradient id="kitOuter" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="#3D1052" />
-                            <stop offset="60%" stopColor="#C45BAA" />
-                            <stop offset="100%" stopColor="#2DD4BF" />
-                          </linearGradient>
-                          <linearGradient id="kitInner" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="#A21CAF" />
-                            <stop offset="60%" stopColor="#E8845C" />
-                            <stop offset="100%" stopColor="#FCD34D" />
-                          </linearGradient>
-                          <radialGradient id="kitCore" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stopColor="#FAF6F0" />
-                            <stop offset="40%" stopColor="#2DD4BF" />
-                            <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
-                          </radialGradient>
-                        </defs>
-                        <g transform="translate(400, 400)">
-                          <circle r="235" fill="none" stroke="#2DD4BF" strokeWidth="2.5" strokeDasharray="6 20" strokeOpacity="0.3" />
-                          <circle r="190" fill="none" stroke="#C45BAA" strokeWidth="3" strokeDasharray="160 20" strokeOpacity="0.4" />
-                          <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(30)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <g transform="rotate(90)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <g transform="rotate(150)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <g transform="rotate(210)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <g transform="rotate(270)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <g transform="rotate(330)"><path d="M 0,0 C -22,-45 -22,-95 0,-125 C 22,-95 22,-45 0,0 Z" fill="url(#kitInner)" opacity="0.5" /></g>
-                          <circle cx="0" cy="0" r="30" fill="url(#kitCore)" />
-                          <circle cx="0" cy="0" r="10" fill="#FAF6F0" />
-                        </g>
-                      </svg>
-                    </div>
-                    <span className="text-[10px] font-mono text-gray-450 mt-1">Display Logo</span>
-                  </div>
-
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-16 h-16 flex items-center justify-center bg-white/5 rounded-xl p-1 border border-white/10 relative">
-                      <svg className="w-12 h-12 drop-shadow-[0_2px_6px_rgba(45,212,191,0.25)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
-                        <g transform="translate(400, 400)">
-                          <circle r="235" fill="none" stroke="#2DD4BF" strokeWidth="4" strokeDasharray="6 20" strokeOpacity="0.4" />
-                          <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(60)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(180)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <g transform="rotate(300)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="url(#kitOuter)" opacity="0.4" /></g>
-                          <circle cx="0" cy="0" r="40" fill="url(#kitCore)" />
-                        </g>
-                      </svg>
-                    </div>
-                    <span className="text-[10px] font-mono text-gray-450 mt-1">Standard Icon</span>
-                  </div>
-
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl p-1 border border-white/10 relative">
-                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
-                        <g transform="translate(400, 400)">
-                          <g transform="rotate(0)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="#2DD4BF" /></g>
-                          <g transform="rotate(120)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="#C45BAA" /></g>
-                          <g transform="rotate(240)"><path d="M 0,0 C -35,-65 -35,-130 0,-175 C 35,-130 35,-65 0,0 Z" fill="#E8845C" /></g>
-                        </g>
-                      </svg>
-                    </div>
-                    <span className="text-[10px] font-mono text-gray-450 mt-1">Micro Favicon</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <button
-                      onClick={downloadLogoSvg}
-                      className="flex-1 py-3 bg-[#2DD4BF] text-[#0E0317] font-bold font-mono text-xs rounded-xl hover:bg-[#2DD4BF]/80 transition-all shadow-[0_0_15px_rgba(45,212,191,0.25)] flex items-center justify-center gap-2 cursor-pointer select-none"
-                    >
-                      📥 Download Vector (.SVG)
-                    </button>
-                    <button
-                      onClick={() => {
-                        const rawText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
-  <!-- Official FlowHer Symmetrical Vector Emblem -->
-  <!-- Designed by Silvella Strain / FlowHer LLC 2026 -->
-</svg>`;
-                        navigator.clipboard.writeText(rawText);
-                        triggerToast("Copied Symmetrical Emblem raw inline SVG markup to your whiteboard clipboard! 📋");
-                      }}
-                      className="py-3 px-4 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-mono text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 select-none"
-                      title="Copy Raw SVG XML Code"
-                    >
-                      <span>Copy SVG XML</span>
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 font-light leading-relaxed select-text">
-                    The symmetrical emblem represents cognitive coherence and self-organization, combining a 6-axis outer rotation (Plum-Magenta-Teal) with a 30° offset inner gemstone bloom (Violet-Peach-Amber).
-                  </p>
-                </div>
-
-              </div>
-
-              {/* Right Column: Master Color Palette Swatches & Guidelines */}
-              <div className="md:col-span-5 space-y-6">
-                
-                {/* Brand Colors Swatches */}
-                <div className="bg-white border border-mag/10 rounded-3xl p-6 shadow-sm space-y-4">
-                  <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase font-bold">
-                    ✦ Symmetrical Brand Colors
-                  </span>
-                  <p className="text-xs text-gray-600 font-light mt-1">
-                    Click any swatch below to instantly copy its HEX value to your clipboard.
-                  </p>
-
-                  <div className="space-y-2.5 pt-1">
-                    {[
-                      { hex: "#3D1052", label: "Plum Queen", text: "text-[#FAF6F0]", purpose: "Primary authority & heavy focus card gradients." },
-                      { hex: "#C45BAA", label: "Symmetrical Magenta", text: "text-[#FAF6F0]", purpose: "Warm brand active elements and focus pacing tabs." },
-                      { hex: "#2DD4BF", label: "Luminous Teal", text: "text-[#0E0317]", purpose: "Grounding workspace highlights and sound wave indicators." },
-                      { hex: "#E8845C", label: "Amber Peach", text: "text-[#FAF6F0]", purpose: "Tactile warnings, self-care prompts, and check-ins." },
-                      { hex: "#FAF6F0", label: "Warm Alabaster", text: "text-[#3D1052] border border-[#C45BAA]/10", purpose: "Soft high-contrast eye-safe light theme canvas." },
-                      { hex: "#130620", label: "Cosmic Indigo", text: "text-[#FAF6F0]", purpose: "Nightmode/Console background & spatial sound soundscapes." }
-                    ].map((c, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          navigator.clipboard.writeText(c.hex);
-                          triggerToast(`Copied Hex Color value ${c.hex} (${c.label}) to clipboard! 🎨`);
-                        }}
-                        className="w-full flex items-center justify-between p-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all text-left cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center font-mono text-[10px] font-bold shadow-xs transition-transform group-hover:scale-105 ${c.text}`}
-                            style={{ backgroundColor: c.hex }}
-                          >
-                            HEX
-                          </div>
-                          <div>
-                            <span className="text-xs font-semibold text-plum block">{c.label}</span>
-                            <span className="text-[10px] text-gray-500 font-light block leading-none">{c.purpose}</span>
-                          </div>
-                        </div>
-                        <span className="font-mono text-xs text-gray-400 font-semibold pr-2 select-all group-hover:text-[#C45BAA]">
-                          {c.hex}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Typography specs */}
-                <div className="bg-[#FAF6F0]/60 border border-[#C45BAA]/15 rounded-3xl p-6 shadow-xs space-y-3">
-                  <span className="text-[10px] tracking-widest text-[#3D1052] font-mono block uppercase font-bold">
-                    ✦ Typographic Pairing Specs
-                  </span>
-                  <div className="divide-y divide-[#C45BAA]/10 space-y-2 pt-1 font-sans">
-                    <div className="pb-2">
-                      <span className="text-[10px] text-gray-500 font-mono block">01/ DISPLAY TYPOGRAPHY</span>
-                      <p className="font-serif italic text-lg text-[#3D1052] leading-tight">Playfair Display / Georgia</p>
-                      <p className="text-[10px] text-gray-400 font-light">Organic, literary, warm, grounding, and kind.</p>
-                    </div>
-                    <div className="py-2">
-                      <span className="text-[10px] text-gray-500 font-mono block">02/ GENERAL INTERACTION UI</span>
-                      <p className="font-sans text-xs font-medium text-[#3D1052] leading-tight">Inter / Outfit (Sans-Serif)</p>
-                      <p className="text-[10px] text-gray-400 font-light">Crisp, readable, clean, and highly professional layout.</p>
-                    </div>
-                    <div className="pt-2">
-                      <span className="text-[10px] text-gray-500 font-mono block">03/ ANALYTICAL INDICATORS</span>
-                      <p className="font-mono text-[11px] text-mag leading-tight font-bold">JetBrains Mono / Fira Code</p>
-                      <p className="text-[10px] text-gray-400 font-light">Quiet, tactical, neat, and non-overwhelming metadata.</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
           {/* Simple CTA footer */}
           <footer className="w-full py-12 border-t border-mag/10 text-center space-y-4 text-xs text-[#8A7F8D]">
             <p className="font-serif italic text-lg text-[#3D1052]">FlowHer™ © 2026</p>
@@ -9923,13 +9708,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       {/* Video Prompt 2 */}
                       <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] tracking-widest text-mag font-mono block uppercase">Prompt 2: "Aesthetic Core Calm satisfying" (Short 15s)</span>
+                          <span className="text-[10px] tracking-widest text-[#E879F9] font-mono block uppercase">Prompt 2: "Aesthetic Core Calm satisfying" (Short 15s)</span>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText("Aesthetic Productivity Clip: Click 'Zen Calm' button on FlowHer. Watch pastel breathing loop expand. Focus sound wave synth live demonstration. Built for neurodivergent women.");
                               triggerToast("Satisfying Prompt copy-pasted! 📹");
                             }}
-                            className="bg-mag/10 text-mag hover:bg-mag/20 text-[9px] font-mono uppercase px-2.5 py-1 rounded-md transition-all font-semibold"
+                            className="bg-[#E879F9]/10 text-[#E879F9] hover:bg-[#E879F9]/20 text-[9px] font-mono uppercase px-2.5 py-1 rounded-md transition-all font-semibold"
                           >
                             Copy Brief
                           </button>
@@ -9941,6 +9726,160 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           <li>Text overlay on screen: <strong>"The exact moment she entered distraction-free focus mode..."</strong></li>
                           <li>Visual details: <strong>Warm tea, smooth breathing circle, wins journal ticking off, sound bath active!</strong></li>
                         </ul>
+                      </div>
+
+                      {/* Video Prompt 3: 15-Sec Cinematic Heartstrings */}
+                      <div className="bg-gradient-to-r from-teal/10 via-mag/5 to-transparent border border-teal/20 rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="flex items-center justify-between relative z-10">
+                          <div>
+                            <span className="text-[10px] tracking-widest text-teal font-mono block uppercase font-bold">PROMPT 3: 15-SEC CINEMATIC HEARTSTRINGS</span>
+                            <span className="text-[9px] text-gray-400 font-mono">Tailored for OpenArt WAN-2.6 Video Close-Up</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const text = `FlowHer 15-Second Cinematic Heartstrings Script:\n\n[0:00 - 0:05]\nVisual: Close-up of professional woman with ADHD looking exhausted, eyes heavy with corporate masking fatigue.\nVoiceover (Warm, gentle): "You're tired of pretending you have it all under control..."\nText Overlay: "The exhaustion of corporate masking..."\n\n[0:05 - 0:10]\nVisual: Golden sun shaft strikes. Her expression shifts, shoulders relax, eyes close in absolute relief, yielding a serene genuine smile.\nVoiceover: "...of fighting a brain that works beautifully..."\nText Overlay: "...when all you want is a space to breathe."\n\n[0:10 - 0:15]\nVisual: Clean cinematic fade-in of the gorgeous lavender FlowHer logo. \nVoiceover: "...just differently. Breathe. We built FlowHer for you."\nText Overlay: "FlowHer™\nThe Sanctuary built for ADHD brains.\nTry today: Linked in Bio."`;
+                              navigator.clipboard.writeText(text);
+                              triggerToast("Cinematic Heartstrings Script copied! 📋🎬💖");
+                            }}
+                            className="bg-teal text-black hover:bg-teal/90 text-[10px] font-mono px-3 py-1.5 rounded-xl transition-all font-bold shadow-lg shadow-teal/10"
+                          >
+                            Copy Script
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-gray-300 font-light leading-relaxed">
+                          A high-converting, deeply emotional 15-second micro-ad built specifically for short-form video algorithms. Perfect for matching with low-frequency cinematic strings or soft lofi pad tracks.
+                        </p>
+
+                        <div className="space-y-2 mt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-teal font-mono uppercase block mb-1">Phase 1 (0:00-0:05)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"You're tired of pretending you have it all under control..."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: High burnout empathy</span>
+                            </div>
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-[#E879F9] font-mono uppercase block mb-1">Phase 2 (0:05-0:10)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"...of fighting a brain that works beautifully..."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: Shift to relief & beauty</span>
+                            </div>
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-teal font-mono uppercase block mb-1">Phase 3 (0:10-0:15)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"...just differently. Breathe. We built FlowHer for you."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: Clear branding CTA</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 bg-black/20 p-3 rounded-xl border border-white/5">
+                          <span className="text-[10px] text-gray-300 font-semibold block mb-1">🎯 Aesthetic Recommendation for Creators</span>
+                          <p className="text-[10.5px] text-gray-400 leading-relaxed">
+                            Use a warm, gravelly voice-over (or standard "Warming/Soft" AI narration models) paired with an organic acoustic piano chord progression. The visual of the golden light hitting her face should align exactly at the 5-second mark as the speaker says *"...beautifully..."* to trigger a physical release of tension in the viewer.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Video Prompt 4: 15-Sec Warm Whisper Sanctuary */}
+                      <div className="bg-gradient-to-r from-[#E879F9]/10 via-teal/5 to-transparent border border-[#E879F9]/20 rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#E879F9]/5 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="flex items-center justify-between relative z-10">
+                          <div>
+                            <span className="text-[10px] tracking-widest text-[#E879F9] font-mono block uppercase font-bold">PROMPT 4: 15-SEC WARM WHISPER SANCTUARY</span>
+                            <span className="text-[9px] text-gray-400 font-mono">Slow, Comforting, and Ultra-Calming Hook</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const text = `FlowHer 15-Second Warm Calm Sanctuary Script:\n\n[0:00 - 0:05]\nVisual: Close-up of a warm, friendly woman's face, looking directly at the camera with a gentle, reassuring smile. Soft pastel lighting.\nVoiceover (Warm, reassuring): "For when your mind is running a thousand miles an hour... and you just need a quiet place to land."\nText Overlay: "When your mind is running 1,000 miles an hour..."\n\n[0:05 - 0:10]\nVisual: She takes a slow, deep breath, her eyes softening as her shoulders drop in absolute comfort.\nVoiceover: "No pressure. No guilt. Just a soft space to breathe and flow."\nText Overlay: "No pressure. Just a soft space."\n\n[0:10 - 0:15]\nVisual: She smiles warmly as a cinematic lavender FlowHer emblem fades onto the screen.\nVoiceover: "Welcome home. This is FlowHer."\nText Overlay: "Welcome home.\nFlowHer™\nThe gentle focus sanctuary for ADHD. Link in Bio."`;
+                              navigator.clipboard.writeText(text);
+                              triggerToast("Warm Sanctuary Script copied! 📋🎬🌸");
+                            }}
+                            className="bg-[#E879F9] text-black hover:bg-[#E879F9]/90 text-[10px] font-mono px-3 py-1.5 rounded-xl transition-all font-bold shadow-lg shadow-[#E879F9]/10"
+                          >
+                            Copy Script
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-gray-300 font-light leading-relaxed">
+                          A warm, tender, high-retention 15-second spot. Intended to sound like a gentle friend whispering a sigh of relief. Perfectly timed for maximum physical and emotional calming.
+                        </p>
+
+                        <div className="space-y-2 mt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-teal font-mono uppercase block mb-1">Phase 1 (0:00-0:05)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"For when your mind is running a thousand miles an hour... and you just need a quiet place to land."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: Emotional understanding</span>
+                            </div>
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-[#E879F9] font-mono uppercase block mb-1">Phase 2 (0:05-0:10)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"No pressure. No guilt. Just a soft space to breathe and flow."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: Relieving external pressure</span>
+                            </div>
+                            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
+                              <span className="text-[9px] font-bold text-teal font-mono uppercase block mb-1">Phase 3 (0:10-0:15)</span>
+                              <p className="text-[11px] text-gray-300 leading-snug">"Welcome home. This is FlowHer."</p>
+                              <span className="text-[9px] text-gray-400 font-mono italic block mt-1">Focus: Safe haven invitation</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 bg-black/20 p-3 rounded-xl border border-white/5">
+                          <span className="text-[10px] text-gray-300 font-semibold block mb-1">🎙️ Recording Guidance & Lip-Sync Tips</span>
+                          <p className="text-[10.5px] text-gray-400 leading-relaxed font-light">
+                            Pair this recording with a <strong>soft lofi acoustic guitar strum</strong> or low-frequency natural rain sounds. When generating the lip-sync or Kling audio, use a "warm, comforting female whisper" voice preset. Make sure the visual depicts her closing her eyes slightly at <strong>0:06</strong> to match the heavy exhale of the script.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Video Guide: Negative Prompts & Lip-Sync Troubleshooting */}
+                      <div className="bg-gradient-to-r from-red-500/10 to-transparent border border-red-500/20 rounded-2xl p-5 space-y-4">
+                        <div>
+                          <span className="text-[10px] tracking-widest text-red-400 font-mono block uppercase font-bold">🚫 EXCELLENT NEGATIVE PROMPTS FOR AI VIDEO</span>
+                          <span className="text-[9px] text-gray-400 font-mono">For WAN 2.6, Kling, & Luma text-to-video generation</span>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="bg-black/30 p-3 rounded-xl border border-white/5 space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9.5px] font-bold text-red-300 font-mono">PRO NEGATIVE PROMPT (UNIVERSAL)</span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText("oversaturated, deformed, watermark, low quality, glitch, fast motion, mechanical movement, flashing lights, robotic acting, unnatural eyes, sudden scene cuts, bad anatomy, text overlays, 3d render feel, plastic skin, stiff posture, jerky camera pan");
+                                  triggerToast("Pro Negative Prompt copied! 📋");
+                                }}
+                                className="bg-red-500/20 hover:bg-red-500/30 text-red-200 text-[9px] font-mono px-2 py-0.5 rounded transition-all"
+                              >
+                                Copy Prompt
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-gray-300 font-mono leading-relaxed bg-black/50 p-2 rounded mt-1 select-all">
+                              oversaturated, deformed, watermark, low quality, glitch, fast motion, mechanical movement, flashing lights, robotic acting, unnatural eyes, sudden scene cuts, bad anatomy, text overlays, 3d render feel, plastic skin, stiff posture, jerky camera pan
+                            </p>
+                          </div>
+
+                          <div className="bg-black/30 p-3 rounded-xl border border-white/5 space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9.5px] font-bold text-teal font-mono">💡 KLING 200-CHARACTER LIP-SYNC FIX</span>
+                              <span className="text-[9px] bg-teal/20 text-teal px-1 rounded">CRITICAL</span>
+                            </div>
+                            <p className="text-[11.5px] text-gray-300 leading-relaxed font-light">
+                              Kling has a strict limit of <strong>200 characters</strong> in the prompt description box when launching a lip-sync generation. Your previous prompt was too long, causing the error! Here is a micro-prompt under 200 characters that delivers perfect quality:
+                            </p>
+                            <div className="flex justify-between items-center mt-2 bg-black/50 p-2 rounded border border-teal/10">
+                              <span className="text-[11px] text-gray-300 font-mono select-all">Realistic natural lip-sync. Weary, genuine, and sincere face expression. Subtle blinking, soft facial muscle motion, photorealistic details.</span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText("Realistic natural lip-sync. Weary, genuine, and sincere face expression. Subtle blinking, soft facial muscle motion, photorealistic details.");
+                                  triggerToast("Kling-safe prompt copied! 📋");
+                                }}
+                                className="text-[9px] font-mono text-teal bg-teal/10 hover:bg-teal/20 px-2 py-0.5 rounded ml-2"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
