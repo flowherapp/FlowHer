@@ -1,10 +1,23 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
-import firebaseConfig from "../firebase-applet-config.json";
+// Safely & dynamically resolve the firebase applet configuration if it exists to avoid build-time errors when deleted
+const firebaseConfigModules = import.meta.glob("../firebase-applet-config.json", { eager: true });
+const configPaths = Object.keys(firebaseConfigModules);
+const firebaseConfig: any = configPaths.length > 0 
+  ? (firebaseConfigModules[configPaths[0]] as any).default 
+  : {
+      apiKey: "dummy-api-key-or-none",
+      authDomain: "dummy-project.firebaseapp.com",
+      projectId: "dummy-project",
+      storageBucket: "dummy-project.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:0000000000000000000000",
+      firestoreDatabaseId: "(default)"
+    };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || "(default)");
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
