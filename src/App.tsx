@@ -579,6 +579,48 @@ export default function App() {
     const savedPlan = localStorage.getItem("fh_user_plan") as "free" | "core" | null;
     return savedPlan || "free"; // Default to free for raw incoming users or guests
   });
+
+  // Secret Promotion / Campaign Architecture Tab Controls (Marketing Mode)
+  const [promoUnlocked, setPromoUnlocked] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("promo") === "true" || params.get("marketing") === "true" || params.get("admin") === "true") {
+        localStorage.setItem("fh_promo_unlocked", "true");
+        return true;
+      }
+      return localStorage.getItem("fh_promo_unlocked") === "true";
+    }
+    return false;
+  });
+  const [footerClicks, setFooterClicks] = useState<number>(0);
+
+  const hasPromoAccess = (user?.email === "s.strain04@gmail.com") || promoUnlocked;
+
+  const handleFooterCopyrightClick = () => {
+    setFooterClicks(prev => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setPromoUnlocked(curr => {
+          const updated = !curr;
+          localStorage.setItem("fh_promo_unlocked", String(updated));
+          triggerToast(`Campaign & Promotion Planner ${updated ? "UNLOCKED 📣 (Direct Owner/Marketing Access)" : "LOCKED 🔒 (Public View Active)"}`);
+          return updated;
+        });
+        return 0;
+      }
+      if (next > 1) {
+        triggerToast(`Owner Access: Tap ${5 - next} more times to toggle Marketing controls...`);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (appTab === "promote" && !hasPromoAccess) {
+      setAppTab("home");
+    }
+  }, [appTab, hasPromoAccess]);
+
   const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signup");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "", promo: "" });
@@ -946,6 +988,119 @@ export default function App() {
   const [selectedSoundCue, setSelectedSoundCue] = useState<string>(() => {
     return localStorage.getItem("fh_selected_sound_cue") || "gentle-chime";
   });
+
+  // Daily Mood check-in notification reminder states
+  const [moodNotificationsEnabled, setMoodNotificationsEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem("fh_mood_notifications_enabled");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<string>(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      return Notification.permission;
+    }
+    return "unsupported";
+  });
+  const [lastMoodCheckinDate, setLastMoodCheckinDate] = useState<string>(() => {
+    return localStorage.getItem("fh_last_mood_checkin_date") || "";
+  });
+
+  const requestNotificationPermission = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const status = await Notification.requestPermission();
+        setNotificationPermissionStatus(status);
+        if (status === "granted") {
+          setMoodNotificationsEnabled(true);
+          localStorage.setItem("fh_mood_notifications_enabled", "true");
+          triggerToast("Browser notification permissions granted! reminders active 🔔");
+          try {
+            new Notification("FlowHer™ Daily Reminders", {
+              body: "Great! Daily Mood check-in reminders are now active for 9 AM. 🌱",
+              icon: "/favicon.ico",
+            });
+          } catch (e) {
+            console.warn("Could not fire confirmation notification", e);
+          }
+        } else {
+          setMoodNotificationsEnabled(false);
+          localStorage.setItem("fh_mood_notifications_enabled", "false");
+          triggerToast("Notification permission denied or dismissed.");
+        }
+      } catch (err) {
+        console.error("Error setting up notification permission", err);
+      }
+    } else {
+      triggerToast("Browser notifications are not supported in this environment.");
+    }
+  };
+
+  const testMoodNotification = () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission !== "granted") {
+        requestNotificationPermission();
+        return;
+      }
+      try {
+        new Notification("FlowHer™ Daily Check-In Reminder (Test)", {
+          body: "This is a live test of your Daily Mood Check-In browser reminder. How is your brain energy today? 🌱✨",
+          icon: "/favicon.ico",
+          tag: "daily-mood-test",
+        });
+        triggerToast("Test browser notification dispatched successfully! 🔔");
+      } catch (e) {
+        console.warn("Could not fire test notification", e);
+        triggerToast("Could not trigger browser notification. Ensure permissions are active.");
+      }
+    } else {
+      triggerToast("Notifications are not supported in this browser.");
+    }
+  };
+
+  const handleMoodCheckinCompleted = () => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    setLastMoodCheckinDate(todayStr);
+    localStorage.setItem("fh_last_mood_checkin_date", todayStr);
+  };
+
+  useEffect(() => {
+    if (!moodNotificationsEnabled) return;
+    if (notificationPermissionStatus !== "granted") return;
+
+    const runPeriodicCheck = () => {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const hasCheckedInToday = localStorage.getItem("fh_last_mood_checkin_date") === todayStr || lastMoodCheckinDate === todayStr;
+      
+      if (hasCheckedInToday) {
+        return; 
+      }
+
+      // Check if we already notified today
+      const alreadyNotified = localStorage.getItem("fh_last_mood_notified_date") === todayStr;
+      if (alreadyNotified) {
+        return;
+      }
+
+      const currentHour = new Date().getHours();
+      // Is it 9 AM or later?
+      if (currentHour >= 9) {
+        try {
+          new Notification("FlowHer™ Daily Mindful Check-In", {
+            body: "How is your brain energy today? Take a moment to record your Daily Mood check-in and honor your battery. 🌱✨",
+            icon: "/favicon.ico",
+            tag: "daily-mood-reminder",
+          });
+          localStorage.setItem("fh_last_mood_notified_date", todayStr);
+          triggerToast("Daily Mood Check-In reminder notification fired! 🔔");
+        } catch (e) {
+          console.warn("Could not fire dynamic daily checkin notification", e);
+        }
+      }
+    };
+
+    runPeriodicCheck();
+    const interval = setInterval(runPeriodicCheck, 30000);
+    return () => clearInterval(interval);
+  }, [moodNotificationsEnabled, notificationPermissionStatus, lastMoodCheckinDate]);
 
   // A persistent ref to reuse AudioContext and bypass browser session blockages
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -4698,7 +4853,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   onClick={() => setCurrentView("founding")}
                   className="bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold py-4 px-8 rounded-2xl hover:opacity-95 shadow-md flex items-center justify-center gap-2"
                 >
-                  <span>Secure Core Founding Spot</span>
+                  <span>Become a Founding Member</span>
                   <ArrowRight className="h-4.5 w-4.5" />
                 </button>
                 <button 
@@ -4708,7 +4863,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   }}
                   className="bg-plum/10 text-plum border border-plum/15 text-sm font-medium py-4 px-8 rounded-2xl hover:bg-plum/15 transition-all text-center"
                 >
-                  Initiate Basic Demo Access
+                  Try Free Demo
                 </button>
               </div>
 
@@ -4977,7 +5132,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
           {/* Simple CTA footer */}
           <footer className="w-full py-12 border-t border-mag/10 text-center space-y-4 text-xs text-[#8A7F8D]">
-            <p className="font-serif italic text-lg text-[#3D1052]">FlowHer™ © 2026</p>
+            <p 
+              onClick={handleFooterCopyrightClick} 
+              className="font-serif italic text-lg text-[#3D1052] cursor-pointer select-none hover:opacity-80 transition-all inline-block active:scale-95"
+              title="Click 5 times for administrator/marketing features"
+            >
+              FlowHer™ © 2026
+            </p>
             <p className="font-light">FlowHer™ — For women whose brains work differently.</p>
             <div className="flex justify-center gap-6 mt-1 flex-wrap">
               <button onClick={() => setCurrentView("brand-kit")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🎨 Brand Identity Kit</button>
@@ -5719,7 +5880,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
           {/* Core Footer section inside brand-kit view */}
           <footer className="w-full py-16 border-t border-mag/10 text-center space-y-4 text-xs text-[#8A7F8D] mt-16">
-            <p className="font-serif italic text-lg text-[#3D1052]">FlowHer™ © 2026</p>
+            <p 
+              onClick={handleFooterCopyrightClick} 
+              className="font-serif italic text-lg text-[#3D1052] cursor-pointer select-none hover:opacity-80 transition-all inline-block active:scale-95"
+              title="Click 5 times for administrator/marketing features"
+            >
+              FlowHer™ © 2026
+            </p>
             <p className="font-light">FlowHer™ — For women whose brains work differently.</p>
             <div className="flex justify-center gap-6 mt-1.5">
               <button onClick={() => setCurrentView("landing")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🏠 Home Landing</button>
@@ -6376,6 +6543,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               <button 
                 onClick={() => {
                   setStreakCount(prev => prev + 1);
+                  handleMoodCheckinCompleted();
                   triggerToast("Organic checkin logged. Day preservation saved! 🌱");
                 }}
                 className="text-[10px] uppercase font-mono bg-teal/15 border border-teal/30 text-teal py-1 px-3 rounded-full hover:bg-teal/20"
@@ -6499,34 +6667,36 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 </div>
 
                 {/* VISUAL BANNER CARD FOR THE NEW VIRAL PROMOTION PLANNER & ACCELERATION HUB */}
-                <div 
-                  onClick={() => {
-                    setAppTab("promote");
-                    setSelectedWorkTool(null);
-                  }}
-                  className="bg-gradient-to-br from-[#1E1B4B]/60 via-[#130620] to-teal/10 border border-teal/30 rounded-2xl p-5 cursor-pointer hover:border-[#2DD4BF]/60 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all flex items-center justify-between text-left group duration-300 relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-radial from-teal/10 to-transparent blur-xl group-hover:from-teal/20 transition-all" />
-                  <div className="space-y-1.5 pr-2 z-10">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-teal/15 text-teal text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-teal/20">
-                        Campaign Architect 📣
-                      </span>
-                      <span className="bg-plum/20 text-[#E085C9] text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-[#C45BAA]/25">
-                        Brand Toolkit Loaded
-                      </span>
+                {hasPromoAccess && (
+                  <div 
+                    onClick={() => {
+                      setAppTab("promote");
+                      setSelectedWorkTool(null);
+                    }}
+                    className="bg-gradient-to-br from-[#1E1B4B]/60 via-[#130620] to-teal/10 border border-teal/30 rounded-2xl p-5 cursor-pointer hover:border-[#2DD4BF]/60 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all flex items-center justify-between text-left group duration-300 relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-radial from-teal/10 to-transparent blur-xl group-hover:from-teal/20 transition-all" />
+                    <div className="space-y-1.5 pr-2 z-10">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-teal/15 text-teal text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-teal/20">
+                          Campaign Architect 📣
+                        </span>
+                        <span className="bg-plum/20 text-[#E085C9] text-[8px] sm:text-[9.5px] font-mono tracking-wider font-semibold uppercase px-2.5 py-0.5 rounded-full border border-[#C45BAA]/25">
+                          Brand Toolkit Loaded
+                        </span>
+                      </div>
+                      <h4 className="font-serif text-[#FAF7FF] font-medium text-base group-hover:text-[#2DD4BF] transition-colors">
+                        FlowHer™ Viral Promotion Hub & Planner
+                      </h4>
+                      <p className="text-xs text-gray-300 font-light leading-relaxed max-w-md">
+                        Instagram & TikTok video prompts, exact posting copy for Reddit & LinkedIn, publication pitches, and your interactive play-by-play launching checklist.
+                      </p>
                     </div>
-                    <h4 className="font-serif text-[#FAF7FF] font-medium text-base group-hover:text-[#2DD4BF] transition-colors">
-                      FlowHer™ Viral Promotion Hub & Planner
-                    </h4>
-                    <p className="text-xs text-gray-300 font-light leading-relaxed max-w-md">
-                      Instagram & TikTok video prompts, exact posting copy for Reddit & LinkedIn, publication pitches, and your interactive play-by-play launching checklist.
-                    </p>
+                    <div className="h-10 w-10 rounded-full bg-teal/10 border border-teal/20 flex items-center justify-center text-[#2DD4BF] font-serif text-lg group-hover:bg-[#2DD4BF] group-hover:text-[#130620] group-hover:border-[#2DD4BF] shadow-[0_0_15px_rgba(45,212,191,0.15)] transition-all flex-shrink-0 z-10">
+                      →
+                    </div>
                   </div>
-                  <div className="h-10 w-10 rounded-full bg-teal/10 border border-teal/20 flex items-center justify-center text-[#2DD4BF] font-serif text-lg group-hover:bg-[#2DD4BF] group-hover:text-[#130620] group-hover:border-[#2DD4BF] shadow-[0_0_15px_rgba(45,212,191,0.15)] transition-all flex-shrink-0 z-10">
-                    →
-                  </div>
-                </div>
+                )}
 
                 {/* Mood picker check-in */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
@@ -6538,6 +6708,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         onClick={() => {
                           setSelectedMoodIndex(idx);
                           localStorage.setItem("fh_selected_mood", String(idx));
+                          handleMoodCheckinCompleted();
                           triggerToast(`Mood checked in as ${m.name} ✓`);
                         }}
                         className={`p-3 rounded-xl border text-center transition-all ${
@@ -6575,6 +6746,123 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       {MOODS[selectedMoodIndex].tips}
                     </div>
                   )}
+
+                  {/* Browser notification integration */}
+                  <div className="border-t border-white/5 pt-4 mt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] tracking-wider text-gray-400 font-mono uppercase block">Browser Notifications</span>
+                      <span className={`text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full ${
+                        notificationPermissionStatus === "granted" 
+                          ? "bg-teal/15 text-teal border border-teal/20" 
+                          : notificationPermissionStatus === "denied"
+                          ? "bg-rose/15 text-rose border border-rose/20"
+                          : "bg-white/5 text-gray-400 border border-white/5"
+                      }`}>
+                        Status: {notificationPermissionStatus === "granted" ? "🟢 Granted" : notificationPermissionStatus === "denied" ? "🔴 Denied" : "⚪ Pending/Supported"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#1C0A2E]/40 border border-[#C45BAA]/10 rounded-xl p-3">
+                      <div className="space-y-1">
+                        <div className="text-xs font-semibold text-[#FAF7FF]">9 AM Check-In Reminder</div>
+                        <div className="text-[10px] text-gray-400 font-light leading-relaxed">
+                          Notifies you if you haven't completed your dynamic brain energy check-in by 9:00 AM.
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (moodNotificationsEnabled) {
+                              setMoodNotificationsEnabled(false);
+                              localStorage.setItem("fh_mood_notifications_enabled", "false");
+                              triggerToast("9 AM check-in reminders disabled 🔕");
+                            } else {
+                              if (notificationPermissionStatus !== "granted") {
+                                requestNotificationPermission();
+                              } else {
+                                setMoodNotificationsEnabled(true);
+                                localStorage.setItem("fh_mood_notifications_enabled", "true");
+                                triggerToast("9 AM check-in reminders enabled! 🔔");
+                              }
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+                            moodNotificationsEnabled 
+                              ? "bg-[#C45BAA]/20 text-white border border-[#C45BAA]/45 hover:bg-[#C45BAA]/30" 
+                              : "bg-white/5 text-gray-300 border border-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          {moodNotificationsEnabled ? "🔔 Reminders On" : "🔕 Reminders Off"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Developer and testing utilities */}
+                    <div className="bg-white/2 rounded-xl p-3 border border-white/5 flex flex-wrap items-center justify-between gap-2.5">
+                      <div className="text-[10px] text-gray-400 font-mono">
+                        {(() => {
+                          const today = new Date().toISOString().split("T")[0];
+                          const checkedIn = (lastMoodCheckinDate === today);
+                          return (
+                            <span>Today's Check-In: <strong className={checkedIn ? "text-teal font-semibold" : "text-rose font-semibold"}>{checkedIn ? "Completed ✓" : "Incomplete ✗"}</strong></span>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={testMoodNotification}
+                          className="hover:scale-105 active:scale-95 text-[9px] uppercase font-mono tracking-wider font-semibold text-teal hover:text-white bg-teal/10 border border-teal/20 hover:bg-teal/20 px-2 py-1 rounded transition-all"
+                          title="Direct test notification to check behavior"
+                        >
+                          Test Notification
+                        </button>
+                        <button
+                          onClick={() => {
+                            try {
+                              const todayStr = new Date().toISOString().split("T")[0];
+                              const isCheckedIn = localStorage.getItem("fh_last_mood_checkin_date") === todayStr || lastMoodCheckinDate === todayStr;
+                              if (isCheckedIn) {
+                                triggerToast("Cannot simulate because you checked in today already. Clear check-in first.");
+                                return;
+                              }
+                              
+                              if (Notification.permission !== "granted") {
+                                requestNotificationPermission();
+                                return;
+                              }
+
+                              new Notification("FlowHer™ Daily Mindful Check-In (Simulation)", {
+                                body: "How is your brain energy today? Take a moment to record your Daily Mood and care for your limits. 🌱✨(9 AM Simulation)",
+                                icon: "/favicon.ico",
+                              });
+                              triggerToast("Bypassed 9 AM check-in restriction and simulated the notification successfully!");
+                            } catch (e) {
+                              triggerToast("Bypass failed. Confirm browser permissions are active.");
+                            }
+                          }}
+                          className="hover:scale-105 active:scale-95 text-[9px] uppercase font-mono tracking-wider font-semibold text-[#FAF6F0] bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded transition-all"
+                          title="Simulate 9 AM time check and trigger prediction"
+                        >
+                          Simulate 9AM reminder
+                        </button>
+                        {lastMoodCheckinDate && (
+                          <button
+                            onClick={() => {
+                              setLastMoodCheckinDate("");
+                              localStorage.removeItem("fh_last_mood_checkin_date");
+                              localStorage.removeItem("fh_last_mood_notified_date");
+                              triggerToast("Successfully cleared check-in state for today!");
+                            }}
+                            className="hover:scale-105 active:scale-95 text-[9px] uppercase font-mono tracking-wider font-semibold text-rose hover:text-white bg-rose/10 border border-rose/20 hover:bg-rose/20 px-2 py-1 rounded transition-all"
+                            title="Reset checked-in status so you can trigger simulated checks"
+                          >
+                            Reset Check-in
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Affirmation slider card */}
@@ -10379,16 +10667,18 @@ s.strain04@gmail.com`;
               <Lock className="h-5 w-5" />
               <span className="text-[9px] font-sans">Energy Log</span>
             </button>
-            <button 
-              onClick={() => {
-                setAppTab("promote");
-                setSelectedWorkTool(null);
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "promote" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Megaphone className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Promote</span>
-            </button>
+            {hasPromoAccess && (
+              <button 
+                onClick={() => {
+                  setAppTab("promote");
+                  setSelectedWorkTool(null);
+                }}
+                className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "promote" ? "text-mag" : "text-gray-400"}`}
+              >
+                <Megaphone className="h-5 w-5" />
+                <span className="text-[9px] font-sans">Promote</span>
+              </button>
+            )}
           </nav>
 
           {/* GUIDED INTERACTIVE TOUR MODAL OVERLAY */}
