@@ -358,6 +358,7 @@ Ensure a calm, grounding, and supportive tone. Do not use corporate double-speak
 // ==========================================
 
 app.get("/get-source-code", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
   try {
     const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
     if (fs.existsSync(singleFileHtmlPath)) {
@@ -505,6 +506,7 @@ app.get("/get-source-code", (req, res) => {
 
 // Serve the raw single-file HTML for clean direct viewing or download
 app.get("/get-source-code/raw", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
   try {
     const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
     if (fs.existsSync(singleFileHtmlPath)) {
@@ -520,6 +522,7 @@ app.get("/get-source-code/raw", (req, res) => {
 
 // Expose the unified FlowHer Deployment and Source Code Assistant page
 app.get("/get-react-code", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
   try {
     const reactAppPath = path.join(process.cwd(), "src", "App.tsx");
     const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
@@ -796,6 +799,7 @@ app.get("/get-react-code", (req, res) => {
 
 // Expose raw /src/App.tsx standard text
 app.get("/get-react-code/raw", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
   try {
     const reactAppPath = path.join(process.cwd(), "src", "App.tsx");
     if (fs.existsSync(reactAppPath)) {
