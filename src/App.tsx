@@ -81,7 +81,10 @@ import {
   Upload,
   Plus,
   Megaphone,
-  GripVertical
+  GripVertical,
+  Flame,
+  History,
+  Trash2
 } from "lucide-react";
 
 import { 
@@ -93,7 +96,7 @@ import {
   ADHD_GLOSSARY
 } from "./constants";
 
-import { Win, MaskMoment } from "./types";
+import { Win, MaskMoment, VictoryLogEntry } from "./types";
 
 const MINIMIZERS = [
   { regex: /\bjust\b/gi, word: "just", replacement: "(remove entirely)", reason: "Softens recommendations and signals hesitancy." },
@@ -812,6 +815,135 @@ export default function App() {
     }
   };
 
+  const recordVictoryLog = (currentPriorities: string[]) => {
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const todayStr = `${year}-${month}-${day}`;
+
+      const alreadyLoggedToday = victoryLog.some(log => log.date === todayStr);
+      if (alreadyLoggedToday) return;
+
+      const newLogEntry: VictoryLogEntry = {
+        id: `victory_${Date.now()}`,
+        date: todayStr,
+        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        formattedDate: now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }),
+        wins: [...currentPriorities]
+      };
+
+      setVictoryLog(prev => [newLogEntry, ...prev]);
+    } catch (err) {
+      console.warn("Unable to record victory log", err);
+    }
+  };
+
+  const getPriorityStreakData = () => {
+    if (victoryLog.length === 0) {
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const dObj = new Date();
+        dObj.setDate(dObj.getDate() - i);
+        const year = dObj.getFullYear();
+        const month = String(dObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dObj.getDate()).padStart(2, "0");
+        const dStr = `${year}-${month}-${day}`;
+        last7Days.push({
+          dateStr: dStr,
+          label: dObj.toLocaleDateString([], { weekday: 'narrow' }),
+          completed: false,
+          isToday: i === 0
+        });
+      }
+      return { current: 0, longest: 0, last7Days };
+    }
+
+    const dates: string[] = Array.from(new Set(victoryLog.map((l: VictoryLogEntry) => l.date))) as string[];
+    dates.sort((a: string, b: string) => b.localeCompare(a));
+
+    const getLocalDateOnly = (dateObj: Date) => {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const today = getLocalDateOnly(new Date());
+    
+    const yesterdayObj = new Date();
+    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+    const yesterday = getLocalDateOnly(yesterdayObj);
+
+    let currentStreak = 0;
+    if (dates[0] === today || dates[0] === yesterday) {
+      let checkDateString: string = dates[0] as string;
+      let checkIdx = 0;
+      
+      while (checkIdx < dates.length) {
+        if (dates[checkIdx] === checkDateString) {
+          currentStreak++;
+          const parts = checkDateString.split("-");
+          const prevDayObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          prevDayObj.setDate(prevDayObj.getDate() - 1);
+          checkDateString = getLocalDateOnly(prevDayObj);
+          
+          checkIdx = dates.indexOf(checkDateString);
+          if (checkIdx === -1) {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    const sortedDatesAsc: string[] = [...dates].reverse() as string[];
+    let maxStreak = 0;
+    let tempStreak = 0;
+    if (sortedDatesAsc.length > 0) {
+      tempStreak = 1;
+      maxStreak = 1;
+      for (let i = 1; i < sortedDatesAsc.length; i++) {
+        const d1 = sortedDatesAsc[i - 1] as string;
+        const d2 = sortedDatesAsc[i] as string;
+        
+        const p1 = d1.split("-");
+        const expectedNextObj = new Date(parseInt(p1[0]), parseInt(p1[1]) - 1, parseInt(p1[2]));
+        expectedNextObj.setDate(expectedNextObj.getDate() + 1);
+        const expectedNextStr = getLocalDateOnly(expectedNextObj);
+
+        if (d2 === expectedNextStr) {
+          tempStreak++;
+          if (tempStreak > maxStreak) maxStreak = tempStreak;
+        } else {
+          tempStreak = 1;
+        }
+      }
+    }
+
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const dObj = new Date();
+      dObj.setDate(dObj.getDate() - i);
+      const dStr = getLocalDateOnly(dObj);
+      const wasCompleted = victoryLog.some(log => log.date === dStr);
+      last7Days.push({
+        dateStr: dStr,
+        label: dObj.toLocaleDateString([], { weekday: 'narrow' }),
+        completed: wasCompleted,
+        isToday: dStr === today
+      });
+    }
+
+    return {
+      current: currentStreak,
+      longest: maxStreak,
+      last7Days
+    };
+  };
+
   // Action Priorities State
   const [priorities, setPriorities] = useState<string[]>(() => {
     const saved = localStorage.getItem("fh_priorities");
@@ -822,6 +954,13 @@ export default function App() {
     const saved = localStorage.getItem("fh_priorities_completed");
     return saved ? JSON.parse(saved) : [false, false, false];
   });
+
+  const [victoryLog, setVictoryLog] = useState<VictoryLogEntry[]>(() => {
+    const saved = localStorage.getItem("fh_victory_log");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const streakData = getPriorityStreakData();
 
   // Drag and drop states for priorities
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -1406,6 +1545,15 @@ export default function App() {
   }, [prioritiesCompleted]);
 
   useEffect(() => {
+    localStorage.setItem("fh_victory_log", JSON.stringify(victoryLog));
+    if (auth.currentUser) {
+      updateDoc(doc(db, "users", auth.currentUser.uid), { victoryLog }).catch((err) =>
+        handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`)
+      );
+    }
+  }, [victoryLog]);
+
+  useEffect(() => {
     localStorage.setItem("fh_user_plan", userPlan);
     if (auth.currentUser) {
       updateDoc(doc(db, "users", auth.currentUser.uid), { userPlan }).catch((err) =>
@@ -1511,7 +1659,8 @@ export default function App() {
               dopamineSparks: Number(localStorage.getItem("fh_dopamine_sparks") || "0"),
               userPlan: localStorage.getItem("fh_user_plan") || (email === "s.strain04@gmail.com" ? "core" : "free"),
               priorities: JSON.parse(localStorage.getItem("fh_priorities") || '["", "", ""]'),
-              prioritiesCompleted: JSON.parse(localStorage.getItem("fh_priorities_completed") || '[false, false, false]')
+              prioritiesCompleted: JSON.parse(localStorage.getItem("fh_priorities_completed") || '[false, false, false]'),
+              victoryLog: JSON.parse(localStorage.getItem("fh_victory_log") || '[]')
             };
             await setDoc(userRef, initialProfile);
 
@@ -1567,6 +1716,7 @@ export default function App() {
             if (data.userPlan !== undefined) setUserPlan(data.userPlan);
             if (data.priorities !== undefined) setPriorities(data.priorities);
             if (data.prioritiesCompleted !== undefined) setPrioritiesCompleted(data.prioritiesCompleted);
+            if (data.victoryLog !== undefined) setVictoryLog(data.victoryLog);
           }
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${uid}`));
 
@@ -7701,6 +7851,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                                 const allThreeCompleted = priorities.every(item => item.trim() !== "") && newCompleted.every(status => status);
                                 if (allThreeCompleted) {
                                   triggerVictoryConfetti("all-completed");
+                                  recordVictoryLog(priorities);
                                 } else {
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const x = (rect.left + rect.width / 2) / window.innerWidth;
@@ -7724,6 +7875,142 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Priority Victory Log and Daily Streak Dashboard */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-[#FAF6F0]" />
+                      <span className="text-[10px] tracking-widest text-[#FAF6F0] font-mono block uppercase">Victory Log & Streaks</span>
+                    </div>
+                  </div>
+
+                  {/* Prominent Golden/Teal Consecutive Day Streak Card */}
+                  <div className="relative overflow-hidden bg-gradient-to-br from-teal/15 via-[#C45BAA]/5 to-transparent border border-teal/15 rounded-xl p-4.5 flex items-center justify-between gap-4">
+                    <div className="space-y-1 text-left">
+                      <span className="text-[9px] font-mono tracking-wider text-teal uppercase font-bold">Consecutive Completes</span>
+                      <h4 className="text-3xl font-black text-white tracking-tight flex items-baseline gap-2 font-sans">
+                        {streakData.current}
+                        <span className="text-xs font-normal text-gray-400 font-mono">
+                          {streakData.current === 1 ? "day streak count" : "consecutive days"}
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-[#807584] leading-relaxed">
+                        {streakData.current > 0 
+                          ? "🔥 Sparkling executive stamina! Maintain the high-dopamine cycle today." 
+                          : "🚀 Power up! Tackle all 3 daily priorities to activate your consecutive streak."}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 relative">
+                      <div className="absolute -inset-1.5 rounded-full bg-teal/30 blur-md opacity-40"></div>
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                        streakData.current > 0 
+                          ? "bg-teal/15 border-teal/30 text-teal shadow-[0_0_15px_rgba(45,212,191,0.25)]" 
+                          : "bg-white/5 border-white/10 text-[#8A7F8D]"
+                      }`}>
+                        <Flame className={`h-7 w-7 ${streakData.current > 0 ? "fill-teal animate-pulse" : ""}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-[#8A7F8D] leading-relaxed">
+                    Completing all three daily priorities fuels your executive momentum! Consistency builds cognitive flow. Here is your tracking record:
+                  </p>
+
+                  {/* Streak Visual Ribbon (7 Days) */}
+                  <div className="bg-white/2 border border-white/5 rounded-xl p-3.5 flex flex-col items-center gap-3">
+                    <div className="w-full flex justify-between px-2 text-[10px] font-mono text-[#8A7F8D]">
+                      <span>Weekly Focus Alignment</span>
+                      <span className="text-teal font-semibold">Best Streak: {streakData.longest}d</span>
+                    </div>
+
+                    <div className="w-full grid grid-cols-7 gap-1">
+                      {streakData.last7Days.map((day, dIdx) => (
+                        <div key={dIdx} className="flex flex-col items-center gap-2">
+                          <div className="text-[10px] font-mono text-[#8A7F8D] uppercase">
+                            {day.label}
+                          </div>
+                          <div 
+                            title={day.completed ? `Completed on ${day.dateStr}!` : `Not completed on ${day.dateStr}`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative ${
+                              day.completed 
+                                ? "bg-teal/20 border-teal text-teal shadow-[0_0_10px_rgba(45,212,191,0.2)]" 
+                                : day.isToday
+                                  ? "border border-dashed border-[#C45BAA]/60 bg-white/2 text-[#FAF6F0]"
+                                  : "bg-white/2 border border-white/5 text-white/10"
+                            }`}
+                          >
+                            {day.completed ? (
+                              <Check className="h-4 w-4 stroke-[3]" />
+                            ) : day.isToday ? (
+                              <span className="text-[9px] font-bold text-[#C45BAA]">Now</span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 bg-white/10 rounded-full" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* History Log Entries */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[10px] text-[#8A7F8D] uppercase tracking-wider font-mono px-1">
+                      <div className="flex items-center gap-1">
+                        <History className="h-3 w-3 text-[#C45BAA]" />
+                        <span>Recent Conquered Days</span>
+                      </div>
+                      {victoryLog.length > 0 && (
+                        <button 
+                          onClick={() => {
+                            if (window.confirm("Do you want to clear your Victory Log history? Your streaks will reset.")) {
+                              setVictoryLog([]);
+                            }
+                          }}
+                          className="text-white/30 hover:text-red-400 font-mono transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Reset Log</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {victoryLog.length === 0 ? (
+                      <div className="border border-dashed border-white/5 bg-white/2 rounded-xl p-4 text-center">
+                        <p className="text-xs text-[#8A7F8D] italic">
+                          No logged absolute victories today yet. Complete all 3 priorities above to trigger a celebratory dopamine blast and record your win! 🏔️✨
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {victoryLog.slice(0, 3).map((vEntry) => (
+                          <div 
+                            key={vEntry.id} 
+                            className="border border-white/5 bg-white/2 hover:bg-white/5 rounded-xl p-3 transition-colors text-xs space-y-2 text-left"
+                          >
+                            <div className="flex justify-between items-center border-b border-white/5 pb-1">
+                              <span className="font-semibold text-gray-200 text-[11px]">{vEntry.formattedDate}</span>
+                              <span className="text-[10px] bg-teal/10 text-teal px-1.5 py-0.5 rounded font-mono">{vEntry.time}</span>
+                            </div>
+                            <ul className="space-y-1 font-light text-[#8A7F8D]">
+                              {vEntry.wins.map((task, tIdx) => (
+                                <li key={tIdx} className="flex items-center gap-2 text-[10.5px] truncate">
+                                  <span className="text-teal font-mono">{(tIdx + 1)}.</span>
+                                  <span className="truncate max-w-full text-gray-300">{task || "Untitled Priority"}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                        {victoryLog.length > 3 && (
+                          <p className="text-[10px] text-center text-white/30 font-mono italic">
+                            Showing last 3 of {victoryLog.length} daily alignments
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

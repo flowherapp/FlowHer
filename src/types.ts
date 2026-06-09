@@ -37,6 +37,14 @@ export interface OnboardingData {
   completed: boolean;
 }
 
+export interface VictoryLogEntry {
+  id: string;
+  date: string;
+  time: string;
+  formattedDate: string;
+  wins: string[];
+}
+
 export interface UserState {
   plan: 'free' | 'core';
   username: string;
