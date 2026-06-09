@@ -752,6 +752,66 @@ export default function App() {
     }
   };
 
+  // Unique ADHD-friendly Victory confetti burst for positive reinforcement
+  const triggerVictoryConfetti = (type: "drag-top" | "all-completed") => {
+    try {
+      if (type === "drag-top") {
+        // High-dopamine single-fountain stream shooting upward
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ["#2DD4BF", "#C45BAA", "#FCD34D"],
+          startVelocity: 35,
+          gravity: 0.8,
+          ticks: 120
+        });
+        triggerToast("Priority Optimized! 🎯 Dragged to the top to capture your highest physical & mental energy level. Let's go!");
+      } else if (type === "all-completed") {
+        // Multi-burst firework celebration simulating a grand victory!
+        const duration = 2000;
+        const animationEnd = Date.now() + duration;
+        const colors = ["#C45BAA", "#2DD4BF", "#FCD34D", "#FFFFFF", "#9333EA"];
+
+        const interval = setInterval(() => {
+          const timeLeft = animationEnd - Date.now();
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            return;
+          }
+          // Launch burst from left side
+          confetti({
+            particleCount: 25,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.8 },
+            colors
+          });
+          // Launch burst from right side
+          confetti({
+            particleCount: 25,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.8 },
+            colors
+          });
+          // Launch central high burst
+          confetti({
+            particleCount: 15,
+            angle: 90,
+            spread: 80,
+            origin: { x: 0.5, y: 0.7 },
+            colors
+          });
+        }, 150);
+
+        triggerToast("🏆 ABSOLUTE TRIUMPH! All 3 top daily priorities completed! Your focus energy is off the charts. Take a deep breath! 🎉🌟");
+      }
+    } catch (err) {
+      console.warn("Unable to trigger victory confetti", err);
+    }
+  };
+
   // Action Priorities State
   const [priorities, setPriorities] = useState<string[]>(() => {
     const saved = localStorage.getItem("fh_priorities");
@@ -802,13 +862,19 @@ export default function App() {
     listPriorities.splice(targetIndex, 0, draggedItem);
     listCompleted.splice(targetIndex, 0, draggedComp);
 
+    const isDraggedToTop = targetIndex === 0 && draggedIdx > 0;
+
     setPriorities(listPriorities);
     setPrioritiesCompleted(listCompleted);
 
     setDraggedIdx(null);
     setDragOverIdx(null);
 
-    triggerToast("Priorities reordered successfully! 🔄");
+    if (isDraggedToTop) {
+      triggerVictoryConfetti("drag-top");
+    } else {
+      triggerToast("Priorities reordered successfully! 🔄");
+    }
   };
 
   // Keyboard/Button accessibility fallbacks for shifting positions
@@ -7632,10 +7698,15 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                               newCompleted[idx] = nextState;
                               setPrioritiesCompleted(newCompleted);
                               if (nextState) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = (rect.left + rect.width / 2) / window.innerWidth;
-                                const y = (rect.top + rect.height / 2) / window.innerHeight;
-                                triggerLocalizedConfetti(x, y);
+                                const allThreeCompleted = priorities.every(item => item.trim() !== "") && newCompleted.every(status => status);
+                                if (allThreeCompleted) {
+                                  triggerVictoryConfetti("all-completed");
+                                } else {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const x = (rect.left + rect.width / 2) / window.innerWidth;
+                                  const y = (rect.top + rect.height / 2) / window.innerHeight;
+                                  triggerLocalizedConfetti(x, y);
+                                }
                               }
                             }}
                             disabled={!p.trim()}
