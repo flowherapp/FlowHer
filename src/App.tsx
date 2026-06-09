@@ -75,11 +75,13 @@ import {
   Moon,
   LogOut,
   ChevronDown,
+  ChevronUp,
   User,
   Camera,
   Upload,
   Plus,
-  Megaphone
+  Megaphone,
+  GripVertical
 } from "lucide-react";
 
 import { 
@@ -760,6 +762,72 @@ export default function App() {
     const saved = localStorage.getItem("fh_priorities_completed");
     return saved ? JSON.parse(saved) : [false, false, false];
   });
+
+  // Drag and drop states for priorities
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Drag and drop handlers
+  const handlePriorityDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handlePriorityDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === index) return;
+    setDragOverIdx(index);
+  };
+
+  const handlePriorityDragEnd = () => {
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handlePriorityDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIndex) {
+      setDraggedIdx(null);
+      setDragOverIdx(null);
+      return;
+    }
+
+    const listPriorities = [...priorities];
+    const listCompleted = [...prioritiesCompleted];
+
+    const [draggedItem] = listPriorities.splice(draggedIdx, 1);
+    const [draggedComp] = listCompleted.splice(draggedIdx, 1);
+
+    listPriorities.splice(targetIndex, 0, draggedItem);
+    listCompleted.splice(targetIndex, 0, draggedComp);
+
+    setPriorities(listPriorities);
+    setPrioritiesCompleted(listCompleted);
+
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+
+    triggerToast("Priorities reordered successfully! 🔄");
+  };
+
+  // Keyboard/Button accessibility fallbacks for shifting positions
+  const shiftPriority = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= priorities.length) return;
+
+    const listPriorities = [...priorities];
+    const listCompleted = [...prioritiesCompleted];
+
+    // Swap elements
+    [listPriorities[index], listPriorities[targetIndex]] = [listPriorities[targetIndex], listPriorities[index]];
+    [listCompleted[index], listCompleted[targetIndex]] = [listCompleted[targetIndex], listCompleted[index]];
+
+    setPriorities(listPriorities);
+    setPrioritiesCompleted(listCompleted);
+
+    triggerToast("Priority shifted! 🔄");
+  };
 
   // Smallest Step Engine
   const [smallestStepInput, setSmallestStepInput] = useState("");
@@ -7483,58 +7551,108 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 {/* Priorities Setup */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-4">
                   <span className="text-[10px] tracking-widest text-[#C45BAA] font-mono block uppercase">Your Top 3 Daily Tasks</span>
-                  <p className="text-[11px] text-[#8A7F8D]">What is most important to get done today? Focus on just these three simple items.</p>
+                  <p className="text-[11px] text-[#8A7F8D]">What is most important to get done today? Focus on just these three simple items. Drag and drop items by their handle <span className="font-mono text-teal">⠿</span> or use the arrows to reorder them as your active executive energy, dopamine levels, and cognitive focus shift throughout the day.</p>
                   
-                  <div className="space-y-3">
-                    {priorities.map((p, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#C45BAA]/15 text-mag flex items-center justify-center font-mono text-xs font-bold leading-none shrink-0">{idx + 1}</span>
-                        <input 
-                          type="text"
-                          value={p}
-                          onChange={e => {
-                            const copy = [...priorities];
-                            copy[idx] = e.target.value;
-                            setPriorities(copy);
-                            if (!e.target.value.trim()) {
-                              const newCompleted = [...prioritiesCompleted];
-                              newCompleted[idx] = false;
-                              setPrioritiesCompleted(newCompleted);
-                            }
-                          }}
-                          className={`flex-1 bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-mag text-gray-200 transition-all ${
-                            prioritiesCompleted[idx] && p.trim() ? "line-through opacity-50 decoration-teal text-[#8A7F8D] border-teal/10" : ""
-                          }`}
-                          placeholder={`Enter Task ${idx + 1}`}
-                        />
-                        <button
-                          onClick={e => {
-                            if (!p.trim()) return;
-                            const newCompleted = [...prioritiesCompleted];
-                            const nextState = !newCompleted[idx];
-                            newCompleted[idx] = nextState;
-                            setPrioritiesCompleted(newCompleted);
-                            if (nextState) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const x = (rect.left + rect.width / 2) / window.innerWidth;
-                              const y = (rect.top + rect.height / 2) / window.innerHeight;
-                              triggerLocalizedConfetti(x, y);
-                            }
-                          }}
-                          disabled={!p.trim()}
-                          title={p.trim() ? "Toggle Priority Status" : "Enter a task first to complete it"}
-                          className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-300 shrink-0 cursor-pointer ${
-                            !p.trim() 
-                              ? "border-white/5 text-white/5 cursor-not-allowed opacity-20" 
-                              : prioritiesCompleted[idx]
-                                ? "bg-teal/20 border-teal text-teal shadow-[0_0_12px_rgba(45,212,191,0.2)] scale-105"
-                                : "bg-white/5 border-white/10 text-[#8A7F8D] hover:border-teal/50 hover:text-white"
+                  <div className="space-y-3 text-gray-200">
+                    {priorities.map((p, idx) => {
+                      const isDragged = draggedIdx === idx;
+                      const isDragOver = dragOverIdx === idx;
+
+                      return (
+                        <div 
+                          key={idx} 
+                          draggable={true}
+                          onDragStart={(e) => handlePriorityDragStart(e, idx)}
+                          onDragEnter={(e) => handlePriorityDragOver(e, idx)}
+                          onDragOver={(e) => handlePriorityDragOver(e, idx)}
+                          onDragEnd={handlePriorityDragEnd}
+                          onDrop={(e) => handlePriorityDrop(e, idx)}
+                          className={`flex items-center gap-2 rounded-xl border p-1 transition-all duration-200 ${
+                            isDragged 
+                              ? "opacity-40 border-dashed border-[#C45BAA]/40 bg-[#C45BAA]/5 scale-[0.98] cursor-grabbing" 
+                              : isDragOver
+                                ? "border-teal/40 bg-teal/5 scale-[1.01]"
+                                : "border-white/5 bg-[#12061E]/40"
                           }`}
                         >
-                          <Check className={`h-4 w-4 transition-transform ${prioritiesCompleted[idx] ? "scale-110 stroke-[2.5]" : "scale-100 opacity-60"}`} />
-                        </button>
-                      </div>
-                    ))}
+                          {/* Drag Handle */}
+                          <div 
+                            className="text-gray-500 hover:text-teal active:text-mag flex items-center shrink-0 w-6 h-6 justify-center rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing"
+                            title="Drag to reorder priority list"
+                          >
+                            <GripVertical className="h-4 w-4 opacity-50 hover:opacity-100" />
+                          </div>
+
+                          <span className="w-5 h-5 rounded-full bg-[#C45BAA]/15 text-mag flex items-center justify-center font-mono text-xs font-bold leading-none shrink-0">{idx + 1}</span>
+                          
+                          <input 
+                            type="text"
+                            value={p}
+                            onChange={e => {
+                              const copy = [...priorities];
+                              copy[idx] = e.target.value;
+                              setPriorities(copy);
+                              if (!e.target.value.trim()) {
+                                const newCompleted = [...prioritiesCompleted];
+                                newCompleted[idx] = false;
+                                setPrioritiesCompleted(newCompleted);
+                              }
+                            }}
+                            className={`flex-1 bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-mag text-gray-200 transition-all ${
+                              prioritiesCompleted[idx] && p.trim() ? "line-through opacity-50 decoration-teal text-[#8A7F8D] border-teal/10 bg-white/2" : ""
+                            }`}
+                            placeholder={`Enter Task ${idx + 1}`}
+                          />
+
+                          {/* Up & Down Shift fallbacks for precise accessibility */}
+                          <div className="flex flex-col gap-0.5 justify-center shrink-0 pr-1">
+                            <button
+                              onClick={() => shiftPriority(idx, "up")}
+                              disabled={idx === 0}
+                              title="Move Task Up"
+                              className={`p-0.5 rounded text-gray-500 hover:text-teal hover:bg-white/5 transition-all cursor-pointer ${idx === 0 ? "opacity-10 cursor-not-allowed" : ""}`}
+                            >
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => shiftPriority(idx, "down")}
+                              disabled={idx === priorities.length - 1}
+                              title="Move Task Down"
+                              className={`p-0.5 rounded text-gray-500 hover:text-teal hover:bg-white/5 transition-all cursor-pointer ${idx === priorities.length - 1 ? "opacity-10 cursor-not-allowed" : ""}`}
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={e => {
+                              if (!p.trim()) return;
+                              const newCompleted = [...prioritiesCompleted];
+                              const nextState = !newCompleted[idx];
+                              newCompleted[idx] = nextState;
+                              setPrioritiesCompleted(newCompleted);
+                              if (nextState) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const x = (rect.left + rect.width / 2) / window.innerWidth;
+                                const y = (rect.top + rect.height / 2) / window.innerHeight;
+                                triggerLocalizedConfetti(x, y);
+                              }
+                            }}
+                            disabled={!p.trim()}
+                            title={p.trim() ? "Toggle Priority Status" : "Enter a task first to complete it"}
+                            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-300 shrink-0 cursor-pointer ${
+                              !p.trim() 
+                                ? "border-white/5 text-white/5 cursor-not-allowed opacity-20" 
+                                : prioritiesCompleted[idx]
+                                  ? "bg-teal/20 border-teal text-teal shadow-[0_0_12px_rgba(45,212,191,0.2)] scale-105"
+                                  : "bg-white/5 border-white/10 text-[#8A7F8D] hover:border-teal/50 hover:text-white"
+                            }`}
+                          >
+                            <Check className={`h-4 w-4 transition-transform ${prioritiesCompleted[idx] ? "scale-110 stroke-[2.5]" : "scale-100 opacity-60"}`} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
