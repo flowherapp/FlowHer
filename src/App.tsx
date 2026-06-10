@@ -6305,7 +6305,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 className={`text-[10px] tracking-wider font-mono uppercase px-3 py-1 rounded-full transition-all font-semibold cursor-pointer ${
                   isZenMode 
                     ? "bg-teal/20 border border-teal text-teal shadow-[0_0_15px_rgba(45,212,191,0.4)] animate-pulse" 
-                    : "bg-white/5 border border-white/10 text-gray-300 hover:border-teal/50"
+                    : "bg-[#C45BAA]/10 border border-[#C45BAA]/30 text-[#E085C9] hover:bg-[#C45BAA]/20 hover:border-[#C45BAA]/60 shadow-[0_0_10px_rgba(196,91,170,0.1)]"
                 }`}
                 title="Enter deep distraction-free Zen Calm space"
               >
@@ -7875,6 +7875,26 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Elegant Inline Zen Mode Prompt */}
+                  <div className="mt-4 pt-4 border-t border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-white/2 -mx-5 -mb-5 p-5 rounded-b-2xl">
+                    <div className="space-y-0.5 text-left">
+                      <span className="text-[9px] tracking-wider font-mono text-teal uppercase font-bold">Struggling with details & distractions?</span>
+                      <p className="text-[10.5px] text-[#8A7F8D] max-w-sm leading-relaxed">
+                        Step away from the secondary details. Slip into our minimalist retreat to ground your focus while you conquer these three simple tasks.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsZenMode(true);
+                        localStorage.setItem("fh_zen_mode", "true");
+                        startSomaticDrone();
+                      }}
+                      className="px-4 py-2 bg-teal/10 hover:bg-teal/20 border border-teal/20 hover:border-teal/40 text-teal rounded-xl text-[10px] font-mono tracking-wider uppercase font-semibold transition-all shrink-0 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>🌸 Step into Zen Calm</span>
+                    </button>
                   </div>
                 </div>
 
