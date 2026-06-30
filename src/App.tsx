@@ -11131,13 +11131,19 @@ s.strain04@gmail.com`;
                   {isNavFocusMode ? "Low (Focused)" : "Normal (Full)"}
                 </span>
               </div>
-              <div className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] ${isNavFocusMode ? "border-white/5 hover:border-teal/40 hover:shadow-[0_0_12px_rgba(45,212,191,0.25)]" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)]"}`}>
+              <div 
+                role="group"
+                aria-label="Cognitive Load Toggle"
+                className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)]" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)]"}`}
+              >
                 <button 
                   onClick={() => {
                     setIsNavFocusMode(false);
                     localStorage.setItem("fh_nav_focus_mode", "false");
                     triggerToast("Full Workspace Activated! All tabs and tools restored. ✨");
                   }}
+                  aria-label="Full Workspace Mode"
+                  aria-pressed={!isNavFocusMode}
                   className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${!isNavFocusMode ? "text-white font-bold" : "text-gray-500 hover:text-gray-300"}`}
                   title="Show all tabs and tracking logs"
                 >
@@ -11156,6 +11162,8 @@ s.strain04@gmail.com`;
                     localStorage.setItem("fh_nav_focus_mode", "true");
                     triggerToast("Focus Mode Active: Non-essential tabs hidden for zero cognitive friction. 🧠⚡");
                   }}
+                  aria-label="Cognitive Focus Mode"
+                  aria-pressed={isNavFocusMode}
                   className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${isNavFocusMode ? "text-[#130620] font-bold" : "text-gray-500 hover:text-gray-300"}`}
                   title="Hide non-essential tracking tabs to reduce clutter"
                 >
