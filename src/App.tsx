@@ -5427,6 +5427,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
             <div className="flex justify-center gap-6 mt-1 flex-wrap">
               <button onClick={() => setCurrentView("brand-kit")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🎨 Brand Identity Kit</button>
               <button onClick={() => setCurrentView("founding")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">★ Founding Member Plan</button>
+              <button onClick={() => setShowLegalModal(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🛡️ Privacy & Legal Rules</button>
               <button onClick={() => {
                 if (user) {
                   setCurrentView("app");
@@ -6175,6 +6176,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
             <div className="flex justify-center gap-6 mt-1.5">
               <button onClick={() => setCurrentView("landing")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🏠 Home Landing</button>
               <button onClick={() => setCurrentView("founding")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">★ Founding Member Details</button>
+              <button onClick={() => setShowLegalModal(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🛡️ Privacy & Legal Rules</button>
               <button onClick={() => {
                 if (user) {
                   setCurrentView("app");
@@ -6316,6 +6318,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 className="bg-[#E8845C]/15 border border-[#E8845C]/45 text-[#E8845C] text-[10px] tracking-wider font-mono uppercase px-3 py-1 rounded-full hover:bg-[#E8845C]/25 transition-all text-sm font-semibold"
               >
                 🚨 SOS Help
+              </button>
+              <button 
+                onClick={() => setShowLegalModal(true)}
+                className="p-1.5 rounded-full hover:bg-white/5 text-[#E085C9] hover:text-mag transition-all"
+                title="Privacy, Safety & Brand Protection Disclosures"
+              >
+                <ShieldCheck className="h-4.5 w-4.5" />
               </button>
               <button 
                 onClick={handleSignOut}
