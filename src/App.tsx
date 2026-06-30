@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { jsPDF } from "jspdf";
 import confetti from "canvas-confetti";
+import { motion, AnimatePresence } from "motion/react";
 
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot } from "firebase/firestore";
@@ -698,6 +699,11 @@ export default function App() {
   // Legal, Privacy, and Disclosure compliance states
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [legalTab, setLegalTab] = useState<"medical" | "privacy" | "terms">("medical");
+
+  // Focus Mode toggle for Navigation Bar to minimize cognitive load
+  const [isNavFocusMode, setIsNavFocusMode] = useState<boolean>(() => {
+    return localStorage.getItem("fh_nav_focus_mode") === "true";
+  });
 
   // Daily Check-In & Streak States
   const [streakCount, setStreakCount] = useState<number>(() => {
@@ -1524,6 +1530,13 @@ export default function App() {
     profile: "",
     primaryGoal: "",
   });
+
+  // Reset active tab to home if on a non-essential tab when entering Focus Mode
+  useEffect(() => {
+    if (isNavFocusMode && !["home", "focus", "work"].includes(appTab)) {
+      setAppTab("home");
+    }
+  }, [isNavFocusMode, appTab]);
 
   // Save priorities automatically
   useEffect(() => {
@@ -11108,82 +11121,147 @@ s.strain04@gmail.com`;
           </main>
 
           {/* DYNAMIC NAVIGATION CONTROL BAR TAB BUTTONSROW */}
-          <nav className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl bg-[#130620]/95 backdrop-blur-md rounded-t-3xl border-t border-white/5 fixed bottom-0 left-1/2 -translate-x-1/2 px-2 py-3 flex items-center justify-around z-30 select-none font-sans">
-            <button 
-              onClick={() => {
-                setAppTab("home");
-                setSelectedWorkTool(null);
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "home" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Smile className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Home</span>
-            </button>
-            <button 
-              onClick={() => {
-                setAppTab("focus");
-                setSelectedWorkTool(null);
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "focus" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Zap className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Focus</span>
-            </button>
-            <button 
-              onClick={() => {
-                setAppTab("work");
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "work" ? "text-mag" : "text-gray-400"}`}
-            >
-              <ShieldCheck className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Calm Guides</span>
-            </button>
-            <button 
-              onClick={() => {
-                executeCoreAction("My Wins Journal", () => {
-                  setAppTab("wins");
-                  setSelectedWorkTool(null);
-                });
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "wins" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Award className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Wins</span>
-            </button>
-            <button 
-              onClick={() => {
-                executeCoreAction("Quiet Sanctuary Space", () => {
-                  setAppTab("unmask");
-                  setSelectedWorkTool(null);
-                });
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "unmask" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Moon className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Unburden</span>
-            </button>
-             <button 
-              onClick={() => {
-                setAppTab("mask");
-                setSelectedWorkTool(null);
-              }}
-              className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "mask" ? "text-mag" : "text-gray-400"}`}
-            >
-              <Lock className="h-5 w-5" />
-              <span className="text-[9px] font-sans">Energy Log</span>
-            </button>
-            {hasPromoAccess && (
+          <nav className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl bg-[#130620]/95 backdrop-blur-md rounded-t-3xl border-t border-white/5 fixed bottom-0 left-1/2 -translate-x-1/2 px-4 py-3 flex flex-col gap-2.5 z-30 select-none font-sans shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
+            {/* Cognitive Mode Toggle Switch Header */}
+            <div className="flex items-center justify-between px-2 pb-1.5 border-b border-white/5 text-[10px] text-gray-400 select-none">
+              <div className="flex items-center gap-1.5 font-mono tracking-wider uppercase text-[#E085C9]">
+                <Brain className="h-3 w-3 text-teal animate-pulse" />
+                <span>Cognitive Load:</span>
+                <span className={isNavFocusMode ? "text-teal font-bold" : "text-[#C45BAA]"}>
+                  {isNavFocusMode ? "Low (Focused)" : "Normal (Full)"}
+                </span>
+              </div>
+              <div className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] ${isNavFocusMode ? "border-white/5 hover:border-teal/40 hover:shadow-[0_0_12px_rgba(45,212,191,0.25)]" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)]"}`}>
+                <button 
+                  onClick={() => {
+                    setIsNavFocusMode(false);
+                    localStorage.setItem("fh_nav_focus_mode", "false");
+                    triggerToast("Full Workspace Activated! All tabs and tools restored. ✨");
+                  }}
+                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${!isNavFocusMode ? "text-white font-bold" : "text-gray-500 hover:text-gray-300"}`}
+                  title="Show all tabs and tracking logs"
+                >
+                  {!isNavFocusMode && (
+                    <motion.span 
+                      layoutId="activeTabPill" 
+                      className="absolute inset-0 bg-gradient-to-r from-[#8a2575] to-[#C45BAA] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  Full Mode
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsNavFocusMode(true);
+                    localStorage.setItem("fh_nav_focus_mode", "true");
+                    triggerToast("Focus Mode Active: Non-essential tabs hidden for zero cognitive friction. 🧠⚡");
+                  }}
+                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${isNavFocusMode ? "text-[#130620] font-bold" : "text-gray-500 hover:text-gray-300"}`}
+                  title="Hide non-essential tracking tabs to reduce clutter"
+                >
+                  {isNavFocusMode && (
+                    <motion.span 
+                      layoutId="activeTabPill" 
+                      className="absolute inset-0 bg-[#2DD4BF] rounded-full -z-10 shadow-[0_0_8px_rgba(45,212,191,0.5)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  Focus Mode
+                </button>
+              </div>
+            </div>
+
+            {/* Navigation Buttons Row */}
+            <div className="flex items-center justify-around w-full">
               <button 
                 onClick={() => {
-                  setAppTab("promote");
+                  setAppTab("home");
                   setSelectedWorkTool(null);
                 }}
-                className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "promote" ? "text-mag" : "text-gray-400"}`}
+                className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "home" ? "text-mag" : "text-gray-400"}`}
               >
-                <Megaphone className="h-5 w-5" />
-                <span className="text-[9px] font-sans">Promote</span>
+                <Smile className="h-5 w-5" />
+                <span className="text-[9px] font-sans">Home</span>
               </button>
-            )}
+              <button 
+                onClick={() => {
+                  setAppTab("focus");
+                  setSelectedWorkTool(null);
+                }}
+                className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "focus" ? "text-mag" : "text-gray-400"}`}
+              >
+                <Zap className="h-5 w-5" />
+                <span className="text-[9px] font-sans">Focus</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setAppTab("work");
+                }}
+                className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "work" ? "text-mag" : "text-gray-400"}`}
+              >
+                <ShieldCheck className="h-5 w-5" />
+                <span className="text-[9px] font-sans">Calm Guides</span>
+              </button>
+              
+              <AnimatePresence mode="popLayout">
+                {!isNavFocusMode && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, width: 0 }}
+                    animate={{ opacity: 1, scale: 1, width: "auto" }}
+                    exit={{ opacity: 0, scale: 0.95, width: 0 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    className="flex items-center justify-around gap-4 md:gap-6 pl-3 border-l border-white/5 overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => {
+                        executeCoreAction("My Wins Journal", () => {
+                          setAppTab("wins");
+                          setSelectedWorkTool(null);
+                        });
+                      }}
+                      className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "wins" ? "text-mag" : "text-gray-400"}`}
+                    >
+                      <Award className="h-5 w-5" />
+                      <span className="text-[9px] font-sans">Wins</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        executeCoreAction("Quiet Sanctuary Space", () => {
+                          setAppTab("unmask");
+                          setSelectedWorkTool(null);
+                        });
+                      }}
+                      className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "unmask" ? "text-mag" : "text-gray-400"}`}
+                    >
+                      <Moon className="h-5 w-5" />
+                      <span className="text-[9px] font-sans">Unburden</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setAppTab("mask");
+                        setSelectedWorkTool(null);
+                      }}
+                      className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "mask" ? "text-mag" : "text-gray-400"}`}
+                    >
+                      <Lock className="h-5 w-5" />
+                      <span className="text-[9px] font-sans">Energy Log</span>
+                    </button>
+                    {hasPromoAccess && (
+                      <button 
+                        onClick={() => {
+                          setAppTab("promote");
+                          setSelectedWorkTool(null);
+                        }}
+                        className={`flex flex-col items-center gap-1 shrink-0 ${appTab === "promote" ? "text-mag" : "text-gray-400"}`}
+                      >
+                        <Megaphone className="h-5 w-5" />
+                        <span className="text-[9px] font-sans">Promote</span>
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
           {/* GUIDED INTERACTIVE TOUR MODAL OVERLAY */}
