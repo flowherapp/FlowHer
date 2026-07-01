@@ -1,0 +1,24 @@
+{
+  "short_name": "FlowHer",
+  "name": "FlowHer App",
+  "description": "Customized sensory battery check-ins, time-blindness timers, silent companions, and advocacy scripts for neurodivergent professional women.",
+  "icons": [
+    {
+      "src": "/flowher_logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/flowher_logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 180x180 192x192 384x384 512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#2d0a3e",
+  "theme_color": "#C899CB",
+  "display": "standalone",
+  "orientation": "portrait"
+}

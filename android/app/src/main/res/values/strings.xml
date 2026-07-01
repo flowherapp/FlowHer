@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FlowHer</string>
+    <string name="title_activity_main">FlowHer</string>
+    <string name="package_name">com.flowher.app</string>
+    <string name="custom_url_scheme">com.flowher.app</string>
+</resources>
