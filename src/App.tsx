@@ -3313,6 +3313,11 @@ export default function App() {
 
   // Dynamic API Base URL Resolver for hosted pasting integration
   const API_BASE = (() => {
+    // Detect if running on a native mobile device (Capacitor webview)
+    const isCapacitor = typeof window !== "undefined" && (window as any).Capacitor;
+    if (isCapacitor) {
+      return "https://ais-pre-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
+    }
     const h = window.location.hostname;
     if (h === "localhost" || h === "127.0.0.1" || h.includes(".run.app") || !h) {
       return "";
