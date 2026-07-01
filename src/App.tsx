@@ -11134,7 +11134,21 @@ s.strain04@gmail.com`;
               <div 
                 role="group"
                 aria-label="Cognitive Load Toggle"
-                className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)]" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)]"}`}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    const newMode = !isNavFocusMode;
+                    setIsNavFocusMode(newMode);
+                    localStorage.setItem("fh_nav_focus_mode", String(newMode));
+                    if (newMode) {
+                      triggerToast("Focus Mode Active: Non-essential tabs hidden for zero cognitive friction. 🧠⚡");
+                    } else {
+                      triggerToast("Full Workspace Activated! All tabs and tools restored. ✨");
+                    }
+                  }
+                }}
+                className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] focus:outline-none focus:ring-2 ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)] focus:ring-teal/50" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)] focus:ring-[#C45BAA]/50"}`}
               >
                 <button 
                   onClick={() => {
