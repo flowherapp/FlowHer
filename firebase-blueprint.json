@@ -15,7 +15,8 @@
         "dopamineSparks": { "type": "number" },
         "userPlan": { "type": "string" },
         "priorities": { "type": "array" },
-        "prioritiesCompleted": { "type": "array" }
+        "prioritiesCompleted": { "type": "array" },
+        "activeThemeId": { "type": "string" }
       },
       "required": ["email", "username"]
     },

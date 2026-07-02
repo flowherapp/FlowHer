@@ -516,9 +516,70 @@ export default function App() {
     return localStorage.getItem("fh_active_theme") || "cosmic";
   });
 
+  const [lastSyncedThemeId, setLastSyncedThemeId] = useState<string>(() => {
+    return localStorage.getItem("fh_last_synced_theme") || "cosmic";
+  });
+
+  const [syncWithSystem, setSyncWithSystem] = useState<boolean>(() => {
+    return localStorage.getItem("fh_sync_with_system") === "true";
+  });
+
+  const [preferredDarkThemeId, setPreferredDarkThemeId] = useState<string>(() => {
+    const saved = localStorage.getItem("fh_preferred_dark_theme");
+    return saved && saved !== "sanctuary" ? saved : "cosmic";
+  });
+
   const activeTheme = useMemo<FocusTheme>(() => {
     return FOCUS_THEMES.find(t => t.id === activeThemeId) || FOCUS_THEMES[0];
   }, [activeThemeId]);
+
+  const handleRestoreDefaultTheme = () => {
+    const defaultTheme = lastSyncedThemeId;
+    setSyncWithSystem(false);
+    setActiveThemeId(defaultTheme);
+    triggerToast(`Theme restored to your synced default: ${FOCUS_THEMES.find(t => t.id === defaultTheme)?.name || "Cosmic Twilight"} 🌟`);
+  };
+
+  // Track system theme and apply if synced
+  useEffect(() => {
+    localStorage.setItem("fh_sync_with_system", syncWithSystem ? "true" : "false");
+    if (!syncWithSystem) return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: light)");
+    
+    const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        setActiveThemeId("sanctuary");
+      } else {
+        setActiveThemeId(preferredDarkThemeId);
+      }
+    };
+
+    // Apply initially
+    handleSystemThemeChange(mediaQuery);
+
+    // Listen for changes
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleSystemThemeChange);
+      return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleSystemThemeChange);
+      return () => mediaQuery.removeListener(handleSystemThemeChange);
+    }
+  }, [syncWithSystem, preferredDarkThemeId]);
+
+  const handleSelectTheme = (themeId: string) => {
+    if (themeId === "sanctuary") {
+      setSyncWithSystem(false);
+      setActiveThemeId("sanctuary");
+    } else {
+      setSyncWithSystem(false);
+      setPreferredDarkThemeId(themeId);
+      localStorage.setItem("fh_preferred_dark_theme", themeId);
+      setActiveThemeId(themeId);
+    }
+  };
 
   const [selectedWorkTool, setSelectedWorkTool] = useState<string | null>(null);
   const [promoSubTab, setPromoSubTab] = useState<"videos" | "reddit" | "linkedin" | "articles" | "checklist">("videos");
@@ -1642,6 +1703,15 @@ export default function App() {
     }
   }, [lastCheckInDate]);
 
+  useEffect(() => {
+    localStorage.setItem("fh_active_theme", activeThemeId);
+    if (auth.currentUser) {
+      updateDoc(doc(db, "users", auth.currentUser.uid), { activeThemeId }).catch((err) =>
+        handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`)
+      );
+    }
+  }, [activeThemeId]);
+
 
   useEffect(() => {
     if (user && user.email === "s.strain04@gmail.com") {
@@ -1686,7 +1756,8 @@ export default function App() {
               userPlan: localStorage.getItem("fh_user_plan") || (email === "s.strain04@gmail.com" ? "core" : "free"),
               priorities: JSON.parse(localStorage.getItem("fh_priorities") || '["", "", ""]'),
               prioritiesCompleted: JSON.parse(localStorage.getItem("fh_priorities_completed") || '[false, false, false]'),
-              victoryLog: JSON.parse(localStorage.getItem("fh_victory_log") || '[]')
+              victoryLog: JSON.parse(localStorage.getItem("fh_victory_log") || '[]'),
+              activeThemeId: localStorage.getItem("fh_active_theme") || "cosmic"
             };
             await setDoc(userRef, initialProfile);
 
@@ -1743,6 +1814,13 @@ export default function App() {
             if (data.priorities !== undefined) setPriorities(data.priorities);
             if (data.prioritiesCompleted !== undefined) setPrioritiesCompleted(data.prioritiesCompleted);
             if (data.victoryLog !== undefined) setVictoryLog(data.victoryLog);
+            if (data.activeThemeId !== undefined) {
+              if (!snapshot.metadata.hasPendingWrites) {
+                setLastSyncedThemeId(data.activeThemeId);
+                localStorage.setItem("fh_last_synced_theme", data.activeThemeId);
+              }
+              setActiveThemeId(data.activeThemeId);
+            }
           }
         }, (err) => handleFirestoreError(err, OperationType.GET, `users/${uid}`));
 
@@ -6374,13 +6452,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           <button
                             key={theme.id}
                             onClick={() => {
-                              setActiveThemeId(theme.id);
-                              localStorage.setItem("fh_active_theme", theme.id);
+                              handleSelectTheme(theme.id);
                               setShowThemeMenu(false);
                               triggerToast(`Focus Theme: ${theme.name} Activated! ${theme.emoji}`);
                             }}
                             className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                              isSelected
+                              isSelected && !syncWithSystem
                                 ? activeTheme.id === 'sanctuary'
                                   ? 'bg-[#F3ECE0] text-[#E8845C] font-semibold'
                                   : 'bg-white/10 text-white font-semibold'
@@ -6393,10 +6470,51 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                               <span>{theme.emoji}</span>
                               <span>{theme.name}</span>
                             </span>
-                            {isSelected && <span className="text-[10px]">✓</span>}
+                            {isSelected && !syncWithSystem && <span className="text-[10px]">✓</span>}
                           </button>
                         );
                       })}
+                      <div className={`h-px my-1 ${activeTheme.id === 'sanctuary' ? 'bg-amber-900/10' : 'bg-white/5'}`} />
+                      <button
+                        onClick={() => {
+                          setSyncWithSystem(!syncWithSystem);
+                          setShowThemeMenu(false);
+                          triggerToast(!syncWithSystem ? "Auto Sync with System Theme Enabled! ⚙️" : "Sync with System Disabled");
+                        }}
+                        className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                          syncWithSystem
+                            ? activeTheme.id === 'sanctuary'
+                              ? 'bg-[#F3ECE0] text-[#E8845C] font-semibold'
+                              : 'bg-white/10 text-white font-semibold'
+                            : activeTheme.id === 'sanctuary'
+                              ? 'hover:bg-[#F3ECE0]/50 text-gray-700'
+                              : 'hover:bg-white/5 text-gray-300 hover:text-white'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>🔄</span>
+                          <span>Sync with OS Theme</span>
+                        </span>
+                        {syncWithSystem && <span className="text-[10px]">✓</span>}
+                      </button>
+                      <div className={`h-px my-1 ${activeTheme.id === 'sanctuary' ? 'bg-amber-900/10' : 'bg-white/5'}`} />
+                      <button
+                        onClick={() => {
+                          handleRestoreDefaultTheme();
+                          setShowThemeMenu(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                          activeTheme.id === 'sanctuary'
+                            ? 'hover:bg-[#F3ECE0]/50 text-gray-700 font-medium'
+                            : 'hover:bg-white/5 text-gray-300 hover:text-white font-medium'
+                        }`}
+                        title="Restore Default Synced Theme"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>✨</span>
+                          <span>Restore Default</span>
+                        </span>
+                      </button>
                     </div>
                   </>
                 )}
@@ -7058,9 +7176,22 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         Choose Your Focus Theme
                       </h4>
                     </div>
-                    <span className="text-xl px-2.5 py-1 rounded-full bg-white/5 border border-white/5 font-semibold">
-                      {activeTheme.emoji}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleRestoreDefaultTheme}
+                        className={`text-[9px] font-mono tracking-widest uppercase px-2.5 py-1 rounded-full border transition-all cursor-pointer font-semibold ${
+                          activeTheme.id === 'sanctuary'
+                            ? 'bg-amber-900/5 border-amber-900/15 text-[#1C0A2E]/80 hover:bg-amber-900/10'
+                            : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                        title="Restore theme to your last synced Firestore default"
+                      >
+                        Restore Default
+                      </button>
+                      <span className="text-xl px-2.5 py-1 rounded-full bg-white/5 border border-white/5 font-semibold select-none">
+                        {activeTheme.emoji}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs font-light leading-relaxed opacity-90 text-gray-300">
                     Nourish your nervous system. Selecting a theme dynamically adjusts backgrounds, typography tints, borders, and accents to establish optimal sensory comfort.
@@ -7068,13 +7199,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
                     {FOCUS_THEMES.map((theme) => {
-                      const isSelected = activeThemeId === theme.id;
+                      const isSelected = activeThemeId === theme.id && !syncWithSystem;
                       return (
                         <button
                           key={theme.id}
                           onClick={() => {
-                            setActiveThemeId(theme.id);
-                            localStorage.setItem("fh_active_theme", theme.id);
+                            handleSelectTheme(theme.id);
                             triggerToast(`Focus Theme: ${theme.name} Activated! ${theme.emoji}`);
                           }}
                           className={`group p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
@@ -7090,6 +7220,31 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         </button>
                       );
                     })}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/2 border border-white/5 rounded-xl p-3.5">
+                    <div className="space-y-0.5">
+                      <span className={`text-xs font-medium block ${activeTheme.id === 'sanctuary' ? 'text-[#1C0A2E]' : 'text-white'}`}>Sync with System Theme</span>
+                      <span className={`text-[10px] font-sans font-light leading-relaxed block ${activeTheme.id === 'sanctuary' ? 'text-gray-600' : 'text-gray-400'}`}>
+                        Automatically switches to 'Sanctuary' (light) when light mode is active on your device, and restores your dark theme otherwise.
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const nextSync = !syncWithSystem;
+                        setSyncWithSystem(nextSync);
+                        triggerToast(nextSync ? "Auto Sync with System Theme Enabled! ⚙️" : "Sync with System Disabled");
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        syncWithSystem ? 'bg-teal' : 'bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          syncWithSystem ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
                   
                   <div className="bg-white/2 border border-white/5 rounded-xl p-3 flex items-start gap-2.5">

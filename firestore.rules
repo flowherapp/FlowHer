@@ -44,7 +44,8 @@ service cloud.firestore {
         && (data.dopamineSparks is int || data.dopamineSparks is float)
         && data.userPlan is string && (data.userPlan == 'free' || data.userPlan == 'core')
         && data.priorities is list && data.priorities.size() == 3
-        && data.prioritiesCompleted is list && data.prioritiesCompleted.size() == 3;
+        && data.prioritiesCompleted is list && data.prioritiesCompleted.size() == 3
+        && data.get('activeThemeId', 'cosmic') is string && data.get('activeThemeId', 'cosmic').size() <= 50;
     }
 
     function isValidWin(data) {
@@ -104,7 +105,7 @@ service cloud.firestore {
           incoming().diff(existing()).affectedKeys().hasAny([
             'username', 'streakCount', 'lastCheckInDate', 'bestStreak', 
             'profilePic', 'profileBio', 'dopamineSparks', 'userPlan', 
-            'priorities', 'prioritiesCompleted'
+            'priorities', 'prioritiesCompleted', 'activeThemeId'
           ])
         );
       allow delete: if false; // Profiles cannot be randomly purged
