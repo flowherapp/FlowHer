@@ -94,7 +94,9 @@ import {
   ADA_RIGHTS, 
   DOPAMINE_ITEMS, 
   BREATH_STAGES,
-  ADHD_GLOSSARY
+  ADHD_GLOSSARY,
+  FOCUS_THEMES,
+  FocusTheme
 } from "./constants";
 
 import { Win, MaskMoment, VictoryLogEntry } from "./types";
@@ -508,6 +510,16 @@ export default function App() {
   // Navigation & Screen Control
   const [currentView, setCurrentView] = useState<"landing" | "founding" | "app" | "brand-kit">("landing");
   const [appTab, setAppTab] = useState<"home" | "focus" | "work" | "wins" | "unmask" | "mask" | "glossary" | "promote">("home");
+  
+  // Focus Theme Selector State
+  const [activeThemeId, setActiveThemeId] = useState<string>(() => {
+    return localStorage.getItem("fh_active_theme") || "cosmic";
+  });
+
+  const activeTheme = useMemo<FocusTheme>(() => {
+    return FOCUS_THEMES.find(t => t.id === activeThemeId) || FOCUS_THEMES[0];
+  }, [activeThemeId]);
+
   const [selectedWorkTool, setSelectedWorkTool] = useState<string | null>(null);
   const [promoSubTab, setPromoSubTab] = useState<"videos" | "reddit" | "linkedin" | "articles" | "checklist">("videos");
 
@@ -516,6 +528,7 @@ export default function App() {
   const [brandKitRotationSpeed, setBrandKitRotationSpeed] = useState(25); // seconds per rotation
   const [brandKitActiveHue, setBrandKitActiveHue] = useState<number>(0); // hue rotation offset
   const [brandKitShowDevice, setBrandKitShowDevice] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   // ADHD Glossary and Neuro-Hub States
   const [glossarySearch, setGlossarySearch] = useState("");
@@ -3316,7 +3329,7 @@ export default function App() {
     // Detect if running on a native mobile device (Capacitor webview)
     const isCapacitor = typeof window !== "undefined" && (window as any).Capacitor;
     if (isCapacitor) {
-      return "https://ais-pre-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
+      return "https://ais-dev-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
     }
     const h = window.location.hostname;
     if (h === "localhost" || h === "127.0.0.1" || h.includes(".run.app") || !h) {
@@ -6213,22 +6226,32 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
            MAIN APP VIEW (Dashboard space)
          ========================================== */}
       {currentView === "app" && (
-        <div className="w-full min-h-screen bg-[#130620] text-[#FAF6F0] flex flex-col justify-between items-center relative overflow-x-hidden">
+        <div className={`w-full min-h-screen flex flex-col justify-between items-center relative overflow-x-hidden transition-all duration-500 ${activeTheme.bgClass} ${activeTheme.textClass}`}>
           
           {/* Header toolbar */}
-          <header className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between border-b border-white/5 sticky top-0 bg-[#130620]/90 backdrop-blur-md z-35 font-sans">
+          <header className={`w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-35 font-sans border-b transition-all duration-500 ${
+            activeTheme.id === 'sanctuary' 
+              ? 'bg-[#FAF6F0]/90 border-amber-900/10' 
+              : activeTheme.id === 'forest' 
+                ? 'bg-[#091811]/90 border-emerald-900/20' 
+                : activeTheme.id === 'ocean' 
+                  ? 'bg-[#060D17]/90 border-blue-900/20' 
+                  : activeTheme.id === 'sunset' 
+                    ? 'bg-[#14081E]/90 border-fuchsia-900/20' 
+                    : 'bg-[#130620]/90 border-white/5'
+          }`}>
             <div className="flex items-center gap-1.5 select-none cursor-pointer" onClick={() => setCurrentView("landing")}>
               <svg className="w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_20px_rgba(45,212,191,0.6)] transition-all transform hover:scale-110 duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="150 150 500 500">
                 <defs>
                   <linearGradient id="appLogoOuter" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#3D1052" />
-                    <stop offset="60%" stopColor="#C45BAA" />
-                    <stop offset="100%" stopColor="#2DD4BF" />
+                    <stop offset="0%" stopColor={activeTheme.id === 'sanctuary' ? '#FAF6F0' : activeTheme.id === 'forest' ? '#052e16' : activeTheme.id === 'ocean' ? '#0f172a' : activeTheme.id === 'sunset' ? '#2e1065' : '#3D1052'} />
+                    <stop offset="60%" stopColor={activeTheme.id === 'sanctuary' ? '#E8845C' : activeTheme.id === 'forest' ? '#10B981' : activeTheme.id === 'ocean' ? '#0284c7' : activeTheme.id === 'sunset' ? '#C45BAA' : '#C45BAA'} />
+                    <stop offset="100%" stopColor={activeTheme.id === 'sanctuary' ? '#D4A843' : activeTheme.id === 'forest' ? '#3D9E8C' : activeTheme.id === 'ocean' ? '#38BDF8' : activeTheme.id === 'sunset' ? '#f472b6' : '#2DD4BF'} />
                   </linearGradient>
                   <linearGradient id="appLogoInner" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#A21CAF" />
-                    <stop offset="60%" stopColor="#E8845C" />
-                    <stop offset="100%" stopColor="#FCD34D" />
+                    <stop offset="0%" stopColor={activeTheme.id === 'sanctuary' ? '#FAF6F0' : activeTheme.id === 'forest' ? '#022c22' : activeTheme.id === 'ocean' ? '#021e33' : activeTheme.id === 'sunset' ? '#311042' : '#A21CAF'} />
+                    <stop offset="60%" stopColor={activeTheme.id === 'sanctuary' ? '#E8845C' : activeTheme.id === 'forest' ? '#059669' : activeTheme.id === 'ocean' ? '#0369a1' : activeTheme.id === 'sunset' ? '#d946ef' : '#E8845C'} />
+                    <stop offset="100%" stopColor={activeTheme.id === 'sanctuary' ? '#FBCFE8' : activeTheme.id === 'forest' ? '#10b981' : activeTheme.id === 'ocean' ? '#0ea5e9' : activeTheme.id === 'sunset' ? '#fae8ff' : '#FCD34D'} />
                   </linearGradient>
                   <radialGradient id="appLogoCoreGlow" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stopColor="#FAF6F0" />
@@ -6278,8 +6301,8 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 </g>
               </svg>
               <div className="flex flex-col items-start select-none">
-                <span className="font-serif text-2xl font-light">Flow<em className="text-mag not-italic font-sans">Her</em>™</span>
-                <span className="text-[10px] tracking-wide text-[#E085C9] font-sans font-light">
+                <span className={`font-serif text-2xl font-light ${activeTheme.id === 'sanctuary' ? 'text-[#1C0A2E]' : 'text-[#FAF6F0]'}`}>Flow<em className={`${activeTheme.accentTextClass} not-italic font-sans`}>Her</em>™</span>
+                <span className={`text-[10px] tracking-wide font-sans font-light ${activeTheme.id === 'sanctuary' ? 'text-[#1C0A2E]/60' : 'text-[#E085C9]'}`}>
                   For women whose brains work differently.
                 </span>
               </div>
@@ -6293,17 +6316,91 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   setIsEditingProfile(false);
                   setShowProfileModal(true);
                 }}
-                className="h-8 w-8 rounded-full border border-[#C45BAA]/40 bg-white/5 text-[#C45BAA] overflow-hidden flex items-center justify-center hover:bg-[#C45BAA]/10 hover:border-mag transition-all cursor-pointer relative group"
+                className={`h-8 w-8 rounded-full border overflow-hidden flex items-center justify-center transition-all cursor-pointer relative group ${
+                  activeTheme.id === 'sanctuary' 
+                    ? 'border-amber-900/20 bg-amber-900/5 text-[#E8845C] hover:bg-amber-900/10' 
+                    : 'border-[#C45BAA]/40 bg-white/5 text-[#C45BAA] hover:bg-[#C45BAA]/10 hover:border-mag'
+                }`}
                 title="View & Edit User Profile"
               >
                 {profilePic ? (
                   <img src={profilePic} alt="Profile" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="h-full w-full bg-gradient-to-tr from-plum to-[#E085C9] text-white flex items-center justify-center text-xs font-mono font-bold select-none uppercase">
+                  <div className={`h-full w-full flex items-center justify-center text-xs font-mono font-bold select-none uppercase ${
+                    activeTheme.id === 'sanctuary'
+                      ? 'bg-gradient-to-tr from-[#E8845C] to-[#D4A843] text-white'
+                      : 'bg-gradient-to-tr from-plum to-[#E085C9] text-white'
+                  }`}>
                     {(user?.name || "U")[0]}
                   </div>
                 )}
               </button>
+
+              {/* Quick Theme Selector Dropdown Trigger */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowThemeMenu(!showThemeMenu)}
+                  className={`flex items-center gap-1 text-[10px] tracking-wider font-mono uppercase px-2.5 py-1 rounded-full border transition-all font-semibold cursor-pointer select-none ${
+                    showThemeMenu 
+                      ? `${activeTheme.accentBorderClass} ${activeTheme.accentTintClass} ${activeTheme.accentTextClass} shadow-[0_0_12px_rgba(196,91,170,0.25)]`
+                      : activeTheme.id === 'sanctuary'
+                        ? 'bg-amber-900/5 border-amber-900/15 text-[#1C0A2E]/80 hover:bg-amber-900/10'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                  title="Quick Theme Selector"
+                >
+                  <span className="text-xs">{activeTheme.emoji}</span>
+                  <span className="hidden sm:inline-block">{activeTheme.name.split(" ")[0]}</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showThemeMenu ? "rotate-180" : ""}`} />
+                </button>
+
+                {showThemeMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowThemeMenu(false)} 
+                    />
+                    <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl border p-2 z-50 text-left space-y-1 backdrop-blur-md transition-all duration-200 ${
+                      activeTheme.id === 'sanctuary' 
+                        ? 'bg-white border-amber-900/15 text-[#1C0A2E]' 
+                        : 'bg-[#130620]/95 border-white/10 text-[#FAF6F0]'
+                    }`}>
+                      <span className={`text-[8px] font-mono tracking-widest px-2.5 py-1 block uppercase ${activeTheme.id === 'sanctuary' ? 'text-gray-500' : 'text-gray-400'}`}>
+                        Focus Environment
+                      </span>
+                      {FOCUS_THEMES.map((theme) => {
+                        const isSelected = activeThemeId === theme.id;
+                        return (
+                          <button
+                            key={theme.id}
+                            onClick={() => {
+                              setActiveThemeId(theme.id);
+                              localStorage.setItem("fh_active_theme", theme.id);
+                              setShowThemeMenu(false);
+                              triggerToast(`Focus Theme: ${theme.name} Activated! ${theme.emoji}`);
+                            }}
+                            className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                              isSelected
+                                ? activeTheme.id === 'sanctuary'
+                                  ? 'bg-[#F3ECE0] text-[#E8845C] font-semibold'
+                                  : 'bg-white/10 text-white font-semibold'
+                                : activeTheme.id === 'sanctuary'
+                                  ? 'hover:bg-[#F3ECE0]/50 text-gray-700'
+                                  : 'hover:bg-white/5 text-gray-300 hover:text-white'
+                            }`}
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <span>{theme.emoji}</span>
+                              <span>{theme.name}</span>
+                            </span>
+                            {isSelected && <span className="text-[10px]">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
               <button 
                 onClick={handleRestartTour}
                 className="bg-[#C45BAA]/15 border border-[#C45BAA]/45 text-[#E085C9] text-[10px] tracking-wider font-mono uppercase px-2.5 py-1 rounded-full hover:bg-[#C45BAA]/25 transition-all font-semibold cursor-pointer select-none shrink-0"
@@ -6947,6 +7044,59 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* 2. FOCUS THEMES SELECTOR */}
+                <div className={`transition-all duration-300 rounded-2xl p-5 space-y-4 ${activeTheme.panelBgClass}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className={`text-[10px] tracking-widest font-mono block uppercase ${activeTheme.accentTextClass}`}>
+                        Personal Focus Sanctuary
+                      </span>
+                      <h4 className={`font-serif font-medium text-lg ${activeTheme.textTitleClass}`}>
+                        Choose Your Focus Theme
+                      </h4>
+                    </div>
+                    <span className="text-xl px-2.5 py-1 rounded-full bg-white/5 border border-white/5 font-semibold">
+                      {activeTheme.emoji}
+                    </span>
+                  </div>
+                  <p className="text-xs font-light leading-relaxed opacity-90 text-gray-300">
+                    Nourish your nervous system. Selecting a theme dynamically adjusts backgrounds, typography tints, borders, and accents to establish optimal sensory comfort.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                    {FOCUS_THEMES.map((theme) => {
+                      const isSelected = activeThemeId === theme.id;
+                      return (
+                        <button
+                          key={theme.id}
+                          onClick={() => {
+                            setActiveThemeId(theme.id);
+                            localStorage.setItem("fh_active_theme", theme.id);
+                            triggerToast(`Focus Theme: ${theme.name} Activated! ${theme.emoji}`);
+                          }}
+                          className={`group p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                            isSelected
+                              ? `${theme.accentBorderClass} ${theme.accentTintClass} text-white ring-1 ring-[#C45BAA]/45`
+                              : "border-white/5 bg-white/2 hover:bg-white/5 hover:border-white/10"
+                          }`}
+                        >
+                          <span className="text-xl group-hover:scale-110 transition-transform">{theme.emoji}</span>
+                          <span className="text-[10px] font-sans font-medium block truncate max-w-full">
+                            {theme.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="bg-white/2 border border-white/5 rounded-xl p-3 flex items-start gap-2.5">
+                    <span className="text-sm">💡</span>
+                    <p className="text-[10px] text-gray-300 leading-relaxed font-sans font-light">
+                      <strong>Current Space:</strong> {activeTheme.name} — {activeTheme.description}
+                    </p>
                   </div>
                 </div>
 

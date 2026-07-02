@@ -165,3 +165,127 @@ export const ADHD_GLOSSARY: GlossaryTerm[] = [
     strategy: "During boring meetings or lectures, actively take notes with colorful pens, stand up at the back of the room if allowed, or sketch visual doodles. Fidgeting is literally sleep-prevention medicine!"
   }
 ];
+
+export interface FocusTheme {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  bgClass: string;
+  textClass: string;
+  panelBgClass: string;
+  panelInnerBgClass: string;
+  accentTextClass: string;
+  accentBgClass: string;
+  accentBorderClass: string;
+  accentBorderHoverClass: string;
+  accentBgHoverClass: string;
+  accentTintClass: string;
+  textMutedClass: string;
+  textTitleClass: string;
+  logoGradientClass: string;
+  borderClass: string;
+}
+
+export const FOCUS_THEMES: FocusTheme[] = [
+  {
+    id: "cosmic",
+    name: "Cosmic Twilight",
+    emoji: "🌌",
+    description: "Deep space purple with vibrant magenta accents.",
+    bgClass: "bg-[#130620]",
+    textClass: "text-[#FAF6F0]",
+    panelBgClass: "bg-white/5 border border-white/5",
+    panelInnerBgClass: "bg-[#130620]/60 border border-white/5",
+    accentTextClass: "text-[#C45BAA]",
+    accentBgClass: "bg-[#C45BAA]",
+    accentBorderClass: "border-[#C45BAA]/40",
+    accentBorderHoverClass: "hover:border-[#C45BAA]/60",
+    accentBgHoverClass: "hover:bg-[#C45BAA]/90",
+    accentTintClass: "bg-[#C45BAA]/10",
+    textMutedClass: "text-gray-400",
+    textTitleClass: "text-white",
+    logoGradientClass: "from-[#3D1052] via-[#C45BAA] to-[#2DD4BF]",
+    borderClass: "border-white/5"
+  },
+  {
+    id: "forest",
+    name: "Forest Green",
+    emoji: "🌲",
+    description: "Deep woodland green with nourishing sage & gold accents.",
+    bgClass: "bg-[#091811]",
+    textClass: "text-[#E6ECE8]",
+    panelBgClass: "bg-emerald-950/20 border border-emerald-900/30",
+    panelInnerBgClass: "bg-[#091811]/60 border border-emerald-900/20",
+    accentTextClass: "text-[#3D9E8C]",
+    accentBgClass: "bg-[#3D9E8C]",
+    accentBorderClass: "border-[#3D9E8C]/40",
+    accentBorderHoverClass: "hover:border-[#3D9E8C]/60",
+    accentBgHoverClass: "hover:bg-[#3D9E8C]/90",
+    accentTintClass: "bg-[#3D9E8C]/15",
+    textMutedClass: "text-emerald-300/60",
+    textTitleClass: "text-emerald-50",
+    logoGradientClass: "from-[#052e16] via-[#10B981] to-[#3D9E8C]",
+    borderClass: "border-emerald-900/30"
+  },
+  {
+    id: "ocean",
+    name: "Deep Ocean",
+    emoji: "🌊",
+    description: "Midnight blue with tranquil aquatic and cyan highlights.",
+    bgClass: "bg-[#060D17]",
+    textClass: "text-[#EAF1F8]",
+    panelBgClass: "bg-blue-950/25 border border-blue-900/30",
+    panelInnerBgClass: "bg-[#060D17]/60 border border-blue-900/20",
+    accentTextClass: "text-[#38BDF8]",
+    accentBgClass: "bg-[#38BDF8]",
+    accentBorderClass: "border-[#38BDF8]/40",
+    accentBorderHoverClass: "hover:border-[#38BDF8]/60",
+    accentBgHoverClass: "hover:bg-[#38BDF8]/90",
+    accentTintClass: "bg-[#38BDF8]/15",
+    textMutedClass: "text-blue-300/60",
+    textTitleClass: "text-blue-50",
+    logoGradientClass: "from-[#0f172a] via-[#0284c7] to-[#38BDF8]",
+    borderClass: "border-blue-900/30"
+  },
+  {
+    id: "sunset",
+    name: "Sunset Lavender",
+    emoji: "🌅",
+    description: "Warm lavender and twilight fuchsia for calming transitions.",
+    bgClass: "bg-[#14081E]",
+    textClass: "text-[#F8F4FC]",
+    panelBgClass: "bg-fuchsia-950/20 border border-fuchsia-900/30",
+    panelInnerBgClass: "bg-[#14081E]/60 border border-fuchsia-900/20",
+    accentTextClass: "text-[#C45BAA]",
+    accentBgClass: "bg-[#C45BAA]",
+    accentBorderClass: "border-[#C45BAA]/40",
+    accentBorderHoverClass: "hover:border-[#C45BAA]/60",
+    accentBgHoverClass: "hover:bg-[#C45BAA]/90",
+    accentTintClass: "bg-[#C45BAA]/15",
+    textMutedClass: "text-fuchsia-300/60",
+    textTitleClass: "text-fuchsia-50",
+    logoGradientClass: "from-[#2e1065] via-[#C45BAA] to-[#f472b6]",
+    borderClass: "border-fuchsia-900/30"
+  },
+  {
+    id: "sanctuary",
+    name: "Warm Sanctuary",
+    emoji: "🏡",
+    description: "A gentle light-mode sanctuary in warm oatmeal & terracotta.",
+    bgClass: "bg-[#FAF6F0]",
+    textClass: "text-[#1C0A2E]",
+    panelBgClass: "bg-white border border-amber-900/15 shadow-xs",
+    panelInnerBgClass: "bg-[#F3ECE0] border border-amber-900/10",
+    accentTextClass: "text-[#E8845C]",
+    accentBgClass: "bg-[#E8845C]",
+    accentBorderClass: "border-[#E8845C]/40",
+    accentBorderHoverClass: "hover:border-[#E8845C]/60",
+    accentBgHoverClass: "hover:bg-[#E8845C]/90",
+    accentTintClass: "bg-[#E8845C]/15",
+    textMutedClass: "text-[#1C0A2E]/60",
+    textTitleClass: "text-[#1C0A2E]",
+    logoGradientClass: "from-[#FAF6F0] via-[#E8845C] to-[#D4A843]",
+    borderClass: "border-amber-900/15"
+  }
+];
