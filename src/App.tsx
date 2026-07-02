@@ -85,7 +85,10 @@ import {
   GripVertical,
   Flame,
   History,
-  Trash2
+  Trash2,
+  MessageSquare,
+  Send,
+  Bot
 } from "lucide-react";
 
 import { 
@@ -600,6 +603,74 @@ export default function App() {
     return Number(localStorage.getItem("fh_dopamine_sparks") || "0");
   });
   const [customSparkParticles, setCustomSparkParticles] = useState<{ id: number; x: number; y: number; emoji: string }[]>([]);
+
+  // Support Chatbot States
+  const [isSupportChatOpen, setIsSupportChatOpen] = useState(false);
+  const [supportChatMessage, setSupportChatMessage] = useState("");
+  const [supportChatHistory, setSupportChatHistory] = useState<{ role: "user" | "model"; text: string; timestamp: Date }[]>([
+    {
+      role: "model",
+      text: "Hi there! 🌿 I am your FlowHer™ Support Companion. I am here to help you navigate your digital sanctuary, explain how our executive-functioning modules work, or guide you through setting up boundaries, breaking down tasks, or calming RSD loops.\n\nHow can I help you nourish your nervous system today?",
+      timestamp: new Date()
+    }
+  ]);
+  const [isSupportChatLoading, setIsSupportChatLoading] = useState(false);
+  const supportChatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to bottom of support chat when history updates or loading status changes
+  useEffect(() => {
+    if (isSupportChatOpen) {
+      setTimeout(() => {
+        supportChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 80);
+    }
+  }, [supportChatHistory, isSupportChatLoading, isSupportChatOpen]);
+
+  const handleSendSupportMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = supportChatMessage.trim();
+    if (!trimmed || isSupportChatLoading) return;
+
+    setSupportChatMessage("");
+
+    const userMsg = { role: "user" as const, text: trimmed, timestamp: new Date() };
+    const updatedHistory = [...supportChatHistory, userMsg];
+    setSupportChatHistory(updatedHistory);
+    setIsSupportChatLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/support-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: trimmed,
+          history: updatedHistory.slice(0, -1).map(h => ({ role: h.role, text: h.text }))
+        })
+      });
+
+      const data = await response.json();
+      if (data && data.result) {
+        setSupportChatHistory(prev => [
+          ...prev,
+          { role: "model" as const, text: data.result, timestamp: new Date() }
+        ]);
+      } else {
+        throw new Error("Empty AI result received");
+      }
+    } catch (err) {
+      console.error("Failed to send support message:", err);
+      setSupportChatHistory(prev => [
+        ...prev,
+        {
+          role: "model" as const,
+          text: "I experienced a tiny digital pause. Please double-check your internet, or try again in a moment. I'm right here to support you! 🌿✨",
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setIsSupportChatLoading(false);
+    }
+  };
 
   // Guided Interactive Tour States
   const [showGuidedTour, setShowGuidedTour] = useState<boolean>(() => {
@@ -12103,6 +12174,201 @@ s.strain04@gmail.com`;
           </div>
         </div>
       )}
+
+      {/* 4. CUSTOMER SUPPORT CHAT COMPONENT (GEMINI COMPANION) */}
+      <div id="customer-support-container" className="fixed bottom-6 right-6 z-40 font-sans text-slate-800">
+        <AnimatePresence>
+          {isSupportChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-16 right-0 w-96 max-w-[calc(100vw-2rem)] h-[540px] max-h-[75vh] flex flex-col bg-[#FAF6F0] rounded-3xl border-2 border-[#C45BAA]/30 shadow-2xl overflow-hidden"
+              style={{ boxShadow: "0 20px 25px -5px rgba(28, 10, 46, 0.25), 0 10px 10px -5px rgba(28, 10, 46, 0.2)" }}
+            >
+              {/* Chat Header */}
+              <div className="bg-gradient-to-r from-plum to-mag p-4 text-white flex items-center justify-between shadow-md shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-white/10 p-1.5 rounded-full">
+                    <Bot className="h-5 w-5 text-amber-200" />
+                  </div>
+                  <div>
+                    <h4 className="font-serif text-sm font-semibold tracking-wide">FlowHer™ Companion</h4>
+                    <span className="text-[10px] text-white/80 font-mono tracking-wider flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-ping"></span> 
+                      Support Concierge • Online
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      setSupportChatHistory([
+                        {
+                          role: "model",
+                          text: "Hi there! 🌿 I am your FlowHer™ Support Companion. I am here to help you navigate your digital sanctuary, explain how our executive-functioning modules work, or guide you through setting up boundaries, breaking down tasks, or calming RSD loops.\n\nHow can I help you nourish your nervous system today?",
+                          timestamp: new Date()
+                        }
+                      ]);
+                      triggerToast("Companion conversation reset. ↺");
+                    }}
+                    title="Clear chat history"
+                    className="p-1 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <History className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsSupportChatOpen(false)}
+                    className="p-1 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Message Thread Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#FAF6F0]/80">
+                {supportChatHistory.map((msg, index) => {
+                  const isUser = msg.role === "user";
+                  return (
+                    <div
+                      key={index}
+                      className={`flex gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}
+                    >
+                      {!isUser && (
+                        <div className="h-7 w-7 rounded-full bg-plum/10 text-plum flex items-center justify-center text-xs shrink-0 select-none">
+                          🌿
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[11px] leading-relaxed shadow-xs ${
+                          isUser
+                            ? "bg-gradient-to-br from-plum to-mag text-white rounded-tr-none font-medium"
+                            : "bg-white border border-[#C45BAA]/15 text-[#1C0A2E] rounded-tl-none"
+                        }`}
+                      >
+                        {/* Custom Formatted Bubble Content */}
+                        <div 
+                          className="space-y-1.5 break-words"
+                          dangerouslySetInnerHTML={{
+                            __html: (() => {
+                              let formatted = msg.text
+                                .replace(/&/g, "&amp;")
+                                .replace(/</g, "&lt;")
+                                .replace(/>/g, "&gt;");
+                              
+                              // Convert markdown bold to standard html
+                              formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-mag bg-mag/5 px-1 rounded-sm'>$1</strong>");
+                              
+                              // Convert dash lists
+                              formatted = formatted.replace(/(?:\r?\n|^)\s*-\s+(.*?)(?=\r?\n|$)/g, "<li class='ml-3 list-disc text-[11px] leading-relaxed text-[#2D1B36]'>$1</li>");
+                              
+                              // Convert numbered lists
+                              formatted = formatted.replace(/(?:\r?\n|^)\s*\d+\.\s+(.*?)(?=\r?\n|$)/g, "<li class='ml-3 list-decimal text-[11px] leading-relaxed text-[#2D1B36]'>$1</li>");
+                              
+                              // Translate newlines into breaks
+                              return formatted.split("\n").join("<br />");
+                            })()
+                          }}
+                        />
+                        <span className="block text-[8px] mt-1.5 text-right font-mono opacity-60">
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Loading Skeleton */}
+                {isSupportChatLoading && (
+                  <div className="flex gap-2.5 justify-start items-start">
+                    <div className="h-7 w-7 rounded-full bg-plum/10 text-plum flex items-center justify-center text-xs shrink-0 select-none">
+                      🌿
+                    </div>
+                    <div className="bg-white border border-[#C45BAA]/15 rounded-2xl rounded-tl-none px-4 py-3 space-y-1.5 w-48 shadow-xs">
+                      <div className="h-2 bg-plum/10 rounded-full animate-pulse w-full"></div>
+                      <div className="h-2 bg-plum/10 rounded-full animate-pulse w-5/6"></div>
+                      <div className="h-2 bg-plum/10 rounded-full animate-pulse w-2/3"></div>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={supportChatEndRef} />
+              </div>
+
+              {/* Quick Prompt/Action Chips */}
+              <div className="px-3 py-2 border-t border-black/5 bg-white/40 overflow-x-auto whitespace-nowrap flex gap-1.5 scrollbar-thin shrink-0 select-none">
+                {[
+                  { text: "Break down a task ⏳", prompt: "Can you help me break down a complex, overwhelming task using the Smallest Step methodology?" },
+                  { text: "RSD check 🤍", prompt: "I am feeling really anxious about a brief message I received. Can we do an RSD Reality Check?" },
+                  { text: "Draft a firm email 💼", prompt: "I need to draft a professional email stating a clear timeline boundary. Help me write a firm draft without apologetic padding." },
+                  { text: "Tell me about themes 🎨", prompt: "How do FlowHer's focus themes and colors help protect against ADHD distraction and sensory burnout?" }
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSupportChatMessage(chip.prompt);
+                    }}
+                    className="py-1 px-2.5 bg-white border border-plum/15 hover:border-plum text-[10px] text-plum rounded-full hover:bg-plum/5 cursor-pointer shadow-2xs transition-all shrink-0 active:scale-95"
+                  >
+                    {chip.text}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input Footer Form */}
+              <form 
+                onSubmit={handleSendSupportMessage}
+                className="p-3 border-t border-black/5 bg-white flex gap-2 items-center shrink-0"
+              >
+                <input
+                  type="text"
+                  value={supportChatMessage}
+                  onChange={(e) => setSupportChatMessage(e.target.value)}
+                  placeholder="Ask for support or tips..."
+                  disabled={isSupportChatLoading}
+                  className="flex-1 bg-gray-50 border border-plum/15 text-[#1C0A2E] placeholder:text-gray-400 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-mag focus:bg-white focus:ring-1 focus:ring-mag transition-all"
+                />
+                <button
+                  type="submit"
+                  disabled={!supportChatMessage.trim() || isSupportChatLoading}
+                  className={`p-2 rounded-xl text-white transition-all shadow-xs flex items-center justify-center cursor-pointer ${
+                    !supportChatMessage.trim() || isSupportChatLoading
+                      ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                      : "bg-gradient-to-r from-plum to-mag hover:opacity-95"
+                  }`}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+
+              {/* Secure note */}
+              <div className="bg-white text-center pb-2 text-[8px] text-slate-400 font-mono select-none tracking-wide">
+                FlowHer™ digital sanctuary • Data synced & private 🌿
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Launcher Button */}
+        <motion.button
+          onClick={() => setIsSupportChatOpen(prev => !prev)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="h-12 px-4 bg-gradient-to-r from-plum to-mag text-white rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl cursor-pointer transition-all border border-white/15 select-none"
+        >
+          <div className="relative flex items-center justify-center">
+            <MessageSquare className="h-5 w-5 text-amber-200" />
+            {!isSupportChatOpen && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-amber-400 rounded-full animate-ping"></span>
+            )}
+          </div>
+          <span className="font-serif text-xs font-semibold tracking-wider">
+            {isSupportChatOpen ? "Close Assistant" : "Help Companion 🌿"}
+          </span>
+        </motion.button>
+      </div>
     </div>
   );
 }

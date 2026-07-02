@@ -353,6 +353,72 @@ Ensure a calm, grounding, and supportive tone. Do not use corporate double-speak
   }
 });
 
+// 6. Customer Support Chatbot
+app.post("/api/ai/support-chat", async (req, res) => {
+  const { message, history } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: "No message supplied." });
+  }
+
+  try {
+    const client = getAIClient();
+    
+    // Map history to standard Gemini roles ('user' and 'model')
+    const contents: any[] = [];
+    
+    if (Array.isArray(history)) {
+      history.forEach((msg: any) => {
+        if (msg.role === "user" || msg.role === "model") {
+          contents.push({
+            role: msg.role,
+            parts: [{ text: msg.text || msg.content || "" }]
+          });
+        }
+      });
+    }
+    
+    // Add the current message
+    contents.push({
+      role: "user",
+      parts: [{ text: message }]
+    });
+
+    const systemInstruction = `You are the FlowHer™ Support Companion & Concierge—a warm, deeply compassionate, and sensory-aware customer support guide for a specialized executive-functioning and communication optimization platform designed for neurodivergent professionals (ADHD, Autism, and sensory sensitivities).
+
+Your goal is to assist users with app navigation, explain FlowHer's key modules, and offer gentle executive functioning support.
+
+Key modules in FlowHer™ that you can explain and support:
+1. Focus States & Custom Themes: Dynamic themes (like 'Cosmic Twilight', 'Sanctuary' (light theme), 'Forest Whisper', etc.) designed for visual comfort, reducing ADHD distractibility or sensory fatigue. Includes a 'Sync with System Theme' feature.
+2. Smallest Step Breakdown (ADHD Focus): Paralyzed by a task? The tool breaks it down into the single, tiniest 5-minute activation step and subsequent micro-steps to spark dopamine and lower activation energy.
+3. RSD (Rejection Sensitive Dysphoria) Toolkit: Gentle validation, separating facts from catastrophizing thoughts during a spiral, offering grounding somatic steps.
+4. Conversation Script Generator: Helps users establish steady boundaries in meeting settings or write diplomatic, firm verbal/text scripts.
+5. Email Drafting Assistant: Generates bold, formal, or accommodating draft emails with zero apologies or minimizing fillers.
+6. Victory Log: A specialized micro-accomplishment log to celebrate positive neural momentum and build "done list" dopamine.
+
+Communication Guidelines:
+- Tone: Deeply neuroinclusive, sensory-friendly, warm, conversational, clear, and reassuring. Speak with gentle confidence.
+- Format: Use bullet points, bold highlights, and clear whitespace. Avoid overwhelming paragraphs.
+- Keep responses relatively concise so they fit beautifully in a compact floating chat layout.
+- If a user feels overwhelmed, offer a quick somatic breathing pause: "Take a slow, cool breath. Let's tackle this one tiny micro-step at a time."`;
+
+    const response = await client.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: contents,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+      }
+    });
+
+    res.json({ result: response.text });
+  } catch (error: any) {
+    console.error("Gemini Support Chat Error:", error.message || error);
+    res.json({ 
+      result: "Hello! I am here to help support you on your FlowHer™ journey. It looks like my cloud neural link is experiencing a tiny chemical pause (API connection issue), but you are doing wonderfully. If you are having trouble with a task or feeling overwhelmed, try using our **Smallest Step** ADHD tool or taking a 4-second breath. I'm right here with you! 🌿✨" 
+    });
+  }
+});
+
 // ==========================================
 // SOURCE CODE RETRIEVAL ENDPOINTS (BYPASS UI FILE SIZE LIMITS)
 // ==========================================
