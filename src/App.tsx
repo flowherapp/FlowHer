@@ -5681,7 +5681,11 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               <button
                 onClick={() => {
                   setShowGateModal(null);
-                  openLemonCheckout("monthly");
+                  if (user?.uid || auth.currentUser?.uid) {
+                    openLemonCheckout("monthly");
+                  } else {
+                    handleGetCoreClick();
+                  }
                 }}
                 className="w-full py-3.5 bg-gradient-to-r from-teal to-[#C45BAA] text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
@@ -6811,9 +6815,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 Brand Kit
               </button>
               <button
-                onClick={() =>
-                  openLemonCheckout(isAnnual ? "yearly" : "monthly")
-                }
+                onClick={handleGetCoreClick}
                 className="text-xs font-sans text-mag font-semibold py-2 px-4 rounded-full border border-[#C45BAA]/65 hover:bg-mag/5 bg-gradient-to-r from-mag/5 to-transparent hover:shadow-sm transition-all hidden md:flex items-center gap-1.5"
               >
                 Get Core — $39.99/mo
