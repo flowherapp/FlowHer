@@ -3,7 +3,15 @@ import { jsPDF } from "jspdf";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "motion/react";
 
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
+} from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -626,17 +634,7 @@ const renderHighlightedText = (text: string) => {
   );
 };
 
-interface TourStep {
-  title: string;
-  text: string;
-  targetTab: string;
-  tool: any;
-  highlightIndicator: string;
-  iconName: string;
-  subTab?: string;
-}
-
-const TOUR_STEPS: TourStep[] = [
+const TOUR_STEPS = [
   {
     title: "Welcome to FlowHer\u2122",
     text: "This is a quieter place to work from. FlowHer\u2122 takes the hard parts of a workday, the overwhelm, the emails you cannot start, the doubt, and gives each one a simple tool. No streaks to protect. No guilt. Just help.",
@@ -1131,6 +1129,8 @@ export default function App() {
   // Sensory settings
   const [showSensorySettings, setShowSensorySettings] = useState(false);
   const [showPricingPanel, setShowPricingPanel] = useState(false);
+  const [pendingCheckoutAfterAuth, setPendingCheckoutAfterAuth] =
+    useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );
@@ -1193,6 +1193,22 @@ export default function App() {
       );
     }
     window.open(url.toString(), "_blank", "noopener");
+  };
+
+  // Every "Get FlowHer™ Core" button calls this, never setShowPricingPanel
+  // or openLemonCheckout directly. An account must exist before checkout
+  // opens, since a payment with nobody to attach it to cannot be recovered
+  // after the fact. If already signed in, goes straight to pricing. If not,
+  // opens sign-up first and resumes automatically the moment it completes.
+  const handleGetCoreClick = () => {
+    if (user?.uid || auth.currentUser?.uid) {
+      setShowPricingPanel(true);
+    } else {
+      setPendingCheckoutAfterAuth(true);
+      setAuthMode("signup");
+      setShowAuthModal(true);
+      triggerToast("Create your free account first, then choose your plan.");
+    }
   };
 
   // Secret Promotion / Campaign Architecture Tab Controls (Marketing Mode)
@@ -2844,9 +2860,14 @@ export default function App() {
         setAuthError("Please input your registered email address.");
         return;
       }
-      setResetSuccess(true);
-      triggerCelebrationConfetti();
-      triggerToast("Simulated password reset instructions dispatched!");
+      sendPasswordResetEmail(auth, authForm.email)
+        .then(() => {
+          setResetSuccess(true);
+          triggerToast("Password reset instructions sent to your email.");
+        })
+        .catch((err) => {
+          setAuthError(friendlyAuthError(err?.code));
+        });
       return;
     }
 
@@ -2860,43 +2881,67 @@ export default function App() {
         setAuthError("Please input your name.");
         return;
       }
-      // Create user
-      const userData = { name: authForm.name, email: authForm.email };
-      setUser(userData);
-      localStorage.setItem("fh_user", JSON.stringify(userData));
-
-      triggerToast(
-        `Account created successfully! Welcome to FlowHer™, ${authForm.name}. `,
-      );
+      createUserWithEmailAndPassword(auth, authForm.email, authForm.password)
+        .then(async (cred) => {
+          try {
+            await updateProfile(cred.user, { displayName: authForm.name });
+          } catch (e) {}
+          // onAuthStateChanged (elsewhere in this file) picks up the new
+          // session, sets user state with the real uid, and creates the
+          // Firestore profile document automatically.
+          triggerToast(
+            `Account created successfully! Welcome to FlowHer™, ${authForm.name}. 🎉`,
+          );
+          setShowAuthModal(false);
+          setCurrentView("app");
+          if (pendingCheckoutAfterAuth) {
+            setPendingCheckoutAfterAuth(false);
+            setShowPricingPanel(true);
+          }
+        })
+        .catch((err) => {
+          setAuthError(friendlyAuthError(err?.code));
+        });
     } else {
-      // Signin simulation
-      let userToLoad = null;
-      const savedStr = localStorage.getItem("fh_user");
-      if (savedStr) {
-        try {
-          userToLoad = JSON.parse(savedStr);
-        } catch (e) {}
-      }
-
-      // If none was saved, or email typed is different, dynamically build the session user
-      if (!userToLoad || userToLoad.email !== authForm.email) {
-        userToLoad = {
-          name: "Professional User",
-          email: authForm.email,
-        };
-      }
-
-      setUser(userToLoad);
-      localStorage.setItem("fh_user", JSON.stringify(userToLoad));
-
-      // Plan is server-authoritative: Firestore snapshot (written by the payment webhook) sets it.
-      setUserPlan("free");
-
-      setShowAuthModal(false);
-      setCurrentView("app");
-      triggerToast(`Welcome back to FlowHer™, ${userToLoad.name}!`);
+      signInWithEmailAndPassword(auth, authForm.email, authForm.password)
+        .then((cred) => {
+          const name =
+            cred.user.displayName || authForm.email.split("@")[0] || "User";
+          // onAuthStateChanged handles the full user/session sync.
+          setShowAuthModal(false);
+          setCurrentView("app");
+          triggerToast(`Welcome back to FlowHer™, ${name}!`);
+          if (pendingCheckoutAfterAuth) {
+            setPendingCheckoutAfterAuth(false);
+            setShowPricingPanel(true);
+          }
+        })
+        .catch((err) => {
+          setAuthError(friendlyAuthError(err?.code));
+        });
     }
   };
+
+  // Turns Firebase Auth error codes into plain, non-technical language.
+  function friendlyAuthError(code?: string): string {
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "An account with that email already exists. Try signing in instead.";
+      case "auth/weak-password":
+        return "Please choose a password with at least 6 characters.";
+      case "auth/invalid-email":
+        return "That email address does not look right. Please check it.";
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Email or password is incorrect. Please try again.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please wait a moment and try again.";
+      default:
+        return "Something went wrong. Please try again in a moment.";
+    }
+  }
+
 
   const handleSignOut = () => {
     signOut(auth)
@@ -6828,7 +6873,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <button
-                  onClick={() => setShowPricingPanel(true)}
+                  onClick={handleGetCoreClick}
                   className="bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold py-4 px-8 rounded-2xl hover:opacity-95 shadow-md flex items-center justify-center gap-2"
                 >
                   <span>Get FlowHer™ Core</span>
@@ -7238,7 +7283,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 Brand Identity Kit
               </button>
               <button
-                onClick={() => setShowPricingPanel(true)}
+                onClick={handleGetCoreClick}
                 className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold"
               >
                 Core Pricing
@@ -8134,7 +8179,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 Home Landing
               </button>
               <button
-                onClick={() => setShowPricingPanel(true)}
+                onClick={handleGetCoreClick}
                 className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold"
               >
                 Core Pricing
