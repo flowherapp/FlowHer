@@ -52,11 +52,32 @@ app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" })
 
     const event = JSON.parse(req.body.toString("utf8"));
     const eventName: string = event?.meta?.event_name || "";
-    const userId: string | undefined = event?.meta?.custom_data?.user_id;
+    let userId: string | undefined = event?.meta?.custom_data?.user_id;
+    const userEmail: string | undefined = event?.data?.attributes?.user_email;
     const status: string = event?.data?.attributes?.status || "";
 
+    if (!userId && userEmail && admin.apps.length) {
+      // Safety net: if the checkout link somehow opened without the user_id
+      // attached, look the account up by email instead of silently dropping
+      // a real payment on the floor.
+      try {
+        const match = await admin
+          .firestore()
+          .collection("users")
+          .where("email", "==", userEmail)
+          .limit(1)
+          .get();
+        if (!match.empty) {
+          userId = match.docs[0].id;
+          console.warn("LS webhook: recovered user_id via email lookup for", userEmail);
+        }
+      } catch (e) {
+        console.error("Email fallback lookup failed:", e);
+      }
+    }
+
     if (!userId) {
-      console.warn("LS webhook without user_id:", eventName, event?.data?.attributes?.user_email);
+      console.warn("LS webhook without user_id or matching email:", eventName, userEmail);
       return res.status(200).send("ok (no user_id)");
     }
 

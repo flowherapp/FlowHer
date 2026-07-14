@@ -1144,12 +1144,14 @@ export default function App() {
   const [tourStep, setTourStep] = useState<number>(0);
 
   // User Authentication & Plan State
-  const [user, setUser] = useState<{ name: string; email: string } | null>(
-    () => {
-      const saved = localStorage.getItem("fh_user");
-      return saved ? JSON.parse(saved) : null;
-    },
-  );
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    uid?: string;
+  } | null>(() => {
+    const saved = localStorage.getItem("fh_user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [userPlan, setUserPlan] = useState<"free" | "core">(() => {
     return "free"; // Plan is server-authoritative: the Lemon Squeezy webhook writes it to Firestore
   });
@@ -1166,10 +1168,19 @@ export default function App() {
   };
   const openLemonCheckout = (plan: "monthly" | "yearly") => {
     const url = new URL(LEMON_CHECKOUT_URLS[plan]);
-    if (auth.currentUser) {
-      url.searchParams.set("checkout[custom][user_id]", auth.currentUser.uid);
-      if (auth.currentUser.email)
-        url.searchParams.set("checkout[email]", auth.currentUser.email);
+    // Prefer the app's own user state (populated the moment sign-in
+    // completes, and persisted to localStorage) over auth.currentUser,
+    // which is not always synchronously ready the instant a button is
+    // clicked, especially right after signup.
+    const uid = user?.uid || auth.currentUser?.uid;
+    const email = user?.email || auth.currentUser?.email;
+    if (uid) {
+      url.searchParams.set("checkout[custom][user_id]", uid);
+      if (email) url.searchParams.set("checkout[email]", email);
+    } else {
+      console.warn(
+        "openLemonCheckout: no signed-in user found — checkout will not auto-link to an account.",
+      );
     }
     window.open(url.toString(), "_blank", "noopener");
   };
@@ -2900,7 +2911,7 @@ export default function App() {
     if (tourStep < TOUR_STEPS.length - 1) {
       const nextStep = tourStep + 1;
       setTourStep(nextStep);
-      const target = TOUR_STEPS[nextStep] as any;
+      const target = TOUR_STEPS[nextStep];
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }
@@ -2921,7 +2932,7 @@ export default function App() {
     if (tourStep > 0) {
       const prevStep = tourStep - 1;
       setTourStep(prevStep);
-      const target = TOUR_STEPS[prevStep] as any;
+      const target = TOUR_STEPS[prevStep];
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }
