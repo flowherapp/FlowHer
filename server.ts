@@ -22,6 +22,7 @@ const PORT = 3000;
 // ============================================================
 import crypto from "crypto";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (!admin.apps.length) {
   try {
@@ -35,6 +36,32 @@ if (!admin.apps.length) {
   } catch (e) {
     console.error("Firebase Admin init failed:", e);
   }
+}
+
+let _db: any = null;
+function getDb() {
+  if (!_db) {
+    let databaseId: string | undefined = undefined;
+    try {
+      const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        if (config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)") {
+          databaseId = config.firestoreDatabaseId;
+          console.log(`Using custom Firestore database ID: ${databaseId}`);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse firebase-applet-config.json:", e);
+    }
+
+    if (databaseId) {
+      _db = getFirestore(admin.apps[0] || admin.app(), databaseId);
+    } else {
+      _db = getFirestore(admin.apps[0] || admin.app());
+    }
+  }
+  return _db;
 }
 
 app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" }), async (req, res) => {
@@ -61,8 +88,7 @@ app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" })
       // attached, look the account up by email instead of silently dropping
       // a real payment on the floor.
       try {
-        const match = await admin
-          .firestore()
+        const match = await getDb()
           .collection("users")
           .where("email", "==", userEmail)
           .limit(1)
@@ -90,7 +116,7 @@ app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" })
     if (eventName === "subscription_expired") newPlan = "free";
 
     if (newPlan && admin.apps.length) {
-      await admin.firestore().doc("users/" + userId).set({
+      await getDb().doc("users/" + userId).set({
         userPlan: newPlan,
         lsSubscriptionId: String(event?.data?.id || ""),
         lsStatus: status,

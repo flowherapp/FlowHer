@@ -626,7 +626,17 @@ const renderHighlightedText = (text: string) => {
   );
 };
 
-const TOUR_STEPS = [
+interface TourStep {
+  title: string;
+  text: string;
+  targetTab: string;
+  tool: any;
+  highlightIndicator: string;
+  iconName: string;
+  subTab?: string;
+}
+
+const TOUR_STEPS: TourStep[] = [
   {
     title: "Welcome to FlowHer\u2122",
     text: "This is a quieter place to work from. FlowHer\u2122 takes the hard parts of a workday, the overwhelm, the emails you cannot start, the doubt, and gives each one a simple tool. No streaks to protect. No guilt. Just help.",
