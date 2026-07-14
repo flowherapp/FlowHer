@@ -13,15 +13,25 @@ const PORT = 3000;
 
 // ============================================================
 // Lemon Squeezy webhook (raw body required — MUST come before express.json)
-// Env: LEMONSQUEEZY_WEBHOOK_SECRET, FIREBASE_SERVICE_ACCOUNT
+// Env: LEMONSQUEEZY_WEBHOOK_SECRET (required)
+//      FIREBASE_SERVICE_ACCOUNT (optional — only needed outside Google Cloud)
+//
+// This runs on Google's own infrastructure (AI Studio / Cloud Run), so it
+// uses Application Default Credentials automatically — no downloadable key
+// required. FIREBASE_SERVICE_ACCOUNT stays as a fallback for non-Google hosts.
 // ============================================================
 import crypto from "crypto";
 import admin from "firebase-admin";
 
-if (!admin.apps.length && process.env.FIREBASE_SERVICE_ACCOUNT) {
+if (!admin.apps.length) {
   try {
-    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-    console.log("Firebase Admin initialized (webhook plan updates enabled).");
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+      console.log("Firebase Admin initialized via service account JSON.");
+    } else {
+      admin.initializeApp(); // Application Default Credentials (automatic on Google Cloud)
+      console.log("Firebase Admin initialized via Application Default Credentials.");
+    }
   } catch (e) {
     console.error("Firebase Admin init failed:", e);
   }
