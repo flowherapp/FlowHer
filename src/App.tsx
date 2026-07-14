@@ -21,6 +21,13 @@ const triggerQuickConfetti = () => {
 };
 
 const triggerCelebrationConfetti = () => {
+  // Respect the user's sensory settings. Celebration should never be
+  // something that happens TO someone who did not consent to it.
+  try {
+    if (localStorage.getItem("fh_confetti_enabled") === "false") return;
+    if (localStorage.getItem("fh_reduce_motion") === "true") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  } catch (e) {}
   try {
     const duration = 2.5 * 1000;
     const animationEnd = Date.now() + duration;
@@ -88,8 +95,7 @@ import {
   Trash2,
   MessageSquare,
   Send,
-  Bot
-} from "lucide-react";
+  Bot, Settings } from "lucide-react";
 
 import { 
   AFFIRMATIONS, 
@@ -509,9 +515,193 @@ const renderTourIcon = (name: string) => {
   }
 };
 
+
+// ============================================================
+// SENSORY SETTINGS PANEL — FlowHer™
+// The control room for a nervous system. Everything here is a
+// choice the user gets to make about how much the app does to her.
+// ============================================================
+const SensorySettingsPanel = ({ onClose }: { onClose: () => void }) => {
+  const [reduceMotion, setReduceMotion] = useState(() => localStorage.getItem("fh_reduce_motion") === "true");
+  const [calmMode, setCalmMode] = useState(() => localStorage.getItem("fh_calm_mode") === "true");
+  const [confettiOn, setConfettiOn] = useState(() => localStorage.getItem("fh_confetti_enabled") !== "false");
+  const [textScale, setTextScale] = useState(() => Number(localStorage.getItem("fh_text_scale") || "100"));
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("fh-reduce-motion", reduceMotion);
+    localStorage.setItem("fh_reduce_motion", String(reduceMotion));
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("fh-calm-mode", calmMode);
+    localStorage.setItem("fh_calm_mode", String(calmMode));
+  }, [calmMode]);
+
+  useEffect(() => {
+    localStorage.setItem("fh_confetti_enabled", String(confettiOn));
+  }, [confettiOn]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = textScale + "%";
+    localStorage.setItem("fh_text_scale", String(textScale));
+  }, [textScale]);
+
+  const Row = ({ label, desc, on, set }: { label: string; desc: string; on: boolean; set: (v: boolean) => void }) => (
+    <div className="flex items-start justify-between gap-4 py-4 border-b border-white/10">
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-white">{label}</p>
+        <p className="text-xs text-white/60 mt-1 leading-relaxed">{desc}</p>
+      </div>
+      <button
+        onClick={() => set(!on)}
+        aria-label={label}
+        aria-pressed={on}
+        className={`shrink-0 w-12 h-7 rounded-full transition-colors ${on ? "bg-[#C899CB]" : "bg-white/20"}`}
+      >
+        <span className={`block w-5 h-5 rounded-full bg-white transition-transform ${on ? "translate-x-6" : "translate-x-1"}`} />
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-label="Sensory settings">
+      <div className="bg-[#2d0a3e] rounded-3xl max-w-md w-full p-6 border border-[#C899CB]/30 max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-xl text-white font-serif">Sensory Settings</h2>
+          <button onClick={onClose} aria-label="Close sensory settings" className="text-white/60 hover:text-white p-1">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="text-xs text-white/50 mb-4 leading-relaxed">
+          You decide how much this app does to you. Change any of this, any time, for any reason.
+        </p>
+
+        <Row
+          label="Reduce motion"
+          desc="Turns off animations and transitions. Good for sensory-sensitive days, migraines, or vestibular sensitivity."
+          on={reduceMotion}
+          set={setReduceMotion}
+        />
+        <Row
+          label="Calm mode"
+          desc="Removes gradients, glows, and blur. A quieter, flatter interface for when even color feels like a lot."
+          on={calmMode}
+          set={setCalmMode}
+        />
+        <Row
+          label="Celebration effects"
+          desc="Confetti when you log a win. Some days it is dopamine. Some days it is too much. Your call."
+          on={confettiOn}
+          set={setConfettiOn}
+        />
+
+        <div className="py-4">
+          <p className="text-sm font-semibold text-white">Text size</p>
+          <p className="text-xs text-white/60 mt-1 mb-3">Larger text is easier to hold when focus is thin.</p>
+          <div className="flex items-center gap-2">
+            {[90, 100, 110, 125].map((size) => (
+              <button
+                key={size}
+                onClick={() => setTextScale(size)}
+                aria-label={`Text size ${size} percent`}
+                aria-pressed={textScale === size}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                  textScale === size ? "bg-[#C899CB] text-[#2d0a3e]" : "bg-white/10 text-white/70 hover:bg-white/20"
+                }`}
+              >
+                {size === 90 ? "Small" : size === 100 ? "Default" : size === 110 ? "Large" : "Largest"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-2 py-3 bg-[#C899CB] text-[#2d0a3e] rounded-xl font-semibold text-sm"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+// ============================================================
+// PRICING PANEL — FlowHer™
+// One plan. Two billing options. No countdowns, no fake slots.
+// ============================================================
+const PricingPanel = ({
+  isAnnual,
+  setBillingCycle,
+  onSubscribe,
+  onClose,
+}: {
+  isAnnual: boolean;
+  setBillingCycle: (v: "monthly" | "annual") => void;
+  onSubscribe: (plan: "monthly" | "yearly") => void;
+  onClose: () => void;
+}) => {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-label="FlowHer Core pricing">
+      <div className="bg-white rounded-3xl max-w-md w-full p-7 border border-[#C45BAA]/20 relative max-h-[90vh] overflow-y-auto">
+        <button onClick={onClose} aria-label="Close pricing" className="absolute top-4 right-4 p-1 rounded-full hover:bg-black/5 text-[#8A7F8D]">
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="text-xs uppercase tracking-widest text-[#C45BAA] font-semibold mb-2">FlowHer™ Core</div>
+        <h2 className="font-serif text-2xl font-light text-plum mb-2">One plan. Everything unlocked.</h2>
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          Full access to every tool: Smallest Step, Email Drafting, RSD Toolkit, Masking Debt tracker, Time Blindness Corrector, and unlimited Win Journal entries.
+        </p>
+
+        <div className="flex bg-plum/5 rounded-full p-1 mb-6">
+          <button
+            onClick={() => setBillingCycle("monthly")}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${!isAnnual ? "bg-white text-plum shadow-sm" : "text-plum/60"}`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBillingCycle("annual")}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${isAnnual ? "bg-white text-plum shadow-sm" : "text-plum/60"}`}
+          >
+            Annual
+          </button>
+        </div>
+
+        <div className="text-center mb-6">
+          {isAnnual ? (
+            <>
+              <div className="text-4xl font-serif text-plum">$24.99<span className="text-base text-gray-500">/mo</span></div>
+              <p className="text-xs text-gray-500 mt-1">Billed annually as $299.88/yr. Save 37.5% over monthly.</p>
+            </>
+          ) : (
+            <>
+              <div className="text-4xl font-serif text-plum">$39.99<span className="text-base text-gray-500">/mo</span></div>
+              <p className="text-xs text-gray-500 mt-1">Billed monthly. Cancel anytime.</p>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={() => onSubscribe(isAnnual ? "yearly" : "monthly")}
+          className="w-full py-4 bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold rounded-2xl hover:opacity-95 shadow-md flex items-center justify-center gap-2"
+        >
+          <span>Get FlowHer™ Core</span>
+          <ArrowRight className="h-4.5 w-4.5" />
+        </button>
+        <p className="text-[11px] text-gray-400 text-center mt-3">
+          Checkout runs through Lemon Squeezy. Your card details never touch FlowHer™.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   // Navigation & Screen Control
-  const [currentView, setCurrentView] = useState<"landing" | "founding" | "app" | "brand-kit">("landing");
+  const [currentView, setCurrentView] = useState<"landing" | "app" | "brand-kit">("landing");
   const [appTab, setAppTab] = useState<"home" | "focus" | "work" | "wins" | "unmask" | "mask" | "glossary" | "promote">("home");
   
   // Focus Theme Selector State
@@ -672,42 +862,28 @@ export default function App() {
     }
   };
 
+  // Sensory settings
+  const [showSensorySettings, setShowSensorySettings] = useState(false);
+  const [showPricingPanel, setShowPricingPanel] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const isAnnual = billingCycle === "annual";
+  useEffect(() => {
+    // Apply saved sensory preferences on boot, before anything animates
+    if (localStorage.getItem("fh_reduce_motion") === "true") {
+      document.documentElement.classList.add("fh-reduce-motion");
+    }
+    if (localStorage.getItem("fh_calm_mode") === "true") {
+      document.documentElement.classList.add("fh-calm-mode");
+    }
+    const scale = localStorage.getItem("fh_text_scale");
+    if (scale) document.documentElement.style.fontSize = scale + "%";
+  }, []);
+
   // Guided Interactive Tour States
   const [showGuidedTour, setShowGuidedTour] = useState<boolean>(() => {
     return !localStorage.getItem("fh_guided_tour_completed");
   });
   const [tourStep, setTourStep] = useState<number>(0);
-
-  // Dynamic Founding Spots Urgency States
-  const [spotsRemaining, setSpotsRemaining] = useState<number>(() => {
-    const saved = localStorage.getItem("fh_founding_spots_remaining");
-    if (saved) return Number(saved);
-    const initial = Math.floor(Math.random() * 5) + 9; // between 9 and 13 spots left
-    localStorage.setItem("fh_founding_spots_remaining", String(initial));
-    return initial;
-  });
-
-  // Billing interval cycle & Founding intake active status toggles
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-  const [foundingStatus, setFoundingStatus] = useState<"active" | "filled">("active");
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSpotsRemaining(prev => {
-        if (prev <= 3) {
-          return 3; // Keep a buffer minimum of 3 spots
-        }
-        const decrease = Math.random() > 0.65 ? 1 : 0;
-        if (decrease > 0) {
-          const nextVal = prev - decrease;
-          localStorage.setItem("fh_founding_spots_remaining", String(nextVal));
-          return nextVal;
-        }
-        return prev;
-      });
-    }, 45000); // Scrutinize every 45 secs for real-time engagement decay
-    return () => clearInterval(interval);
-  }, []);
 
   // User Authentication & Plan State
   const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
@@ -715,21 +891,25 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [userPlan, setUserPlan] = useState<"free" | "core">(() => {
-    const savedUserStr = localStorage.getItem("fh_user");
-    if (savedUserStr) {
-      try {
-        const u = JSON.parse(savedUserStr);
-        if (u && u.email === "s.strain04@gmail.com") {
-          return "core";
-        }
-        if (u && u.email === "guest@localworkspace.direct") {
-          return "free";
-        }
-      } catch (err) {}
-    }
-    const savedPlan = localStorage.getItem("fh_user_plan") as "free" | "core" | null;
-    return savedPlan || "free"; // Default to free for raw incoming users or guests
+    return "free"; // Plan is server-authoritative: the Lemon Squeezy webhook writes it to Firestore
   });
+
+  // ============================================================
+  // REAL Lemon Squeezy hosted checkout (card data never touches this app)
+  // Paste your two live buy links from Lemon Squeezy > Product > Share
+  // ============================================================
+  const LEMON_CHECKOUT_URLS: Record<"monthly" | "yearly", string> = {
+    monthly: "https://YOURSTORE.lemonsqueezy.com/buy/PASTE-MONTHLY-VARIANT-UUID",
+    yearly: "https://YOURSTORE.lemonsqueezy.com/buy/PASTE-ANNUAL-VARIANT-UUID",
+  };
+  const openLemonCheckout = (plan: "monthly" | "yearly") => {
+    const url = new URL(LEMON_CHECKOUT_URLS[plan]);
+    if (auth.currentUser) {
+      url.searchParams.set("checkout[custom][user_id]", auth.currentUser.uid);
+      if (auth.currentUser.email) url.searchParams.set("checkout[email]", auth.currentUser.email);
+    }
+    window.open(url.toString(), "_blank", "noopener");
+  };
 
   // Secret Promotion / Campaign Architecture Tab Controls (Marketing Mode)
   const [promoUnlocked, setPromoUnlocked] = useState<boolean>(() => {
@@ -745,7 +925,7 @@ export default function App() {
   });
   const [footerClicks, setFooterClicks] = useState<number>(0);
 
-  const hasPromoAccess = (user?.email === "s.strain04@gmail.com") || promoUnlocked;
+  const hasPromoAccess = promoUnlocked; // Owner access via 5-tap footer toggle only
 
   const handleFooterCopyrightClick = () => {
     setFooterClicks(prev => {
@@ -1785,14 +1965,6 @@ export default function App() {
 
 
   useEffect(() => {
-    if (user && user.email === "s.strain04@gmail.com") {
-      setUserPlan("core");
-      if (user.name !== "Silvella") {
-        const revised = { ...user, name: "Silvella" };
-        setUser(revised);
-        localStorage.setItem("fh_user", JSON.stringify(revised));
-      }
-    }
     if (auth.currentUser && user) {
       updateDoc(doc(db, "users", auth.currentUser.uid), { username: user.name }).catch((err) =>
         handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`)
@@ -1824,7 +1996,7 @@ export default function App() {
               profilePic: localStorage.getItem("fh_profile_pic") || "",
               profileBio: localStorage.getItem("fh_profile_bio") || "A professional navigating executive functioning with smart aesthetic micro-structures.",
               dopamineSparks: Number(localStorage.getItem("fh_dopamine_sparks") || "0"),
-              userPlan: localStorage.getItem("fh_user_plan") || (email === "s.strain04@gmail.com" ? "core" : "free"),
+              userPlan: "free", // webhook upgrades to core after real payment
               priorities: JSON.parse(localStorage.getItem("fh_priorities") || '["", "", ""]'),
               prioritiesCompleted: JSON.parse(localStorage.getItem("fh_priorities_completed") || '[false, false, false]'),
               victoryLog: JSON.parse(localStorage.getItem("fh_victory_log") || '[]'),
@@ -2087,29 +2259,7 @@ export default function App() {
       setUser(userData);
       localStorage.setItem("fh_user", JSON.stringify(userData));
 
-      // Promo validation for Core access
-      const normalCode = authForm.promo.trim().toUpperCase();
-      const validBetaCodes = ["BETAFLOWHER2026", "FLOWHERBETA", "FLOWHER_AI", "BETA3MONTHS", "FLOWHER3MONTHS", "FLOWHER3M"];
-      if (validBetaCodes.includes(normalCode)) {
-        setUserPlan("core");
-        localStorage.setItem("fh_plan", "core");
-        localStorage.setItem("fh_beta_tier", "3_months");
-      } else {
-        setUserPlan("free");
-        localStorage.setItem("fh_plan", "free");
-        localStorage.removeItem("fh_beta_tier");
-      }
-
-      setShowAuthModal(false);
-      setShowOnboarding(true); // show Onboarding onboarding steps
-      setCurrentView("app");
-      triggerCelebrationConfetti();
-      const isBetaMonths = ["BETA3MONTHS", "FLOWHER3MONTHS", "FLOWHER3M"].includes(normalCode);
-      if (isBetaMonths) {
-        triggerToast("🎉 3-Month Beta Testing Pass Activated! Full Core features unlocked.");
-      } else {
-        triggerToast(`Account created successfully! Welcome to FlowHer™, ${authForm.name}. 🎉`);
-      }
+      triggerToast(`Account created successfully! Welcome to FlowHer™, ${authForm.name}. 🎉`);
     } else {
       // Signin simulation
       let userToLoad = null;
@@ -2123,7 +2273,7 @@ export default function App() {
       // If none was saved, or email typed is different, dynamically build the session user
       if (!userToLoad || userToLoad.email !== authForm.email) {
         userToLoad = {
-          name: authForm.email === "s.strain04@gmail.com" ? "Silvella" : "Professional User",
+          name: "Professional User",
           email: authForm.email
         };
       }
@@ -2131,13 +2281,8 @@ export default function App() {
       setUser(userToLoad);
       localStorage.setItem("fh_user", JSON.stringify(userToLoad));
 
-      if (userToLoad.email === "s.strain04@gmail.com") {
-        setUserPlan("core");
-        localStorage.setItem("fh_user_plan", "core");
-      } else {
-        const savedPlan = localStorage.getItem("fh_user_plan") as "free" | "core" | null;
-        setUserPlan(savedPlan || "free");
-      }
+      // Plan is server-authoritative: Firestore snapshot (written by the payment webhook) sets it.
+      setUserPlan("free");
 
       setShowAuthModal(false);
       setCurrentView("app");
@@ -3801,7 +3946,7 @@ Short-form video content is the single fastest way to reach the ADHD community.
   - **Audio**: "And when you need to focus, we don't set loud alarms that trigger your rejection sensitivity. FlowHer uses gentle sound bath vibrations and ADHD survival tools built specifically for us."
   - **Text Overlay**: "Continuous Sound Bath drone + Mindful Focus timers"
 - **0:30-0:45 Visual/Framing**: Showing the gorgeous, symmetrical FlowHer logo design, followed by a clean phone-app screenshot of the homepage and a clear "Open Dashboard ➔" button link.
-  - **Audio**: "Stop fighting your brain. Join thousands of other women reclaiming their focus. Check out FlowHer, linked in our bio, and lock in your founding spot today."
+  - **Audio**: "Stop fighting your brain. Join thousands of other women reclaiming their focus. Check out FlowHer, linked in our bio, and start your Core membership today."
   - **Text Overlay**: "Built for women whose brains work differently. Try FlowHer™ today."
 
 ---
@@ -4366,6 +4511,16 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
         </div>
       )}
 
+      {showSensorySettings && <SensorySettingsPanel onClose={() => setShowSensorySettings(false)} />}
+      {showPricingPanel && (
+        <PricingPanel
+          isAnnual={isAnnual}
+          setBillingCycle={setBillingCycle}
+          onSubscribe={(plan) => { setShowPricingPanel(false); openLemonCheckout(plan); }}
+          onClose={() => setShowPricingPanel(false)}
+        />
+      )}
+
       {/* Somatic Safe Space Overlays (SOS Overlay) */}
       {isSosActive && (
         <div className="fixed inset-0 z-50 bg-[#1C0A2E]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center text-[#FAF6F0]">
@@ -4454,20 +4609,14 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               Unlock entire custom survival scripts, full time blindness multipliers tracker, RSD Toolkit, and unlimited Wins logging by stepping up to Core.
             </p>
 
-            {/* Spots ticker indicators */}
+            {/* Core pricing summary */}
             <div className="bg-plum/5 border border-[#C45BAA]/20 rounded-2xl p-4 mb-6">
               <div className="flex justify-between text-xs font-mono mb-1 text-plum">
-                <span>Core Founding Slots remaining</span>
-                <span className="text-mag font-semibold">{spotsRemaining} left</span>
-              </div>
-              <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-[#E8845C] to-[#C45BAA] rounded-full transition-all duration-1000" 
-                  style={{ width: `${((200 - spotsRemaining) / 200) * 100}%` }} 
-                />
+                <span>Core Plan</span>
+                <span className="text-mag font-semibold">$39.99/mo</span>
               </div>
               <p className="text-[11px] text-[#8A7F8D] mt-2">
-                Only {spotsRemaining} of our 200 slots remain. Locked pricing ($24.99/month) is secured permanently for those who claim today.
+                Or $24.99/month billed annually at $299.88/yr. Save 37.5%. Cancel anytime.
               </p>
             </div>
 
@@ -4475,36 +4624,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               <button 
                 onClick={() => {
                   setShowGateModal(null);
-                  setShowLemonCheckout({
-                    plan: "FlowHer™ Core - Monthly Founding Slot",
-                    price: 24.99,
-                    billing: "monthly"
-                  });
+                  openLemonCheckout("monthly");
                 }}
                 className="w-full py-3.5 bg-gradient-to-r from-teal to-[#C45BAA] text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Unlock Core via Lemon Squeezy 🍋</span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
-              <button 
-                onClick={() => {
-                  setUserPlan("core");
-                  setShowGateModal(null);
-                  triggerCelebrationConfetti();
-                  triggerToast("Promo Sim: You are now upgraded to FlowHer™ Core! 🎉");
-                }}
-                className="w-full py-2 bg-[#1C0A2E]/5 text-[#1C0A2E] border border-[#1C0A2E]/20 text-[11px] font-sans font-medium rounded-xl hover:bg-[#1C0A2E]/10 transition-all flex items-center justify-center gap-1.5"
-              >
-                <span>Bypass: Simulate Free Beta Code 🤫</span>
-              </button>
-              <button 
-                onClick={() => {
-                  setShowGateModal(null);
-                  setCurrentView("founding");
-                }}
-                className="w-full py-2.5 bg-plum/10 text-plum font-sans text-xs font-medium rounded-xl hover:bg-plum/15 transition-all text-center block cursor-pointer"
-              >
-                Explore Founding Page Details
               </button>
             </div>
           </div>
@@ -4662,12 +4787,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       <button 
                         onClick={() => {
                           const code = checkoutPromoCode.trim().toUpperCase();
-                          if (code === "BETA100" || code === "FOUNDING30") {
+                          if (code === "LAUNCH20") {
                             setCheckoutPromoApplied(true);
                             setCheckoutPromoError("");
                             triggerQuickConfetti();
                           } else {
-                            setCheckoutPromoError("Invalid code. Try BETA100 or FOUNDING30.");
+                            setCheckoutPromoError("Invalid code.");
                           }
                         }}
                         className="px-4 py-1.5 bg-plum text-white text-xs font-semibold rounded-xl hover:opacity-90 font-sans cursor-pointer"
@@ -4699,7 +4824,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       </button>
                       <button 
                         onClick={() => {
-                          setCheckoutPromoCode("FOUNDING30");
+                          setCheckoutPromoCode("");
                           setCheckoutPromoApplied(true);
                           setCheckoutPromoError("");
                           triggerQuickConfetti();
@@ -4707,7 +4832,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         type="button"
                         className="px-2 py-1 bg-white rounded-md border border-[#C45BAA]/15 hover:bg-white/80 transition-all font-semibold text-plum cursor-pointer text-left sm:text-center"
                       >
-                        🏷️ FOUNDING30 (30% Off)
+                        
                       </button>
                     </div>
                   </div>
@@ -5093,20 +5218,6 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       placeholder="••••••••"
                     />
                   </div>
-                  {authMode === "signup" && (
-                    <div>
-                      <label className="text-xs font-mono text-plum tracking-wider block mb-1">Optional Beta Code</label>
-                      <input 
-                        type="text"
-                        value={authForm.promo}
-                        onChange={e => setAuthForm({ ...authForm, promo: e.target.value })}
-                        className="w-full bg-white border border-[#C45BAA]/20 rounded-xl px-4 py-2.5 text-sm uppercase font-mono tracking-widest focus:outline-none focus:border-mag text-plum"
-                        placeholder="e.g. BETAFLOWHER2026"
-                      />
-                      <span className="text-[10px] text-[#8A7F8D] mt-1 block leading-relaxed">Entering standard beta promo codes grants immediate local simulated premium Core access.</span>
-                    </div>
-                  )}
-
                   <button 
                     type="submit"
                     className="w-full py-4 bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold rounded-xl hover:opacity-95 shadow-md transition-all font-sans cursor-pointer"
@@ -5269,10 +5380,10 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 🎨 Brand Kit
               </button>
               <button 
-                onClick={() => setCurrentView("founding")}
-                className="text-xs font-sans text-mag font-semibold py-2 px-4 rounded-full border border-[#C45BAA]/65 hover:bg-mag/5 bg-gradient-to-r from-mag/5 to-transparent hover:shadow-sm transition-all hidden md:flex items-center gap-1.5 animate-pulse"
+                onClick={() => openLemonCheckout(isAnnual ? "yearly" : "monthly")}
+                className="text-xs font-sans text-mag font-semibold py-2 px-4 rounded-full border border-[#C45BAA]/65 hover:bg-mag/5 bg-gradient-to-r from-mag/5 to-transparent hover:shadow-sm transition-all hidden md:flex items-center gap-1.5"
               >
-                ★ Only {spotsRemaining} Spots Left
+                ★ Get Core — $39.99/mo
               </button>
               <button 
                 onClick={() => {
@@ -5314,10 +5425,10 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <button 
-                  onClick={() => setCurrentView("founding")}
+                  onClick={() => setShowPricingPanel(true)}
                   className="bg-gradient-to-r from-plum to-mag text-white text-sm font-semibold py-4 px-8 rounded-2xl hover:opacity-95 shadow-md flex items-center justify-center gap-2"
                 >
-                  <span>Become a Founding Member</span>
+                  <span>Get FlowHer™ Core</span>
                   <ArrowRight className="h-4.5 w-4.5" />
                 </button>
                 <button 
@@ -5606,7 +5717,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
             <p className="font-light">FlowHer™ — For women whose brains work differently.</p>
             <div className="flex justify-center gap-6 mt-1 flex-wrap">
               <button onClick={() => setCurrentView("brand-kit")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🎨 Brand Identity Kit</button>
-              <button onClick={() => setCurrentView("founding")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">★ Founding Member Plan</button>
+              <button onClick={() => setShowPricingPanel(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">Core Pricing</button>
               <button onClick={() => setShowLegalModal(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🛡️ Privacy & Legal Rules</button>
               <button onClick={() => {
                 if (user) {
@@ -5621,252 +5732,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
         </div>
       )}
 
-      {/* ==========================================
-           FOUNDING SPOTS PAGE VIEW
-         ========================================== */}
-      {currentView === "founding" && (() => {
-        // Dynamic Pricing parameters
-        const isFoundingActive = foundingStatus === "active";
-        const isAnnual = billingCycle === "annual";
-
-        const planTag = isFoundingActive 
-          ? "✦ Exclusive Core Founding Rate" 
-          : "✦ Standard Public Core Plans";
-
-        const mainPrice = isFoundingActive 
-          ? (isAnnual ? "19" : "24") 
-          : (isAnnual ? "24" : "39");
-
-        const centsCode = ".99";
-
-        const billIntervalLabel = isAnnual 
-          ? (isFoundingActive ? "Billed annually as $239.88/yr (Save 20% over Monthly)" : "Billed annually as $299.88/yr (Save 37.5% over Monthly!)")
-          : "Billed monthly. Cancel securely anytime";
-
-        const spotsRemainingDisplay = isFoundingActive ? spotsRemaining : 0;
-
-        return (
-          <div className="w-full max-w-4xl px-4 py-12 space-y-8">
-            
-            <button 
-              onClick={() => setCurrentView("landing")}
-              className="text-xs text-[#8A7F8D] hover:text-[#3D1052] font-semibold flex items-center gap-2"
-            >
-              ← Back to main lobby
-            </button>
-
-            <div className="text-center space-y-4">
-              <span className="text-xs px-3 py-1 bg-[#C45BAA]/15 text-mag uppercase rounded-full tracking-widest font-mono">
-                {planTag}
-              </span>
-              <h1 className="font-serif text-5xl font-light text-plum">
-                {isFoundingActive ? (
-                  <>Secure Your Lifetime Rate. <em className="italic text-mag font-serif">Forever.</em></>
-                ) : (
-                  <>Standard Workspace Memberships. <em className="italic text-mag font-serif">Optimized.</em></>
-                )}
-              </h1>
-              <p className="text-gray-600 font-light max-w-md mx-auto text-sm leading-relaxed">
-                {isFoundingActive ? (
-                  `We are reserving exactly 200 Core Founding spots at $24.99/month (or $19.99/month billed annually). Locked indefinitely and guaranteed never to increase.`
-                ) : (
-                  "The early founding slot registry has closed. Register at standard rates to activate full, unlimited neuro-support mechanisms."
-                )}
-              </p>
-            </div>
-
-            {/* INTERACTIVE COMPLIANCE PLAN SWITCHES */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/60 border border-black/5 rounded-2xl p-4 max-w-2xl mx-auto backdrop-blur-xs shadow-xs select-none">
-              <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                <span className="text-[10px] font-mono tracking-wider text-[#A2488E] uppercase font-bold">1. BILLING CYCLE</span>
-                <span className="text-[10px] text-gray-500 font-light">Choose preferred invoice rhythm</span>
-              </div>
-              
-              <div className="flex bg-[#1C0A2E]/5 rounded-xl p-1 border border-black/5 shrink-0">
-                <button 
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                    billingCycle === "monthly" 
-                      ? "bg-[#1C0A2E] text-white shadow-xs" 
-                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button 
-                  onClick={() => setBillingCycle("annual")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer relative ${
-                    billingCycle === "annual" 
-                      ? "bg-[#1C0A2E] text-white shadow-xs" 
-                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
-                  }`}
-                >
-                  Annual Billing
-                  <span className="absolute -top-2.5 -right-1 px-1 bg-[#C45BAA] text-white text-[7px] font-mono rounded-full uppercase tracking-tight scale-90">
-                    Save
-                  </span>
-                </button>
-              </div>
-
-              <div className="hidden sm:block border-l border-black/10 h-8 mx-1" />
-
-              <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                <span className="text-[10px] font-mono tracking-wider text-[#A2488E] uppercase font-bold">2. REGISTER STATUS SIMULATOR</span>
-                <span className="text-[10px] text-gray-500 font-light">Toggle state after all 200 spots chosen</span>
-              </div>
-
-              <div className="flex bg-[#1C0A2E]/5 rounded-xl p-1 border border-black/5 shrink-0">
-                <button 
-                  onClick={() => {
-                    setFoundingStatus("active");
-                    triggerToast("Simulating: Active Founding Window");
-                  }}
-                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-wide transition-all cursor-pointer ${
-                    foundingStatus === "active" 
-                      ? "bg-teal text-white shadow-xs" 
-                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
-                  }`}
-                >
-                  Slots Open
-                </button>
-                <button 
-                  onClick={() => {
-                    setFoundingStatus("filled");
-                    triggerToast("Simulating: Post-Founding Rates (Fills closed)");
-                  }}
-                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-wide transition-all cursor-pointer ${
-                    foundingStatus === "filled" 
-                      ? "bg-red-700 text-white shadow-xs" 
-                      : "text-gray-650 hover:bg-[#1C0A2E]/5"
-                  }`}
-                >
-                  All 200 Chosen
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white border-2 border-[#C45BAA]/35 rounded-[2rem] p-8 md:p-12 shadow-xl space-y-8">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-6">
-                  <span className="text-xs tracking-wider text-teal font-mono uppercase block">What is unlocked instantly</span>
-                  <ul className="space-y-3.5 text-xs text-gray-700 font-light">
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
-                      <span>Unlimited Smallest Step Breakdown queries (AI-driven)</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
-                      <span>RSD reality tracker metrics de-escalator</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
-                      <span>All automated survival scripts drafting models</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle className="h-4 w-4 text-teal shrink-0 mt-0.5" />
-                      <span>Private, device-encrypted Win Logs repository exports</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Pricing breakdown box */}
-                <div className="bg-[#1C0A2E] text-white p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden">
-                  {/* Subtle top light flare */}
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-teal via-[#E8845C] to-[#C45BAA]" />
-                  
-                  <span className="text-xs uppercase tracking-widest text-[#E8845C] font-mono">
-                    {isFoundingActive ? "Lifetime Core Founding Rate" : "Standard Professional Rate"}
-                  </span>
-                  <div className="font-serif text-6xl block text-white font-light">
-                    ${mainPrice}<span className="text-2xl">{centsCode}</span>
-                  </div>
-                  <span className="text-xs text-white/70 tracking-wide font-sans">{billIntervalLabel}</span>
-
-                  {/* Urgency Counter / Standard Notice indicator */}
-                  <div className="w-full bg-[#270E40] border border-[#C45BAA]/40 rounded-xl p-3.5 space-y-2 text-left">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${isFoundingActive ? "bg-[#E8845C] animate-pulse" : "bg-red-500"}`} />
-                        <span className="text-[10px] font-mono tracking-wider text-orange-200 uppercase font-bold">
-                          {isFoundingActive ? "Urgent Intake Notice" : "FOUNDING CYCLE CONCLUDED"}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono text-gray-300 font-semibold">
-                        {isFoundingActive ? `${200 - spotsRemainingDisplay} / 200 Claimed` : "200 / 200 Spots Claimed"}
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        {isFoundingActive ? (
-                          <strong className="text-white font-medium text-[11px]">Only {spotsRemainingDisplay} founding spots left!</strong>
-                        ) : (
-                          <strong className="text-white font-medium text-[11px]">🔴 General Public Registrations Active</strong>
-                        )}
-                        <span className="text-[9px] text-[#E8845C] font-mono">
-                          {isFoundingActive ? "Intake closing soon" : "Legacy pricing secure"}
-                        </span>
-                      </div>
-                      <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-[#E8845C] to-[#C45BAA] h-full transition-all duration-1000" 
-                          style={{ width: isFoundingActive ? `${((200 - spotsRemainingDisplay) / 200) * 100}%` : "100%" }}
-                        />
-                      </div>
-                    </div>
-                    
-                    <p className="text-[9px] text-gray-400 font-sans leading-normal">
-                      {isFoundingActive ? (
-                        "Due to local device caching resources and private vector memory sandboxes, we cap physical beta groups to maintain sub-100ms response timelines. Secure your place now."
-                      ) : (
-                        "The priority 200 slots have been fully populated and locked in perpetuity. Registration remains open under our standard enterprise pricing modules to support general server capacity."
-                      )}
-                    </p>
-                  </div>
-                  
-                  <button 
-                    onClick={() => {
-                      const baseMonthlyRate = Number(mainPrice) + 0.99;
-                      const finalCheckoutPrice = isAnnual ? baseMonthlyRate * 12 : baseMonthlyRate;
-                      setShowLemonCheckout({
-                        plan: isFoundingActive 
-                          ? (isAnnual ? "FlowHer™ Core - Annual Founding Slot" : "FlowHer™ Core - Monthly Founding Slot")
-                          : (isAnnual ? "FlowHer™ Core - Annual Standard Membership" : "FlowHer™ Core - Monthly Standard Membership"),
-                        price: finalCheckoutPrice,
-                        billing: isAnnual ? "annual" : "monthly"
-                      });
-                    }}
-                    className="w-full py-4 bg-gradient-to-r from-[#E8845C] to-[#C45BAA] text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all cursor-pointer"
-                  >
-                    {isFoundingActive ? "Secure Lifetime Rate ➔" : "Activate Standard Premium Plan ➔"}
-                  </button>
-
-                  {/* Employer Reimbursement Support */}
-                  <div className="w-full text-center pt-2 select-none animate-fadeIn">
-                    <button
-                      onClick={() => {
-                        setEmailSelectedTemplate("Employer benefit reimbursement request");
-                        setEmailSituation("I want to request that my company/HR department reimburses or pays for my FlowHer™ premium subscription as a neurodiversity-friendly professional development and executive-function support tool. The subscription helps me manage cognitive focus, burnout boundaries, and communication confidence.");
-                        setCurrentView("app");
-                        setAppTab("work");
-                        setSelectedWorkTool("email");
-                        triggerToast("Preloaded HR reimbursement template in the Boundary Coach! 🏢");
-                      }}
-                      className="text-[10.5px] font-mono text-[#FAF6F0]/80 hover:text-white transition-all underline decoration-dashed underline-offset-4 cursor-pointer decoration-mag/50 hover:decoration-mag"
-                    >
-                      Need your employer or HR to pay? Click here to generate a reimbursement request email 🏢
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-center text-xs text-[#8A7F8D] italic font-light">
-              Silvella Strain · Founder, FlowHer LLC · Creator of FlowHer™
-            </p>
-          </div>
-        );
-      })()}
+      
 
       {/* ==========================================
            DEDICATED BRAND IDENTITY & DESIGN KIT
@@ -6355,7 +6221,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
             <p className="font-light">FlowHer™ — For women whose brains work differently.</p>
             <div className="flex justify-center gap-6 mt-1.5">
               <button onClick={() => setCurrentView("landing")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🏠 Home Landing</button>
-              <button onClick={() => setCurrentView("founding")} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">★ Founding Member Details</button>
+              <button onClick={() => setShowPricingPanel(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">Core Pricing</button>
               <button onClick={() => setShowLegalModal(true)} className="hover:text-mag hover:underline transition-all cursor-pointer font-sans font-semibold">🛡️ Privacy & Legal Rules</button>
               <button onClick={() => {
                 if (user) {
@@ -6622,6 +6488,15 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 className="bg-[#E8845C]/15 border border-[#E8845C]/45 text-[#E8845C] text-[10px] tracking-wider font-mono uppercase px-3 py-1 rounded-full hover:bg-[#E8845C]/25 transition-all text-sm font-semibold"
               >
                 🚨 SOS Help
+              </button>
+              <button
+                onClick={() => setShowSensorySettings(true)}
+                aria-label="Open sensory settings"
+                title="Sensory settings: reduce motion, calm mode, text size"
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                <span>Sensory</span>
               </button>
               <button 
                 onClick={() => setShowLegalModal(true)}
@@ -10980,7 +10855,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           <div className="p-3 bg-black/25 rounded-xl border border-white/5 space-y-1">
                             <strong className="text-white block font-mono text-[10px] text-mag">🎉 CTA (0:30-0:45):</strong>
                             <p className="text-gray-300">Showing the gorgeous symmetrical Symmetrical emblem of FlowHer, mobile web application running seamlessly.</p>
-                            <span className="block italic text-[10.5px] text-teal">Audio: "Stop fighting your brain. Join thousands of other women reclaiming their focus. Check out FlowHer, linked in our bio, and lock in your founding spot today."</span>
+                            <span className="block italic text-[10.5px] text-teal">Audio: "Stop fighting your brain. Join thousands of other women reclaiming their focus. Check out FlowHer, linked in our bio, and start your Core membership today."</span>
                           </div>
                         </div>
                       </div>

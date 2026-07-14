@@ -11,11 +11,97 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// ============================================================
+// Lemon Squeezy webhook (raw body required — MUST come before express.json)
+// Env: LEMONSQUEEZY_WEBHOOK_SECRET, FIREBASE_SERVICE_ACCOUNT
+// ============================================================
+import crypto from "crypto";
+import admin from "firebase-admin";
+
+if (!admin.apps.length && process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+    console.log("Firebase Admin initialized (webhook plan updates enabled).");
+  } catch (e) {
+    console.error("Firebase Admin init failed:", e);
+  }
+}
+
+app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" }), async (req, res) => {
+  try {
+    const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+    if (!secret) return res.status(500).send("Webhook secret not configured");
+
+    const hmac = crypto.createHmac("sha256", secret);
+    const digest = Buffer.from(hmac.update(req.body).digest("hex"), "utf8");
+    const signature = Buffer.from(req.get("X-Signature") || "", "utf8");
+    if (digest.length !== signature.length || !crypto.timingSafeEqual(digest, signature)) {
+      console.warn("Lemon Squeezy webhook: invalid signature rejected.");
+      return res.status(401).send("Invalid signature");
+    }
+
+    const event = JSON.parse(req.body.toString("utf8"));
+    const eventName: string = event?.meta?.event_name || "";
+    const userId: string | undefined = event?.meta?.custom_data?.user_id;
+    const status: string = event?.data?.attributes?.status || "";
+
+    if (!userId) {
+      console.warn("LS webhook without user_id:", eventName, event?.data?.attributes?.user_email);
+      return res.status(200).send("ok (no user_id)");
+    }
+
+    const activeStates = ["active", "on_trial", "past_due"];
+    let newPlan: "free" | "core" | null = null;
+    if (["subscription_created", "subscription_updated", "subscription_resumed", "subscription_unpaused"].includes(eventName)) {
+      newPlan = activeStates.includes(status) ? "core" : "free";
+    }
+    if (eventName === "subscription_cancelled") newPlan = "core"; // access until period end
+    if (eventName === "subscription_expired") newPlan = "free";
+
+    if (newPlan && admin.apps.length) {
+      await admin.firestore().doc("users/" + userId).set({
+        userPlan: newPlan,
+        lsSubscriptionId: String(event?.data?.id || ""),
+        lsStatus: status,
+        lsUpdatedAt: new Date().toISOString(),
+      }, { merge: true });
+      console.log("Plan updated: " + userId + " -> " + newPlan + " (" + eventName + "/" + status + ")");
+    }
+    return res.status(200).send("ok");
+  } catch (err) {
+    console.error("LS webhook error:", err);
+    return res.status(500).send("error");
+  }
+});
+
+// ============================================================
+// Simple per-IP rate limiter for AI endpoints (30 requests / 5 min)
+// ============================================================
+const aiHits = new Map<string, { count: number; reset: number }>();
+app.use("/api/ai", (req, res, next) => {
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const entry = aiHits.get(ip);
+  if (!entry || now > entry.reset) {
+    aiHits.set(ip, { count: 1, reset: now + 5 * 60 * 1000 });
+    return next();
+  }
+  entry.count += 1;
+  if (entry.count > 30) {
+    return res.status(429).json({ error: "Too many requests. Please pause for a few minutes." });
+  }
+  next();
+});
+
 app.use(express.json());
 
 // Enable CORS for external pasted sites (e.g. flowherapp.com calling our AI Cloud Run instance)
+const ALLOWED_ORIGINS = ["https://flowherapp.com", "https://www.flowherapp.com", "http://localhost:3000"];
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.get("Origin") || "";
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
   res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization");
   if (req.method === "OPTIONS") {
@@ -421,466 +507,6 @@ Communication Guidelines:
 
 // ==========================================
 // SOURCE CODE RETRIEVAL ENDPOINTS (BYPASS UI FILE SIZE LIMITS)
-// ==========================================
-
-app.get("/get-source-code", (req, res) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
-  try {
-    const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
-    if (fs.existsSync(singleFileHtmlPath)) {
-      const code = fs.readFileSync(singleFileHtmlPath, "utf8");
-      
-      // Serve a visually pleasing "Copy Code" helper page
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Get FlowHer Compiled Code</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
-            .card { background: #1e293b; padding: 30px; border-radius: 12px; max-width: 800px; width: 100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); border: 1px solid #334155; }
-            h1 { margin-top: 0; color: #38bdf8; font-size: 24px; text-align: center; }
-            p { color: #94a3b8; line-height: 1.6; font-size: 15px; margin-bottom: 24px; }
-            .btn { display: block; width: 100%; border: none; padding: 14px; font-weight: bold; background: #0284c7; color: white; border-radius: 6px; font-size: 16px; cursor: pointer; text-align: center; text-decoration: none; margin-bottom: 16px; transition: background 0.2s; }
-            .btn:hover { background: #0369a1; }
-            .btn-secondary { background: transparent; border: 1px solid #475569; color: #94a3b8; display: inline-block; box-sizing: border-box; }
-            .btn-secondary:hover { background: #334155; color: white; }
-            .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-            textarea { width: 100%; height: 250px; background: #0b1329; border: 1px solid #334155; border-radius: 6px; color: #f1f5f9; font-family: Courier, monospace; padding: 12px; box-sizing: border-box; resize: none; font-size: 14px; }
-            footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; }
-            .success-toast { display: none; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; position: fixed; top: 20px; font-weight: bold; animation: fadein 0.3s; z-index: 100; }
-            .manual-instructions { display: none; background: #334155; border: 1px dashed #ef4444; padding: 16px; border-radius: 6px; margin-top: 16px; color: #fca5a5; font-size: 14px; line-height: 1.5; text-align: left; }
-            @keyframes fadein { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-          </style>
-        </head>
-        <body>
-          <div class="success-toast" id="toast">Code copied to clipboard! Ready to paste into GitHub.</div>
-          <div class="card">
-            <h1>FlowHer Compiled Code Assistant</h1>
-            <p>Use this workspace tool to grab the complete, styled, compiled, and bundled single-file code for <strong>FlowHer</strong>. Since AI Studio is having trouble showing the large output HTML inside the file explorer tab, you can click below to copy it instantly or download it.</p>
-            
-            <div class="actions">
-              <button class="btn" id="copyBtn">📋 Copy Code to Clipboard</button>
-              <a class="btn btn-secondary" href="/get-source-code/raw" download="index.html">📥 Download index.html</a>
-            </div>
-
-            <div class="manual-instructions" id="manualInstructions">
-              <strong>⚠️ Automatic copy failed because of iframe security sandboxing.</strong><br>
-              Don't worry! We've automatically selected all the code for you below. Just press <strong>Ctrl+C</strong> (or <strong>Cmd+C</strong> on Mac) to copy it, then paste it directly into your GitHub file!
-            </div>
-            
-            <p style="margin-top: 20px; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #cbd5e1;">Preview of the compiled code:</p>
-            <textarea id="codeBlock" readonly>${code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea>
-          </div>
-          <footer>FlowHer Workspace Tools</footer>
-          
-          <script>
-            const copyBtn = document.getElementById('copyBtn');
-            const codeBlock = document.getElementById('codeBlock');
-            const toast = document.getElementById('toast');
-            const manualInstructions = document.getElementById('manualInstructions');
-            
-            copyBtn.addEventListener('click', () => {
-              try {
-                // Select text thoroughly
-                codeBlock.focus();
-                codeBlock.select();
-                codeBlock.setSelectionRange(0, 999999);
-                
-                let success = false;
-                
-                // Method 1: Modern Clipboard API
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                  navigator.clipboard.writeText(codeBlock.value)
-                    .then(() => {
-                      showSuccess();
-                    })
-                    .catch(err => {
-                      // Method 2 callback fallback: older execCommand
-                      try {
-                        const score = document.execCommand('copy');
-                        if (score) {
-                          showSuccess();
-                        } else {
-                          showManualInstructions();
-                        }
-                      } catch (execErr) {
-                        showManualInstructions();
-                      }
-                    });
-                } else {
-                  // Method 3 direct fallback: execCommand
-                  try {
-                    const score = document.execCommand('copy');
-                    if (score) {
-                      showSuccess();
-                    } else {
-                      showManualInstructions();
-                    }
-                  } catch (execErr) {
-                    showManualInstructions();
-                  }
-                }
-              } catch (err) {
-                showManualInstructions();
-              }
-            });
-
-            function showSuccess() {
-              toast.style.display = 'block';
-              manualInstructions.style.display = 'none';
-              copyBtn.className = 'btn';
-              copyBtn.style.background = '#10b981';
-              copyBtn.innerText = '✅ Code Copied!';
-              setTimeout(() => {
-                toast.style.display = 'none';
-                copyBtn.style.background = '';
-                copyBtn.innerText = '📋 Copy Code to Clipboard';
-              }, 3000);
-            }
-
-            function showManualInstructions() {
-              manualInstructions.style.display = 'block';
-              copyBtn.className = 'btn btn-secondary';
-              copyBtn.style.background = '';
-              copyBtn.innerText = '⚠️ Press Ctrl+C to Copy';
-              
-              // Ensure code stays focused and selected
-              codeBlock.focus();
-              codeBlock.select();
-              codeBlock.setSelectionRange(0, 999999);
-            }
-          </script>
-        </body>
-        </html>
-      `);
-    } else {
-      res.status(404).send(`
-        <html>
-        <body style="font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 50px;">
-          <h2>Single compiled file (index_single_file_live.html) not found!</h2>
-          <p>Please wait a moment for the build process to finish, then refresh.</p>
-        </body>
-        </html>
-      `);
-    }
-  } catch (err) {
-    res.status(500).send("Error: " + (err instanceof Error ? err.message : String(err)));
-  }
-});
-
-// Serve the raw single-file HTML for clean direct viewing or download
-app.get("/get-source-code/raw", (req, res) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
-  try {
-    const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
-    if (fs.existsSync(singleFileHtmlPath)) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.sendFile(singleFileHtmlPath);
-    } else {
-      res.status(404).send("File index_single_file_live.html not found");
-    }
-  } catch (err) {
-    res.status(500).send("Error: " + (err instanceof Error ? err.message : String(err)));
-  }
-});
-
-// Expose the unified FlowHer Deployment and Source Code Assistant page
-app.get("/get-react-code", (req, res) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
-  try {
-    const reactAppPath = path.join(process.cwd(), "src", "App.tsx");
-    const singleFileHtmlPath = path.join(process.cwd(), "index_single_file_live.html");
-
-    let reactCode = "";
-    if (fs.existsSync(reactAppPath)) {
-      reactCode = fs.readFileSync(reactAppPath, "utf8");
-    }
-
-    let compiledHtml = "";
-    if (fs.existsSync(singleFileHtmlPath)) {
-      compiledHtml = fs.readFileSync(singleFileHtmlPath, "utf8");
-    }
-
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>FlowHer Deployment Assistant</title>
-        <style>
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #0f172a; 
-            color: #f8fafc; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; 
-            min-height: 100vh; 
-            margin: 0; 
-            box-sizing: border-box; 
-          }
-          .card { 
-            background: #1e293b; 
-            padding: 30px; 
-            border-radius: 12px; 
-            max-width: 900px; 
-            width: 100%; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); 
-            border: 1px solid #334155; 
-            box-sizing: border-box;
-          }
-          h1 { margin-top: 0; color: #a855f7; font-size: 26px; text-align: center; }
-          .explanation {
-            background: rgba(168, 85, 247, 0.1);
-            border-left: 4px solid #a855f7;
-            padding: 16px;
-            border-radius: 0 8px 8px 0;
-            margin-bottom: 24px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #e2e8f0;
-          }
-          .explanation h3 { margin-top: 0; color: #f5f3ff; margin-bottom: 8px; }
-          .explanation code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e9d5ff; }
-          
-          /* Tabs styling */
-          .tab-container {
-            display: flex;
-            border-bottom: 2px solid #334155;
-            margin-bottom: 20px;
-            gap: 8px;
-          }
-          .tab {
-            padding: 12px 24px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            font-size: 15px;
-            font-weight: bold;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.2s;
-          }
-          .tab.active {
-            color: #c084fc;
-            border-bottom: 2px solid #c084fc;
-          }
-          .tab:hover:not(.active) {
-            color: #cbd5e1;
-            background: rgba(255,255,255,0.05);
-            border-radius: 6px 6px 0 0;
-          }
-          
-          .panel { display: none; }
-          .panel.active { display: block; }
-
-          p { color: #94a3b8; line-height: 1.6; font-size: 15px; margin-bottom: 16px; }
-          .btn { 
-            display: inline-block; 
-            border: none; 
-            padding: 14px 28px; 
-            font-weight: bold; 
-            background: #9333ea; 
-            color: white; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            text-align: center; 
-            text-decoration: none; 
-            transition: background 0.2s; 
-          }
-          .btn:hover { background: #7e22ce; }
-          .btn-secondary { background: transparent; border: 1px solid #475569; color: #cbd5e1; margin-left: 10px; }
-          .btn-secondary:hover { background: #334155; color: white; }
-          
-          .actions { display: flex; align-items: center; margin-bottom: 16px; }
-          
-          textarea { 
-            width: 100%; 
-            height: 400px; 
-            background: #0b1329; 
-            border: 1px solid #334155; 
-            border-radius: 6px; 
-            color: #cbd5e1; 
-            font-family: "JetBrains Mono", Courier, monospace; 
-            padding: 12px; 
-            box-sizing: border-box; 
-            resize: vertical; 
-            font-size: 13px; 
-            line-height: 1.4;
-          }
-          
-          footer { text-align: center; margin-top: 30px; font-size: 12px; color: #64748b; }
-          .toast { 
-            display: none; 
-            background: #10b981; 
-            color: white; 
-            padding: 12px 24px; 
-            border-radius: 6px; 
-            position: fixed; 
-            bottom: 30px; 
-            font-weight: bold; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            animation: fadein 0.3s; 
-            z-index: 100; 
-          }
-          .manual-instructions { 
-            display: none; 
-            background: rgba(239, 68, 68, 0.1); 
-            border: 1px dashed #ef4444; 
-            padding: 16px; 
-            border-radius: 6px; 
-            margin-bottom: 16px; 
-            color: #fca5a5; 
-            font-size: 14px; 
-            line-height: 1.5; 
-          }
-          @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        </style>
-      </head>
-      <body>
-        <div class="toast" id="toast">✅ Content copied to clipboard!</div>
-        
-        <div class="card">
-          <h1>FlowHer Assistant</h1>
-          
-          <div class="explanation">
-            <h3>⚠️ Important Note on Web Hosting (e.g. flowherapp.com)</h3>
-            <p style="margin: 0; color: #cbd5e1;">
-              Browsers cannot run the <code>App.tsx</code> file directly. If you paste TypeScript code into a file like <code>index.html</code> on your web server, the page will either display raw text or crash. <br>
-              <strong>To fix your site:</strong> Paste the code from the <strong>Compiled Single-File HTML</strong> tab below into your web host's <code>index.html</code> file. It is compiled and fully bundled!
-            </p>
-          </div>
-
-          <div class="tab-container">
-            <button class="tab active" onclick="switchTab('html')">🌟 Compiled Single-File HTML (For flowherapp.com)</button>
-            <button class="tab" onclick="switchTab('tsx')">💻 React App.tsx Source Code</button>
-          </div>
-
-          <!-- HTML PANEL -->
-          <div id="panel-html" class="panel active">
-            <p>This is the compiled production code of the full app. Copy and paste ALL of this code into your server's <strong>index.html</strong> file and it will load perfectly!</p>
-            <div class="actions">
-              <button class="btn" onclick="copyContent('htmlCode', 'htmlBtn')">📋 Copy Compiled HTML Code</button>
-              <a class="btn btn-secondary" href="/get-source-code/raw" target="_blank" download="index.html">📥 Download index.html</a>
-            </div>
-            <textarea id="htmlCode" readonly>${compiledHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea>
-          </div>
-
-          <!-- TSX PANEL -->
-          <div id="panel-tsx" class="panel">
-            <p>This is the raw React TypeScript source code (<code>/src/App.tsx</code>). Only use this if you are editing on a local React Vite build system.</p>
-            <div class="actions">
-              <button class="btn" onclick="copyContent('tsxCode', 'tsxBtn')">📋 Copy App.tsx Code</button>
-              <a class="btn btn-secondary" href="/get-react-code/raw" target="_blank">📄 View Raw App.tsx</a>
-            </div>
-            <textarea id="tsxCode" readonly>${reactCode.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea>
-          </div>
-
-          <div class="manual-instructions" id="manualInstructions">
-            <strong>⚠️ Clipboard access blocked by browser sandboxing.</strong><br>
-            Please select all the text in the code block below manually, then press <strong>Ctrl+C</strong> (or <strong>Cmd+C</strong> on Mac) to copy it!
-          </div>
-
-        </div>
-        
-        <footer>FlowHer Deployment Assistant</footer>
-        
-        <script>
-          function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            
-            if (tabId === 'html') {
-              document.querySelectorAll('.tab')[0].classList.add('active');
-              document.getElementById('panel-html').classList.add('active');
-            } else {
-              document.querySelectorAll('.tab')[1].classList.add('active');
-              document.getElementById('panel-tsx').classList.add('active');
-            }
-            document.getElementById('manualInstructions').style.display = 'none';
-          }
-
-          function copyContent(textareaId, buttonId) {
-            const textarea = document.getElementById(textareaId);
-            const toast = document.getElementById('toast');
-            const manualInstructions = document.getElementById('manualInstructions');
-            
-            try {
-              textarea.focus();
-              textarea.select();
-              textarea.setSelectionRange(0, 999999);
-              
-              if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textarea.value)
-                  .then(() => showToast())
-                  .catch(() => fallbackCopy(textarea));
-              } else {
-                fallbackCopy(textarea);
-              }
-            } catch (err) {
-              showManual();
-            }
-          }
-
-          function fallbackCopy(textarea) {
-            try {
-              const success = document.execCommand('copy');
-              if (success) {
-                showToast();
-              } else {
-                showManual();
-              }
-            } catch (e) {
-              showManual();
-            }
-          }
-
-          function showToast() {
-            const toast = document.getElementById('toast');
-            document.getElementById('manualInstructions').style.display = 'none';
-            toast.style.display = 'block';
-            setTimeout(() => {
-              toast.style.display = 'none';
-            }, 3000);
-          }
-
-          function showManual() {
-            document.getElementById('manualInstructions').style.display = 'block';
-          }
-        </script>
-      </body>
-      </html>
-    `);
-  } catch (err) {
-    res.status(500).send("Error: " + (err instanceof Error ? err.message : String(err)));
-  }
-});
-
-// Expose raw /src/App.tsx standard text
-app.get("/get-react-code/raw", (req, res) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
-  try {
-    const reactAppPath = path.join(process.cwd(), "src", "App.tsx");
-    if (fs.existsSync(reactAppPath)) {
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.sendFile(reactAppPath);
-    } else {
-      res.status(404).send("React App.tsx not found");
-    }
-  } catch (err) {
-    res.status(500).send("Error: " + (err instanceof Error ? err.message : String(err)));
-  }
-});
-
-// ==========================================
-// VITE OR STATIC SERVING MIDDLEWARE
 // ==========================================
 
 async function start() {
