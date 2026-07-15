@@ -22,20 +22,12 @@ const PORT = 3000;
 // ============================================================
 import crypto from "crypto";
 import admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
 
 if (!admin.apps.length) {
   try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      try {
-        const parsedAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        admin.initializeApp({ credential: admin.credential.cert(parsedAccount) });
-        console.log("Firebase Admin initialized via service account JSON.");
-      } catch (jsonErr) {
-        console.warn("FIREBASE_SERVICE_ACCOUNT was defined but is not valid JSON. Falling back to Application Default Credentials.");
-        admin.initializeApp();
-        console.log("Firebase Admin initialized via Application Default Credentials (after parse error).");
-      }
+      admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+      console.log("Firebase Admin initialized via service account JSON.");
     } else {
       admin.initializeApp(); // Application Default Credentials (automatic on Google Cloud)
       console.log("Firebase Admin initialized via Application Default Credentials.");
@@ -43,32 +35,6 @@ if (!admin.apps.length) {
   } catch (e) {
     console.error("Firebase Admin init failed:", e);
   }
-}
-
-let _db: any = null;
-function getDb() {
-  if (!_db) {
-    let databaseId: string | undefined = undefined;
-    try {
-      const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-      if (fs.existsSync(configPath)) {
-        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-        if (config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)") {
-          databaseId = config.firestoreDatabaseId;
-          console.log(`Using custom Firestore database ID: ${databaseId}`);
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse firebase-applet-config.json:", e);
-    }
-
-    if (databaseId) {
-      _db = getFirestore(admin.apps[0] || admin.app(), databaseId);
-    } else {
-      _db = getFirestore(admin.apps[0] || admin.app());
-    }
-  }
-  return _db;
 }
 
 app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" }), async (req, res) => {
@@ -95,7 +61,8 @@ app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" })
       // attached, look the account up by email instead of silently dropping
       // a real payment on the floor.
       try {
-        const match = await getDb()
+        const match = await admin
+          .firestore()
           .collection("users")
           .where("email", "==", userEmail)
           .limit(1)
@@ -123,7 +90,7 @@ app.post("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" })
     if (eventName === "subscription_expired") newPlan = "free";
 
     if (newPlan && admin.apps.length) {
-      await getDb().doc("users/" + userId).set({
+      await admin.firestore().doc("users/" + userId).set({
         userPlan: newPlan,
         lsSubscriptionId: String(event?.data?.id || ""),
         lsStatus: status,
@@ -428,12 +395,31 @@ app.post("/api/ai/rsd-check", async (req, res) => {
     return res.status(400).json({ error: "No spiral feedback context supplied." });
   }
 
+  // Direct safety net, checked before the AI call or any fallback runs.
+  // Deliberately broad: a false positive just shows a resource unnecessarily,
+  // a false negative could miss a real crisis. Err toward showing it.
+  const crisisPattern = /\b(suicid|kill myself|end my life|end it all|want to die|better off dead|not (be)?here anymore|hurt myself|self.?harm|no reason to (live|go on)|can'?t go on)\b/i;
+  if (crisisPattern.test(spiral)) {
+    return res.json({
+      result: `I hear you, and what you are carrying right now sounds like more than this app can hold.
+
+Please reach out right now, to one of these, or to someone near you:
+
+**988 Suicide & Crisis Lifeline** — call or text 988, any time, day or night.
+**Crisis Text Line** — text HOME to 741741.
+
+You do not have to carry this alone.`,
+    });
+  }
+
   try {
     const client = getAIClient();
-    const prompt = `You are a supportive clinical neurodivergent life coach specializing in Rejection Sensitive Dysphoria (RSD).
-A professional woman is experiencing an RSD spiral: "${spiral}".
+    const prompt = `A professional woman is experiencing an RSD (Rejection Sensitive Dysphoria) spiral and wrote: "${spiral}".
 
-Gently and with immense warmth:
+CRITICAL SAFETY CHECK — DO THIS FIRST, BEFORE ANYTHING ELSE:
+Read what she wrote. If it contains any indication of suicidal thoughts, self-harm, wanting to disappear or not exist, or a genuine mental health crisis, do NOT attempt to reframe it as a cognitive distortion or catastrophic thinking. Instead, respond ONLY with brief warmth acknowledging what she shared, then clearly provide the 988 Suicide & Crisis Lifeline (call or text 988, available 24/7) and the Crisis Text Line (text HOME to 741741), and gently encourage her to reach out to one of those right now or to a trusted person nearby. Stop there. Do not continue with the RSD exercise below.
+
+If, and only if, there is no crisis present, proceed as a supportive clinical neurodivergent life coach specializing in Rejection Sensitive Dysphoria. Gently and with immense warmth:
 1. Validate her emotional pain without validating the catastrophic story.
 2. Separate the Objective Facts of the situation from the subjective catastrophic representations her brain is spinning.
 3. Suggest 2 realistic alternative, non-hostile interpretations (e.g. the other person was busy, inattentive, or dealing with their own stress).
@@ -535,6 +521,9 @@ app.post("/api/ai/support-chat", async (req, res) => {
 
     const systemInstruction = `You are the FlowHer™ Support Companion & Concierge—a warm, deeply compassionate, and sensory-aware customer support guide for a specialized executive-functioning and communication optimization platform designed for neurodivergent professionals (ADHD, Autism, and sensory sensitivities).
 
+CRITICAL SAFETY PROTOCOL — READ FIRST, OVERRIDES ALL OTHER INSTRUCTIONS:
+If a user expresses thoughts of suicide, self-harm, wanting to disappear or not exist, or describes a mental health crisis, immediately stop discussing app features. Do not attempt to counsel, diagnose, or resolve the crisis yourself. Respond with warmth and without judgment, briefly acknowledge what they shared, and clearly provide: the 988 Suicide & Crisis Lifeline (call or text 988, available 24/7 in the US), and the Crisis Text Line (text HOME to 741741). Encourage them to reach out to one of these right now, or to a trusted person nearby. Keep this response short, calm, and human, not clinical or scripted-sounding. Do not return to app support topics until the user indicates they are safe or chooses to redirect the conversation themselves.
+
 Your goal is to assist users with app navigation, explain FlowHer's key modules, and offer gentle executive functioning support.
 
 Key modules in FlowHer™ that you can explain and support:
@@ -549,7 +538,7 @@ Communication Guidelines:
 - Tone: Deeply neuroinclusive, sensory-friendly, warm, conversational, clear, and reassuring. Speak with gentle confidence.
 - Format: Use bullet points, bold highlights, and clear whitespace. Avoid overwhelming paragraphs.
 - Keep responses relatively concise so they fit beautifully in a compact floating chat layout.
-- If a user feels overwhelmed, offer a quick somatic breathing pause: "Take a slow, cool breath. Let's tackle this one tiny micro-step at a time."`;
+- If a user feels overwhelmed (but is not in crisis as defined above), offer a quick somatic breathing pause: "Take a slow, cool breath. Let's tackle this one tiny micro-step at a time."`;
 
     const response = await client.models.generateContent({
       model: "gemini-3.5-flash",
@@ -584,28 +573,7 @@ async function start() {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      const indexPath = path.join(distPath, "index.html");
-      try {
-        if (fs.existsSync(indexPath)) {
-          let html = fs.readFileSync(indexPath, "utf8");
-          const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-          let firebaseConfigJson = "null";
-          if (fs.existsSync(configPath)) {
-            firebaseConfigJson = fs.readFileSync(configPath, "utf8");
-          }
-          // Inject the configuration into the head tag synchronously
-          html = html.replace(
-            "</head>",
-            `<script>window.__FIREBASE_CONFIG__ = ${firebaseConfigJson};</script></head>`
-          );
-          res.send(html);
-        } else {
-          res.sendFile(indexPath);
-        }
-      } catch (err) {
-        console.error("Error serving index.html with injected config:", err);
-        res.sendFile(indexPath);
-      }
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
