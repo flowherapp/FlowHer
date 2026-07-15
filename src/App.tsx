@@ -6434,8 +6434,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   </div>
                 )}
 
-                {EMAIL_AUTH_ENABLED && (
                 <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {EMAIL_AUTH_ENABLED && (
+                    <>
                   {authMode === "signup" && (
                     <div>
                       <label className="text-xs font-mono text-plum tracking-wider block mb-1">
@@ -6492,6 +6493,8 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       ? "Initiate Free Access"
                       : "Secure System Login"}
                   </button>
+                    </>
+                  )}
 
                   {EMAIL_AUTH_ENABLED && (
                 <div className="relative flex py-2 items-center">
@@ -6602,7 +6605,6 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     </div>
                   )}
                 </form>
-                )}
               </>
             )}
           </div>
