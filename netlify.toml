@@ -1,3 +1,8 @@
+[[redirects]]
+  from = "/*"
+  to = "https://flowher.ai.studio/:splat"
+  status = 301
+  force = true
 [build]
   command = "npm run build"
   publish = "dist"
