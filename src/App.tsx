@@ -2970,7 +2970,7 @@ export default function App() {
     if (tourStep < TOUR_STEPS.length - 1) {
       const nextStep = tourStep + 1;
       setTourStep(nextStep);
-      const target = TOUR_STEPS[nextStep];
+      const target = TOUR_STEPS[nextStep] as any;
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }
@@ -2991,7 +2991,7 @@ export default function App() {
     if (tourStep > 0) {
       const prevStep = tourStep - 1;
       setTourStep(prevStep);
-      const target = TOUR_STEPS[prevStep];
+      const target = TOUR_STEPS[prevStep] as any;
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }

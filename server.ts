@@ -577,7 +577,28 @@ async function start() {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexPath = path.join(distPath, "index.html");
+      try {
+        if (fs.existsSync(indexPath)) {
+          let html = fs.readFileSync(indexPath, "utf8");
+          const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+          let firebaseConfigJson = "null";
+          if (fs.existsSync(configPath)) {
+            firebaseConfigJson = fs.readFileSync(configPath, "utf8");
+          }
+          // Inject the configuration into the head tag synchronously
+          html = html.replace(
+            "</head>",
+            `<script>window.__FIREBASE_CONFIG__ = ${firebaseConfigJson};</script></head>`
+          );
+          res.send(html);
+        } else {
+          res.sendFile(indexPath);
+        }
+      } catch (err) {
+        console.error("Error serving index.html with injected config:", err);
+        res.sendFile(indexPath);
+      }
     });
   }
 

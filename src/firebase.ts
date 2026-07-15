@@ -2,11 +2,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
 // Safely & dynamically resolve the firebase applet configuration if it exists to avoid build-time errors when deleted
+const windowConfig = typeof window !== "undefined" ? (window as any).__FIREBASE_CONFIG__ : null;
+
 const firebaseConfigModules = (import.meta as any).glob("../firebase-applet-config.json", { eager: true });
 const configPaths = Object.keys(firebaseConfigModules);
-const firebaseConfig: any = configPaths.length > 0 
+const staticConfig = configPaths.length > 0 
   ? (firebaseConfigModules[configPaths[0]] as any).default 
-  : {
+  : null;
+
+const firebaseConfig: any = windowConfig || staticConfig || {
       apiKey: "dummy-api-key-or-none",
       authDomain: "dummy-project.firebaseapp.com",
       projectId: "dummy-project",
