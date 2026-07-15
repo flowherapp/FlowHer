@@ -2970,7 +2970,7 @@ export default function App() {
     if (tourStep < TOUR_STEPS.length - 1) {
       const nextStep = tourStep + 1;
       setTourStep(nextStep);
-      const target = TOUR_STEPS[nextStep] as any;
+      const target = TOUR_STEPS[nextStep];
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }
@@ -2991,7 +2991,7 @@ export default function App() {
     if (tourStep > 0) {
       const prevStep = tourStep - 1;
       setTourStep(prevStep);
-      const target = TOUR_STEPS[prevStep] as any;
+      const target = TOUR_STEPS[prevStep];
       if (target.targetTab) {
         setAppTab(target.targetTab as any);
       }
@@ -16329,6 +16329,24 @@ s.strain04@gmail.com`;
                     confusingly similar products is strictly prohibited and
                     subject to active legal actions, including cease and desist
                     procedures.
+                  </p>
+
+                  <h4 className="font-bold text-gray-950 font-serif text-[#C45BAA]">
+                    5. Billing, Cancellation & Refunds
+                  </h4>
+                  <p className="bg-plum/5 p-2.5 rounded-xl border border-[#C45BAA]/15 text-[11px] leading-relaxed text-gray-800">
+                    FlowHer™ Core is billed in advance on a recurring monthly
+                    or annual basis, depending on the plan you select. All
+                    charges are processed securely by our merchant of record,
+                    Lemon Squeezy. <strong>All sales are final.</strong> We do
+                    not offer refunds for partial billing periods, unused
+                    time, or change of mind, regardless of how much of the
+                    workspace you used during that period. You may cancel
+                    your subscription at any time from your account or
+                    customer portal, and cancellation stops all future
+                    billing immediately. You will retain full Core access
+                    through the remainder of the period you already paid for,
+                    and your plan will not renew afterward.
                   </p>
                 </div>
               )}
