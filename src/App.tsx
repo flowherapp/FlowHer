@@ -1172,7 +1172,7 @@ export default function App() {
   // ============================================================
   // Email/password sign-in requires the provider to be enabled in Firebase,
   // which is locked behind the Starter Tier. Flip to true after upgrading.
-  const EMAIL_AUTH_ENABLED = false;
+  const EMAIL_AUTH_ENABLED = true;
 
   const LEMON_CHECKOUT_URLS: Record<"monthly" | "yearly", string> = {
     monthly:
