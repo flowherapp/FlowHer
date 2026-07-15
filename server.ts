@@ -27,8 +27,15 @@ import { getFirestore } from "firebase-admin/firestore";
 if (!admin.apps.length) {
   try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-      console.log("Firebase Admin initialized via service account JSON.");
+      try {
+        const parsedAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({ credential: admin.credential.cert(parsedAccount) });
+        console.log("Firebase Admin initialized via service account JSON.");
+      } catch (jsonErr) {
+        console.warn("FIREBASE_SERVICE_ACCOUNT was defined but is not valid JSON. Falling back to Application Default Credentials.");
+        admin.initializeApp();
+        console.log("Firebase Admin initialized via Application Default Credentials (after parse error).");
+      }
     } else {
       admin.initializeApp(); // Application Default Credentials (automatic on Google Cloud)
       console.log("Firebase Admin initialized via Application Default Credentials.");
