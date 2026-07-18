@@ -49,7 +49,9 @@ const triggerCelebrationConfetti = () => {
     if (localStorage.getItem("fh_confetti_enabled") === "false") return;
     if (localStorage.getItem("fh_reduce_motion") === "true") return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Sensory preference check failed, defaulting to showing confetti:", e);
+  }
   try {
     const duration = 2.5 * 1000;
     const animationEnd = Date.now() + duration;
@@ -1331,24 +1333,6 @@ export default function App() {
 
   // Plan Gate Overlay Modal
   const [showGateModal, setShowGateModal] = useState<string | null>(null);
-  const [showLemonCheckout, setShowLemonCheckout] = useState<
-    false | { plan: string; price: number; billing: string }
-  >(false);
-
-  // Lemon Squeezy Simulated Checkout States
-  const [checkoutEmail, setCheckoutEmail] = useState("");
-  const [checkoutCardNumber, setCheckoutCardNumber] = useState(
-    "4242 4242 4242 4242",
-  );
-  const [checkoutCardExpiry, setCheckoutCardExpiry] = useState("12/28");
-  const [checkoutCardCvc, setCheckoutCardCvc] = useState("123");
-  const [checkoutCountry, setCheckoutCountry] = useState("US");
-  const [checkoutPromoCode, setCheckoutPromoCode] = useState("");
-  const [checkoutPromoApplied, setCheckoutPromoApplied] = useState(false);
-  const [checkoutPromoError, setCheckoutPromoError] = useState("");
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutCompleted, setCheckoutCompleted] = useState(false);
-
   // Legal, Privacy, and Disclosure compliance states
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [legalTab, setLegalTab] = useState<"medical" | "privacy" | "terms">(
@@ -1391,7 +1375,9 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Failed to parse saved data from localStorage, starting fresh:", e);
+    }
     return [];
   });
   const [newAffirmationText, setNewAffirmationText] = useState("");
@@ -2319,166 +2305,76 @@ export default function App() {
     }
   }, [isNavFocusMode, appTab]);
 
-  // Save priorities automatically
-  useEffect(() => {
-    localStorage.setItem("fh_priorities", JSON.stringify(priorities));
+  // ============================================================
+  // Shared sync helper. Writes a value to localStorage immediately, then
+  // mirrors it to the user's Firestore document if signed in. One home for
+  // the dual-write pattern used by every field below, instead of repeating
+  // the same localStorage + Firestore + error-handling block eleven times.
+  // Behavior is identical to before, this only removes the repetition.
+  // ============================================================
+  const syncField = (
+    localKey: string,
+    localValue: string,
+    firestoreField: string,
+    firestoreValue: unknown,
+  ) => {
+    localStorage.setItem(localKey, localValue);
     if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { priorities }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
+      updateDoc(doc(db, "users", auth.currentUser.uid), {
+        [firestoreField]: firestoreValue,
+      }).catch((err) =>
+        handleFirestoreError(
+          err,
+          OperationType.UPDATE,
+          `users/${auth.currentUser?.uid}`,
+        ),
       );
     }
+  };
+
+  // Save priorities automatically
+  useEffect(() => {
+    syncField("fh_priorities", JSON.stringify(priorities), "priorities", priorities);
   }, [priorities]);
 
   useEffect(() => {
-    localStorage.setItem(
-      "fh_priorities_completed",
-      JSON.stringify(prioritiesCompleted),
-    );
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), {
-        prioritiesCompleted,
-      }).catch((err) =>
-        handleFirestoreError(
-          err,
-          OperationType.UPDATE,
-          `users/${auth.currentUser?.uid}`,
-        ),
-      );
-    }
+    syncField("fh_priorities_completed", JSON.stringify(prioritiesCompleted), "prioritiesCompleted", prioritiesCompleted);
   }, [prioritiesCompleted]);
 
   useEffect(() => {
-    localStorage.setItem("fh_victory_log", JSON.stringify(victoryLog));
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { victoryLog }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_victory_log", JSON.stringify(victoryLog), "victoryLog", victoryLog);
   }, [victoryLog]);
 
   useEffect(() => {
-    localStorage.setItem("fh_user_plan", userPlan);
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { userPlan }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_user_plan", userPlan, "userPlan", userPlan);
   }, [userPlan]);
 
   useEffect(() => {
-    localStorage.setItem("fh_profile_pic", profilePic);
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { profilePic }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_profile_pic", profilePic, "profilePic", profilePic);
   }, [profilePic]);
 
   useEffect(() => {
-    localStorage.setItem("fh_profile_bio", profileBio);
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { profileBio }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_profile_bio", profileBio, "profileBio", profileBio);
   }, [profileBio]);
 
   useEffect(() => {
-    localStorage.setItem("fh_dopamine_sparks", String(dopamineSparks));
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), {
-        dopamineSparks,
-      }).catch((err) =>
-        handleFirestoreError(
-          err,
-          OperationType.UPDATE,
-          `users/${auth.currentUser?.uid}`,
-        ),
-      );
-    }
+    syncField("fh_dopamine_sparks", String(dopamineSparks), "dopamineSparks", dopamineSparks);
   }, [dopamineSparks]);
 
   useEffect(() => {
-    localStorage.setItem("fh_streak_count", String(streakCount));
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { streakCount }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_streak_count", String(streakCount), "streakCount", streakCount);
   }, [streakCount]);
 
   useEffect(() => {
-    localStorage.setItem("fh_best_streak", String(bestStreak));
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), { bestStreak }).catch(
-        (err) =>
-          handleFirestoreError(
-            err,
-            OperationType.UPDATE,
-            `users/${auth.currentUser?.uid}`,
-          ),
-      );
-    }
+    syncField("fh_best_streak", String(bestStreak), "bestStreak", bestStreak);
   }, [bestStreak]);
 
   useEffect(() => {
-    localStorage.setItem("fh_last_checkin", lastCheckInDate);
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), {
-        lastCheckInDate,
-      }).catch((err) =>
-        handleFirestoreError(
-          err,
-          OperationType.UPDATE,
-          `users/${auth.currentUser?.uid}`,
-        ),
-      );
-    }
+    syncField("fh_last_checkin", lastCheckInDate, "lastCheckInDate", lastCheckInDate);
   }, [lastCheckInDate]);
 
   useEffect(() => {
-    localStorage.setItem("fh_active_theme", activeThemeId);
-    if (auth.currentUser) {
-      updateDoc(doc(db, "users", auth.currentUser.uid), {
-        activeThemeId,
-      }).catch((err) =>
-        handleFirestoreError(
-          err,
-          OperationType.UPDATE,
-          `users/${auth.currentUser?.uid}`,
-        ),
-      );
-    }
+    syncField("fh_active_theme", activeThemeId, "activeThemeId", activeThemeId);
   }, [activeThemeId]);
 
   useEffect(() => {
@@ -2747,7 +2643,9 @@ export default function App() {
               localStorage.removeItem("fh_user_plan");
               setCurrentView("landing");
             }
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Sign-out cleanup encountered an issue:", e);
+          }
         }
       }
     });
@@ -2889,7 +2787,9 @@ export default function App() {
         .then(async (cred) => {
           try {
             await updateProfile(cred.user, { displayName: authForm.name });
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Could not set display name on new account (non-blocking):", e);
+          }
           // onAuthStateChanged (elsewhere in this file) picks up the new
           // session, sets user state with the real uid, and creates the
           // Firestore profile document automatically.
@@ -3551,17 +3451,23 @@ export default function App() {
         ambientNodesRef.current.forEach((node) => {
           try {
             node.stop();
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Ambient audio node stop failed (may already be stopped):", e);
+          }
           try {
             node.disconnect();
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Ambient audio node disconnect failed:", e);
+          }
         });
         ambientNodesRef.current = [];
       }
       if (ambientMainGainRef.current) {
         try {
           ambientMainGainRef.current.disconnect();
-        } catch (e) {}
+        } catch (e) {
+          console.warn("Ambient main gain disconnect failed:", e);
+        }
         ambientMainGainRef.current = null;
       }
       setIsAmbientPlaying(false);
@@ -3860,7 +3766,9 @@ export default function App() {
           try {
             filter.frequency.linearRampToValueAtTime(targetFreq, now + 0.15);
             swellGain.gain.linearRampToValueAtTime(targetGain, now + 0.15);
-          } catch (e) {}
+          } catch (e) {
+            console.warn("Audio swell ramp failed:", e);
+          }
 
           phase += 0.04;
           ambientIntervalRef.current = setTimeout(animateOceanSweep, 150);
@@ -4064,7 +3972,9 @@ export default function App() {
           ambientVolume,
           audioCtxRef.current.currentTime,
         );
-      } catch (err) {}
+      } catch (err) {
+        console.warn("Ambient volume update failed:", err);
+      }
     }
   }, [ambientVolume]);
 
@@ -4080,7 +3990,9 @@ export default function App() {
           brownNoiseVolume,
           audioCtxRef.current.currentTime,
         );
-      } catch (err) {}
+      } catch (err) {
+        console.warn("Brown noise volume update failed:", err);
+      }
     }
   }, [brownNoiseVolume]);
 
@@ -4498,148 +4410,100 @@ THEN:
 Remember: You aren't lazy or behind. Starting is just a chemical spark threshold. Give yourself permission to make micro-progress! `;
   };
 
+  // ============================================================
+  // Shared AI request helper. One home for the fetch boilerplate:
+  // loading state, request, fallback on failure, loading cleanup.
+  // Every AI feature routes through this instead of repeating it.
+  // ============================================================
+  const callAI = async (
+    endpoint: string,
+    payload: Record<string, unknown>,
+    opts: {
+      setLoading: (v: boolean) => void;
+      setResult: (v: string) => void;
+      fallback: string | (() => string);
+    },
+  ) => {
+    const { setLoading, setResult, fallback } = opts;
+    const fb = () => (typeof fallback === "function" ? fallback() : fallback);
+    setLoading(true);
+    setResult("");
+    try {
+      const response = await fetch(API_BASE + endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      setResult(response.ok ? data.result : fb());
+    } catch (err) {
+      console.warn("AI request failed:", endpoint, err);
+      setResult(fb());
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // AI API Handlers
-  const handleFetchSmallestStep = async () => {
+  const handleFetchSmallestStep = () => {
     if (!smallestStepInput.trim()) return;
-    setSmallestStepLoading(true);
-    setSmallestStepResult("");
-    try {
-      const response = await fetch(API_BASE + "/api/ai/smallest-step", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task: smallestStepInput }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setSmallestStepResult(data.result);
-      } else {
-        setSmallestStepResult(generateADHDStepFallback(smallestStepInput));
-      }
-    } catch {
-      setSmallestStepResult(generateADHDStepFallback(smallestStepInput));
-    } finally {
-      setSmallestStepLoading(false);
-    }
+    callAI("/api/ai/smallest-step", { task: smallestStepInput }, {
+      setLoading: setSmallestStepLoading,
+      setResult: setSmallestStepResult,
+      fallback: () => generateADHDStepFallback(smallestStepInput),
+    });
   };
 
-  const handleFetchEmailDraft = async () => {
+  const handleFetchEmailDraft = () => {
     if (!emailSituation.trim()) return;
-    setEmailLoading(true);
-    setEmailResult("");
-    try {
-      const response = await fetch(API_BASE + "/api/ai/draft-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          template: emailSelectedTemplate,
-          situation: emailSituation,
-          tone: emailSelectedTone,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setEmailResult(data.result);
-      } else {
-        setEmailResult(
-          "Subject: Project Status and Boundary Alignment\n\nHi Team,\n\nI wanted to share updates on my milestones...",
-        );
-      }
-    } catch {
-      setEmailResult(
-        "Subject: Capacity Update\n\nHi Team, I am structuring this target to meet standard deadlines safely.",
-      );
-    } finally {
-      setEmailLoading(false);
-    }
+    callAI("/api/ai/draft-email", {
+      template: emailSelectedTemplate,
+      situation: emailSituation,
+      tone: emailSelectedTone,
+    }, {
+      setLoading: setEmailLoading,
+      setResult: setEmailResult,
+      fallback:
+        "Subject: Project Status and Boundary Alignment\n\nHi Team,\n\nI wanted to share updates on my milestones...",
+    });
   };
 
-  const handleFetchScript = async () => {
+  const handleFetchScript = () => {
     if (!scriptSituation.trim()) return;
-    setScriptLoading(true);
-    setScriptResult("");
-    try {
-      const response = await fetch(API_BASE + "/api/ai/gen-script", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptType: scriptSelectedTemplate,
-          situation: scriptSituation,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setScriptResult(data.result);
-      } else {
-        setScriptResult(
-          "ASSERTIVE SCRIPT: Thanks for thinking of me! I want to give this target my full focus, so I will need to finish Project X first.",
-        );
-      }
-    } catch {
-      setScriptResult(
-        "ASSERTIVE: Let's lock this timing on Monday so we are structured.",
-      );
-    } finally {
-      setScriptLoading(false);
-    }
+    callAI("/api/ai/gen-script", {
+      scriptType: scriptSelectedTemplate,
+      situation: scriptSituation,
+    }, {
+      setLoading: setScriptLoading,
+      setResult: setScriptResult,
+      fallback:
+        "ASSERTIVE SCRIPT: Thanks for thinking of me! I want to give this target my full focus, so I will need to finish Project X first.",
+    });
   };
 
-  const handleFetchRSDCheck = async () => {
+  const handleFetchRSDCheck = () => {
     if (!rsdSpiral.trim()) return;
-    setRsdLoading(true);
-    setRsdResult("");
-    try {
-      const response = await fetch(API_BASE + "/api/ai/rsd-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spiral: rsdSpiral }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setRsdResult(data.result);
-      } else {
-        setRsdResult(
-          "Facts: They delayed a meeting. Interpretation: They might be busy with client obligations, not signaling an issue with your capability. Take a somatic breath.",
-        );
-      }
-    } catch {
-      setRsdResult(
-        "Objective Check: This feedback is standard operational updates. Your overall trajectory is entirely safe.",
-      );
-    } finally {
-      setRsdLoading(false);
-    }
+    callAI("/api/ai/rsd-check", { spiral: rsdSpiral }, {
+      setLoading: setRsdLoading,
+      setResult: setRsdResult,
+      fallback:
+        "Facts: They delayed a meeting. Interpretation: They might be busy with client obligations, not signaling an issue with your capability. Take a somatic breath.",
+    });
   };
 
-  const handleFetchMeetingPrep = async () => {
+  const handleFetchMeetingPrep = () => {
     if (!meetingTopic.trim()) return;
-    setMeetingLoading(true);
-    setMeetingResult("");
-    try {
-      const response = await fetch(API_BASE + "/api/ai/meeting-prep", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: meetingTopic,
-          people: meetingPeople,
-          goal: meetingGoal,
-          anxietyLevel: meetingAnxiety,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMeetingResult(data.result);
-      } else {
-        setMeetingResult(
-          "**WALK IN KNOWING:**\n- Your core metrics are healthy\n- You completed last weeks priority checklist safely",
-        );
-      }
-    } catch {
-      setMeetingResult(
-        "**WALK IN KNOWING:**\n- You are ready and well capable.",
-      );
-    } finally {
-      setMeetingLoading(false);
-    }
+    callAI("/api/ai/meeting-prep", {
+      topic: meetingTopic,
+      people: meetingPeople,
+      goal: meetingGoal,
+      anxietyLevel: meetingAnxiety,
+    }, {
+      setLoading: setMeetingLoading,
+      setResult: setMeetingResult,
+      fallback:
+        "**WALK IN KNOWING:**\n- Your core metrics are healthy\n- You completed last weeks priority checklist safely",
+    });
   };
 
   // Time Blindness Logger Functions
@@ -5702,493 +5566,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
       )}
 
       {/* Interactive Lemon Squeezy Checkout Simulator */}
-      {showLemonCheckout && (
-        <div className="fixed inset-0 z-50 bg-[#1C0A2E]/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#FAF6F0] text-[#1C0A2E] rounded-3xl max-w-3xl w-full border border-[#C45BAA]/20 shadow-2xl relative overflow-hidden my-auto">
-            {/* Modal close icon */}
-            <button
-              onClick={() => {
-                setShowLemonCheckout(false);
-                setCheckoutCompleted(false);
-                setCheckoutLoading(false);
-                setCheckoutPromoApplied(false);
-                setCheckoutPromoCode("");
-                setCheckoutPromoError("");
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full hover:bg-black/5 text-[#8A7F8D] z-10"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {!checkoutCompleted ? (
-              <div className="grid grid-cols-1 md:grid-cols-12 text-left">
-                {/* LEFT COLUMN: Summary (5 cols) */}
-                <div className="md:col-span-5 bg-plum/5 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#C45BAA]/10 flex flex-col justify-between">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2 text-xs font-mono tracking-wider font-semibold text-plum uppercase">
-                      <span>🍋 checkout</span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <span className="text-[10px] uppercase tracking-widest font-mono text-[#C45BAA]">
-                        Your Order
-                      </span>
-                      <h4 className="font-serif text-xl text-plum leading-snug">
-                        {showLemonCheckout.plan}
-                      </h4>
-                      <p className="text-xs text-gray-500 font-light">
-                        Plan billing:{" "}
-                        {showLemonCheckout.billing === "annual"
-                          ? "Annually"
-                          : "Monthly"}
-                      </p>
-                    </div>
-
-                    <div className="border-t border-dashed border-[#C45BAA]/20 pt-4 space-y-2.5 text-xs text-gray-650">
-                      <div className="flex justify-between font-light">
-                        <span>Base price</span>
-                        <span>${showLemonCheckout.price.toFixed(2)}</span>
-                      </div>
-
-                      {checkoutPromoApplied && (
-                        <div className="flex justify-between text-teal font-medium">
-                          <span>
-                            Promo discount (
-                            {checkoutPromoCode.toUpperCase() === "BETA100"
-                              ? "100%"
-                              : "30%"}
-                            )
-                          </span>
-                          <span>
-                            -$
-                            {(
-                              showLemonCheckout.price *
-                              (checkoutPromoCode.toUpperCase() === "BETA100"
-                                ? 1.0
-                                : 0.3)
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between font-light">
-                        <span>
-                          Localized Tax (
-                          {checkoutCountry === "GB"
-                            ? "20% UK VAT"
-                            : checkoutCountry === "DE"
-                              ? "19% MwSt"
-                              : checkoutCountry === "CA"
-                                ? "13% GST/HST"
-                                : checkoutCountry === "US"
-                                  ? "8% State Tax"
-                                  : "0% Tax"}
-                          )
-                        </span>
-                        <span>
-                          $
-                          {(
-                            (showLemonCheckout.price -
-                              (checkoutPromoApplied
-                                ? checkoutPromoCode.toUpperCase() === "BETA100"
-                                  ? showLemonCheckout.price
-                                  : showLemonCheckout.price * 0.3
-                                : 0)) *
-                            (checkoutCountry === "GB"
-                              ? 0.2
-                              : checkoutCountry === "DE"
-                                ? 0.19
-                                : checkoutCountry === "CA"
-                                  ? 0.13
-                                  : checkoutCountry === "US"
-                                    ? 0.08
-                                    : 0)
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-[#C45BAA]/10 pt-4 mt-6">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-sm font-semibold text-plum">
-                        Total Due:
-                      </span>
-                      <span className="text-3xl font-serif font-light text-[#C45BAA]">
-                        $
-                        {(
-                          showLemonCheckout.price -
-                          (checkoutPromoApplied
-                            ? checkoutPromoCode.toUpperCase() === "BETA100"
-                              ? showLemonCheckout.price
-                              : showLemonCheckout.price * 0.3
-                            : 0) +
-                          (showLemonCheckout.price -
-                            (checkoutPromoApplied
-                              ? checkoutPromoCode.toUpperCase() === "BETA100"
-                                ? showLemonCheckout.price
-                                : showLemonCheckout.price * 0.3
-                              : 0)) *
-                            (checkoutCountry === "GB"
-                              ? 0.2
-                              : checkoutCountry === "DE"
-                                ? 0.19
-                                : checkoutCountry === "CA"
-                                  ? 0.13
-                                  : checkoutCountry === "US"
-                                    ? 0.08
-                                    : 0)
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-gray-400 leading-normal font-sans">
-                      Taxes are managed dynamically by{" "}
-                      <strong>Lemon Squeezy</strong> as the authorized Merchant
-                      of Record. Click cancel securely anytime.
-                    </p>
-                  </div>
-                </div>
-
-                {/* RIGHT COLUMN: Payment Details (7 cols) */}
-                <div className="md:col-span-7 p-6 md:p-8 space-y-5">
-                  <div className="flex justify-between items-center pb-2 border-b border-black/5">
-                    <h3 className="font-serif text-lg font-light text-plum">
-                      Payment Details
-                    </h3>
-                    <span className="text-[9px] bg-yellow-400/20 text-yellow-800 font-semibold uppercase font-mono px-2 py-0.5 rounded-full flex items-center gap-1">
-                      Lemon Squeezy Partner
-                    </span>
-                  </div>
-
-                  {/* Contact Email */}
-                  <div className="space-y-1 text-left">
-                    <label className="text-[10px] uppercase tracking-wider font-mono font-bold text-gray-500 block">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={checkoutEmail || (user && user.email) || ""}
-                      onChange={(e) => setCheckoutEmail(e.target.value)}
-                      placeholder="e.g. s.strain04@gmail.com"
-                      className="w-full px-3 py-2 bg-white border border-[#C45BAA]/20 rounded-xl text-xs focus:ring-1 focus:ring-plum outline-none font-sans"
-                    />
-                  </div>
-
-                  {/* Billing Country Dropdown */}
-                  <div className="space-y-1 text-left">
-                    <label className="text-[10px] uppercase tracking-wider font-mono font-bold text-gray-500 block">
-                      Billing Country (Handles VAT / Taxes)
-                    </label>
-                    <select
-                      value={checkoutCountry}
-                      onChange={(e) => setCheckoutCountry(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-[#C45BAA]/20 rounded-xl text-xs focus:ring-1 focus:ring-plum outline-none font-sans"
-                    >
-                      <option value="US">United States (8% State Tax)</option>
-                      <option value="GB">United Kingdom (20% VAT)</option>
-                      <option value="DE">Germany (19% MwSt)</option>
-                      <option value="CA">Canada (13% GST/HST)</option>
-                      <option value="OTHER">
-                        Other International (0% tax)
-                      </option>
-                    </select>
-                  </div>
-
-                  {/* Promo Code Fields */}
-                  <div className="space-y-1.5 bg-[#C45BAA]/5 p-3 rounded-2xl border border-[#C45BAA]/10 text-left w-full">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] uppercase tracking-wider font-mono font-bold text-plum block">
-                        Apply Discount Code
-                      </label>
-                      <span className="text-[9px] text-gray-400 font-sans italic">
-                        Test codes below available
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={checkoutPromoCode}
-                        onChange={(e) => {
-                          setCheckoutPromoCode(e.target.value);
-                          setCheckoutPromoError("");
-                        }}
-                        placeholder="e.g. BETA100"
-                        className="w-full px-3 py-1.5 bg-white border border-[#C45BAA]/20 rounded-xl text-xs outline-none uppercase font-mono"
-                      />
-                      <button
-                        onClick={() => {
-                          const code = checkoutPromoCode.trim().toUpperCase();
-                          if (code === "LAUNCH20") {
-                            setCheckoutPromoApplied(true);
-                            setCheckoutPromoError("");
-                            triggerQuickConfetti();
-                          } else {
-                            setCheckoutPromoError("Invalid code.");
-                          }
-                        }}
-                        className="px-4 py-1.5 bg-plum text-white text-xs font-semibold rounded-xl hover:opacity-90 font-sans cursor-pointer"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                    {checkoutPromoError && (
-                      <p className="text-[9px] text-[#A2488E] font-medium font-sans mt-0.5">
-                        {checkoutPromoError}
-                      </p>
-                    )}
-                    {checkoutPromoApplied && (
-                      <p className="text-[9px] text-teal font-medium font-sans flex items-center gap-1 mt-0.5">
-                        <CheckCircle className="h-3 w-3" />
-                        Discount applied! (Code:{" "}
-                        {checkoutPromoCode.toUpperCase()})
-                      </p>
-                    )}
-                    {/* Demo quick code suggestion buttons */}
-                    <div className="flex flex-col sm:flex-row gap-2 pt-1 font-mono text-[9px] w-full">
-                      <button
-                        onClick={() => {
-                          setCheckoutPromoCode("BETA100");
-                          setCheckoutPromoApplied(true);
-                          setCheckoutPromoError("");
-                          triggerQuickConfetti();
-                        }}
-                        type="button"
-                        className="px-2 py-1 bg-white rounded-md border border-[#C45BAA]/15 hover:bg-white/80 transition-all font-semibold text-plum cursor-pointer text-left sm:text-center"
-                      >
-                        BETA100 (100% Off Free Pass)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCheckoutPromoCode("");
-                          setCheckoutPromoApplied(true);
-                          setCheckoutPromoError("");
-                          triggerQuickConfetti();
-                        }}
-                        type="button"
-                        className="px-2 py-1 bg-white rounded-md border border-[#C45BAA]/15 hover:bg-white/80 transition-all font-semibold text-plum cursor-pointer text-left sm:text-center"
-                      ></button>
-                    </div>
-                  </div>
-
-                  {/* Credit Card Input Form */}
-                  <div className="space-y-2 border-t border-black/5 pt-3 text-left">
-                    <label className="text-[10px] uppercase tracking-wider font-mono font-bold text-gray-500 block">
-                      Card Details (Mock Card Active)
-                    </label>
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={checkoutCardNumber}
-                          onChange={(e) =>
-                            setCheckoutCardNumber(e.target.value)
-                          }
-                          placeholder="Card Number"
-                          className="w-full pl-9 pr-3 py-2 bg-white border border-[#C45BAA]/20 rounded-xl text-xs focus:ring-1 focus:ring-plum outline-none font-mono"
-                        />
-                        <span className="absolute left-3 top-2.5 text-xs">
-                          💳
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={checkoutCardExpiry}
-                          onChange={(e) =>
-                            setCheckoutCardExpiry(e.target.value)
-                          }
-                          placeholder="MM/YY"
-                          className="w-full px-3 py-2 bg-white border border-[#C45BAA]/20 rounded-xl text-xs focus:ring-1 focus:ring-plum outline-none font-mono text-center"
-                        />
-                        <input
-                          type="text"
-                          value={checkoutCardCvc}
-                          onChange={(e) => setCheckoutCardCvc(e.target.value)}
-                          placeholder="CVV"
-                          className="w-full px-3 py-2 bg-white border border-[#C45BAA]/20 rounded-xl text-xs focus:ring-1 focus:ring-plum outline-none font-mono text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Check out core action */}
-                  <div className="pt-2 text-left">
-                    <button
-                      onClick={() => {
-                        setCheckoutLoading(true);
-                        setTimeout(() => {
-                          setCheckoutLoading(false);
-                          setCheckoutCompleted(true);
-                          setUserPlan("core");
-                          triggerCelebrationConfetti();
-                        }, 1300);
-                      }}
-                      disabled={checkoutLoading}
-                      className="w-full py-4 bg-[#1C0A2E] text-white font-sans text-sm font-semibold rounded-xl hover:opacity-90 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {checkoutLoading ? (
-                        <>
-                          <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin shrink-0 animate-pulse" />
-                          <span>Authorizing Payment Securely...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="h-4 w-4 text-yellow-400" />
-                          <span>
-                            Pay $
-                            {(
-                              showLemonCheckout.price -
-                              (checkoutPromoApplied
-                                ? checkoutPromoCode.toUpperCase() === "BETA100"
-                                  ? showLemonCheckout.price
-                                  : showLemonCheckout.price * 0.3
-                                : 0) +
-                              (showLemonCheckout.price -
-                                (checkoutPromoApplied
-                                  ? checkoutPromoCode.toUpperCase() ===
-                                    "BETA100"
-                                    ? showLemonCheckout.price
-                                    : showLemonCheckout.price * 0.3
-                                  : 0)) *
-                                (checkoutCountry === "GB"
-                                  ? 0.2
-                                  : checkoutCountry === "DE"
-                                    ? 0.19
-                                    : checkoutCountry === "CA"
-                                      ? 0.13
-                                      : checkoutCountry === "US"
-                                        ? 0.08
-                                        : 0)
-                            ).toFixed(2)}{" "}
-                            Securely
-                          </span>
-                        </>
-                      )}
-                    </button>
-                    <div className="flex items-center justify-center gap-1 text-[9px] text-[#8A7F8D] mt-2.5 font-light text-center">
-                      <Lock className="h-3 w-3 inline" />
-                      <span>
-                        Encrypted SSL security. Lemon Squeezy handles compliance
-                        & chargeback liability.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* checkoutCompleted view (Congratulations/Receipt Screen) */
-              <div className="p-8 text-center space-y-6 flex flex-col items-center justify-center bg-white">
-                <div className="w-16 h-16 bg-teal/15 rounded-full flex items-center justify-center text-teal text-3xl font-bold animate-bounce">
-                  ✓
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-serif text-3xl text-plum leading-snug font-light">
-                    Payment Completed Successfully!
-                  </h3>
-                  <p className="text-sm text-gray-500 font-light max-w-sm mx-auto leading-relaxed">
-                    Welcome to the{" "}
-                    <strong className="text-plum">FlowHer™ Core</strong>{" "}
-                    workspace! Your checkout was processed securely under Lemon
-                    Squeezy transaction <code>LS_SIM_779281</code>.
-                  </p>
-                </div>
-
-                <div className="bg-plum/5 rounded-2xl p-6 w-full max-w-md text-xs space-y-2 text-left text-gray-700 font-mono border border-plum/10">
-                  <div className="flex justify-between border-b border-[#C45BAA]/15 pb-2.5 mb-2.5 font-serif text-sm font-semibold text-plum">
-                    <span>Order Receipt</span>
-                    <span className="text-mag text-xs font-mono">
-                      🍋 Verified
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-light">
-                    <span>Product:</span>
-                    <span className="text-plum font-semibold">
-                      {showLemonCheckout.plan}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-light">
-                    <span>Status:</span>
-                    <span className="text-teal font-medium uppercase font-bold tracking-wider">
-                      Activated
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-light">
-                    <span>Subtotal:</span>
-                    <span>${showLemonCheckout.price.toFixed(2)}</span>
-                  </div>
-                  {checkoutPromoApplied && (
-                    <div className="flex justify-between text-teal font-medium">
-                      <span>Discount ({checkoutPromoCode.toUpperCase()}):</span>
-                      <span>
-                        -$
-                        {(
-                          showLemonCheckout.price *
-                          (checkoutPromoCode.toUpperCase() === "BETA100"
-                            ? 1.0
-                            : 0.3)
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between border-t border-dashed border-[#C45BAA]/20 pt-2 mt-2">
-                    <span className="font-semibold text-plum">
-                      Total Charged:
-                    </span>
-                    <span className="font-bold text-plum text-sm">
-                      $
-                      {(
-                        showLemonCheckout.price -
-                        (checkoutPromoApplied
-                          ? checkoutPromoCode.toUpperCase() === "BETA100"
-                            ? showLemonCheckout.price
-                            : showLemonCheckout.price * 0.3
-                          : 0) +
-                        (showLemonCheckout.price -
-                          (checkoutPromoApplied
-                            ? checkoutPromoCode.toUpperCase() === "BETA100"
-                              ? showLemonCheckout.price
-                              : showLemonCheckout.price * 0.3
-                            : 0)) *
-                          (checkoutCountry === "GB"
-                            ? 0.2
-                            : checkoutCountry === "DE"
-                              ? 0.19
-                              : checkoutCountry === "CA"
-                                ? 0.13
-                                : checkoutCountry === "US"
-                                  ? 0.08
-                                  : 0)
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                  <p className="text-[9px] text-[#8A7F8D] font-sans italic pt-2.5 border-t border-dashed border-[#C45BAA]/25 leading-relaxed">
-                    A copy of this digital receipt and a lifetime license key
-                    have been emailed to{" "}
-                    {checkoutEmail || user?.email || "your email address"} by
-                    our payment processor.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowLemonCheckout(false);
-                    setCheckoutCompleted(false);
-                    setCheckoutPromoApplied(false);
-                    setCheckoutPromoCode("");
-                    setCheckoutPromoError("");
-                    setCurrentView("app");
-                    triggerCelebrationConfetti();
-                  }}
-                  className="px-8 py-3.5 bg-gradient-to-r from-plum to-mag text-white font-semibold rounded-xl text-xs tracking-wider uppercase shadow-md hover:opacity-90 transition-all font-sans cursor-pointer"
-                >
-                  Enter FlowHer™ Workspace
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      
 
       {/* Onboarding Wizard Dialogue */}
       {showOnboarding && (
@@ -8866,7 +8244,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                                     audioCtxRef.current.currentTime,
                                   );
                                 }
-                              } catch (err) {}
+                              } catch (err) {
+                                console.warn("Drone volume update failed:", err);
+                              }
                             }
                           }}
                           className="w-full accent-teal cursor-pointer"
