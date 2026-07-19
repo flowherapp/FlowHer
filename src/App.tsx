@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth";
+import posthog from "posthog-js";
 import {
   doc,
   getDoc,
@@ -1207,6 +1208,37 @@ export default function App() {
   // which is locked behind the Starter Tier. Flip to true after upgrading.
   const EMAIL_AUTH_ENABLED = true;
 
+  // ============================================================
+  // Analytics (PostHog). Answers: how many people sign up, how many
+  // open pricing, how many actually click Get Core. Safe by design —
+  // fetches the key from this app's own server at startup; if it
+  // comes back empty, every trackEvent() call is a harmless no-op,
+  // so nothing breaks while this is being set up.
+  // ============================================================
+  useEffect(() => {
+    fetch(API_BASE + "/api/config")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.posthogKey && !posthog.__loaded) {
+          posthog.init(data.posthogKey, {
+            api_host: "https://us.i.posthog.com",
+            capture_pageview: true,
+            autocapture: false,
+          });
+        }
+      })
+      .catch((e) => console.warn("Analytics config fetch failed:", e));
+  }, []);
+  const trackEvent = (name: string, props?: Record<string, unknown>) => {
+    if (posthog.__loaded) {
+      try {
+        posthog.capture(name, props);
+      } catch (e) {
+        console.warn("Analytics event failed:", name, e);
+      }
+    }
+  };
+
   const LEMON_CHECKOUT_URLS: Record<"monthly" | "yearly", string> = {
     monthly:
       "https://flowher.lemonsqueezy.com/checkout/buy/ddaf0072-6da2-4514-b743-40b6d6db28a5",
@@ -1229,6 +1261,7 @@ export default function App() {
         "openLemonCheckout: no signed-in user found — checkout will not auto-link to an account.",
       );
     }
+    trackEvent("checkout_opened", { plan });
     window.open(url.toString(), "_blank", "noopener");
   };
 
@@ -1239,8 +1272,10 @@ export default function App() {
   // opens sign-up first and resumes automatically the moment it completes.
   const handleGetCoreClick = () => {
     if (user?.uid || auth.currentUser?.uid) {
+      trackEvent("pricing_panel_opened");
       setShowPricingPanel(true);
     } else {
+      trackEvent("get_core_clicked_signed_out");
       setPendingCheckoutAfterAuth(true);
       setAuthMode("signup");
       setShowAuthModal(true);
@@ -2857,6 +2892,7 @@ export default function App() {
               e,
             );
           }
+          trackEvent("signup_completed", { method: "email" });
           // onAuthStateChanged (elsewhere in this file) picks up the new
           // session, sets user state with the real uid, and creates the
           // Firestore profile document automatically.
@@ -5987,6 +6023,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       setAuthError("");
                       signInWithPopup(auth, googleProvider)
                         .then((result) => {
+                          const isNewUser =
+                            (result as any)?._tokenResponse?.isNewUser ?? false;
+                          trackEvent(
+                            isNewUser ? "signup_completed" : "signin_completed",
+                            { method: "google" },
+                          );
                           setShowAuthModal(false);
                           setCurrentView("app");
                           triggerCelebrationConfetti();
