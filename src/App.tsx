@@ -1214,7 +1214,15 @@ export default function App() {
   // fetches the key from this app's own server at startup; if it
   // comes back empty, every trackEvent() call is a harmless no-op,
   // so nothing breaks while this is being set up.
+  //
+  // Events fired before PostHog finishes loading (a real race — the
+  // config fetch takes a moment, and a fast signup can beat it) are
+  // queued here and flushed the instant loading completes, so no
+  // event is ever silently dropped due to timing.
   // ============================================================
+  const analyticsQueue = useRef<
+    { name: string; props?: Record<string, unknown> }[]
+  >([]);
   useEffect(() => {
     fetch(API_BASE + "/api/config")
       .then((r) => r.json())
@@ -1224,6 +1232,16 @@ export default function App() {
             api_host: "https://us.i.posthog.com",
             capture_pageview: true,
             autocapture: false,
+            loaded: () => {
+              analyticsQueue.current.forEach(({ name, props }) => {
+                try {
+                  posthog.capture(name, props);
+                } catch (e) {
+                  console.warn("Queued analytics event failed:", name, e);
+                }
+              });
+              analyticsQueue.current = [];
+            },
           });
         }
       })
@@ -1236,6 +1254,9 @@ export default function App() {
       } catch (e) {
         console.warn("Analytics event failed:", name, e);
       }
+    } else {
+      // Not loaded yet — hold onto it instead of dropping it silently.
+      analyticsQueue.current.push({ name, props });
     }
   };
 
