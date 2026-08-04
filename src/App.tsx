@@ -1496,7 +1496,11 @@ export default function App() {
 
   // Zen Mode states to ensure simplicity and relaxing usage
   const [isZenMode, setIsZenMode] = useState<boolean>(() => {
-    return localStorage.getItem("fh_zen_mode") === "true";
+    // Reset persisted Zen mode on load: the old inline Zen layout was
+    // retired in favor of a full-screen overlay launched from Now, and
+    // stale localStorage was stranding users on the old screen.
+    localStorage.removeItem("fh_zen_mode");
+    return false;
   });
   const [breathingPhase, setBreathingPhase] = useState<
     "inhale" | "hold-in" | "exhale" | "hold-out"
