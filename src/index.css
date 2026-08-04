@@ -63,30 +63,33 @@ body {
    ============================================================ */
 .fh-aurora-amethyst {
   background-image:
-    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(139, 106, 174, 0.16), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(196, 132, 154, 0.13), transparent 55%),
-    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(122, 191, 196, 0.12), transparent 60%);
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(139, 106, 174, 0.34), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(196, 132, 154, 0.28), transparent 58%),
+    radial-gradient(ellipse 55% 40% at 70% 45%, rgba(183, 155, 216, 0.16), transparent 60%),
+    radial-gradient(ellipse 85% 55% at 45% 105%, rgba(122, 191, 196, 0.26), transparent 62%);
 }
 
 .fh-aurora-rose {
   background-image:
-    radial-gradient(ellipse 80% 55% at 12% 0%, rgba(196, 132, 154, 0.18), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 92% 15%, rgba(139, 106, 174, 0.11), transparent 55%),
-    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(217, 167, 140, 0.12), transparent 60%);
+    radial-gradient(ellipse 75% 50% at 10% -5%, rgba(196, 132, 154, 0.36), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 94% 10%, rgba(139, 106, 174, 0.24), transparent 58%),
+    radial-gradient(ellipse 55% 40% at 65% 48%, rgba(217, 167, 140, 0.15), transparent 60%),
+    radial-gradient(ellipse 85% 55% at 50% 105%, rgba(217, 167, 140, 0.26), transparent 62%);
 }
 
 .fh-aurora-seaglass {
   background-image:
-    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(90, 155, 165, 0.16), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(122, 191, 196, 0.14), transparent 55%),
-    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(139, 106, 174, 0.10), transparent 60%);
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(90, 155, 165, 0.32), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(122, 191, 196, 0.30), transparent 58%),
+    radial-gradient(ellipse 55% 40% at 68% 46%, rgba(139, 106, 174, 0.13), transparent 60%),
+    radial-gradient(ellipse 85% 55% at 48% 105%, rgba(139, 106, 174, 0.22), transparent 62%);
 }
 
 .fh-aurora-moonlight {
   background-image:
-    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(139, 106, 174, 0.22), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(196, 132, 154, 0.10), transparent 55%),
-    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(90, 155, 165, 0.12), transparent 60%);
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(139, 106, 174, 0.34), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(196, 132, 154, 0.16), transparent 58%),
+    radial-gradient(ellipse 85% 55% at 48% 105%, rgba(90, 155, 165, 0.18), transparent 62%);
 }
 
 /* Calm mode strips glass blur and gradients for the flattest view */
@@ -174,4 +177,9 @@ body {
 }
 .fh-glass-light .fh-dark-card .border-white\/10 {
   border-color: rgb(255 255 255 / 0.1);
+}
+
+/* Force white text on colored pills/buttons inside light glass themes */
+.fh-glass-light .fh-keep-white {
+  color: #ffffff !important;
 }

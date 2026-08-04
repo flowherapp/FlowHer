@@ -9085,6 +9085,42 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 {/* 1. HOME TAB SCREEN */}
                 {appTab === "home" && (
                   <div className="space-y-6">
+                    {/* Hero greeting */}
+                    <div className="pt-3 pb-1 px-1 space-y-1.5">
+                      <span
+                        className={`text-[10px] font-mono tracking-[0.25em] uppercase block ${activeTheme.accentTextClass}`}
+                      >
+                        {new Date().toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <h2
+                        className={`font-serif text-4xl md:text-5xl font-light leading-[1.1] ${activeTheme.textTitleClass}`}
+                      >
+                        {(() => {
+                          const h = new Date().getHours();
+                          return h < 12
+                            ? "Good morning"
+                            : h < 17
+                              ? "Good afternoon"
+                              : "Good evening";
+                        })()}
+                        ,{" "}
+                        <span className={activeTheme.accentTextClass}>
+                          {(user?.name || "friend").split(" ")[0]}
+                        </span>
+                        .
+                      </h2>
+                      <p
+                        className={`text-sm font-sans font-light ${activeTheme.textMutedClass}`}
+                      >
+                        Your nervous system sets the pace today. Everything here
+                        follows.
+                      </p>
+                    </div>
+
                     {/* Integrated user bio / profile quick-view card */}
                     <div
                       className={`rounded-2xl p-5 space-y-4 transition-all duration-300 ${activeTheme.panelBgClass}`}
@@ -9204,7 +9240,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                               }}
                               className={`group p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                                 isSelected
-                                  ? `${theme.accentBorderClass} ${theme.accentTintClass} text-white ring-1 ring-[#C45BAA]/45`
+                                  ? `${theme.accentBorderClass} ${theme.accentTintClass} ${theme.accentTextClass} font-semibold ring-1 ring-[#C45BAA]/30`
                                   : "border-white/5 bg-white/2 hover:bg-white/5 hover:border-white/10"
                               }`}
                             >
@@ -15125,7 +15161,7 @@ s.strain04@gmail.com`;
           </main>
 
           {/* DYNAMIC NAVIGATION CONTROL BAR TAB BUTTONSROW */}
-          <nav className="w-full max-w-lg md:max-w-2xl lg:max-w-4xl bg-[#130620]/95 backdrop-blur-md rounded-t-3xl border-t border-white/5 fixed bottom-0 left-1/2 -translate-x-1/2 px-4 py-3 flex flex-col gap-2.5 z-30 select-none font-sans shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
+          <nav className={`w-full max-w-lg md:max-w-2xl lg:max-w-4xl ${isLightTheme ? "bg-white/80 border-t border-[#8B6AAE]/15 shadow-[0_-8px_30px_rgba(139,106,174,0.18)]" : "bg-[#130620]/95 border-t border-white/5 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"} backdrop-blur-md rounded-t-3xl fixed bottom-0 left-1/2 -translate-x-1/2 px-4 py-3 flex flex-col gap-2.5 z-30 select-none font-sans transition-colors duration-500`}>
             {/* Cognitive Mode Toggle Switch Header */}
             <div className="flex items-center justify-between px-2 pb-1.5 border-b border-white/5 text-[10px] text-gray-400 select-none">
               <div className="flex items-center gap-1.5 font-mono tracking-wider uppercase text-[#E085C9]">
@@ -15160,7 +15196,7 @@ s.strain04@gmail.com`;
                     }
                   }
                 }}
-                className={`relative flex items-center bg-black/45 p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] focus:outline-none focus:ring-2 ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)] focus:ring-teal/50" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)] focus:ring-[#C45BAA]/50"}`}
+                className={`relative flex items-center ${isLightTheme ? "bg-[#2E2440]/10" : "bg-black/45"} p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] focus:outline-none focus:ring-2 ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)] focus:ring-teal/50" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)] focus:ring-[#C45BAA]/50"}`}
               >
                 <button
                   onClick={() => {
@@ -15172,7 +15208,7 @@ s.strain04@gmail.com`;
                   }}
                   aria-label="Full Workspace Mode"
                   aria-pressed={!isNavFocusMode}
-                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${!isNavFocusMode ? "text-white font-bold" : "text-gray-500 hover:text-gray-300"}`}
+                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${!isNavFocusMode ? "fh-keep-white text-white font-bold" : "text-gray-500 hover:text-gray-300"}`}
                   title="Show all tabs and tracking logs"
                 >
                   {!isNavFocusMode && (
