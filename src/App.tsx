@@ -9404,14 +9404,23 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           ? moodMeta.insight
                           : "Your nervous system sets the pace today. Everything here follows."}
                       </p>
-                      <button
-                        onClick={() => setMoodGateOpen(true)}
-                        className={`text-[10px] font-mono tracking-widest uppercase cursor-pointer ${activeTheme.accentTextClass} hover:opacity-70`}
-                      >
-                        {moodMeta
-                          ? `Feeling ${moodMeta.label} · change`
-                          : "Check in with yourself"}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setMoodGateOpen(true)}
+                          className={`text-[10px] font-mono tracking-widest uppercase cursor-pointer ${activeTheme.accentTextClass} hover:opacity-70`}
+                        >
+                          {moodMeta
+                            ? `Feeling ${moodMeta.label} · change`
+                            : "Check in with yourself"}
+                        </button>
+                        {isFounder && (
+                          <span
+                            className={`text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full ${activeTheme.accentTintClass} ${activeTheme.accentTextClass}`}
+                          >
+                            Founder &middot; Core
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Zen Mode entry: the single calming action on Now */}
@@ -14243,6 +14252,7 @@ s.strain04@gmail.com`;
                 >
                   {isNavFocusMode ? "Low (Focused)" : "Normal (Full)"}
                 </span>
+                <span className="opacity-40">&middot; b277</span>
               </div>
               <div
                 role="group"
