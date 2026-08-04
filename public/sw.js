@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flowher-cache-v1';
+const CACHE_NAME = 'flowher-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,7 +6,7 @@ const ASSETS_TO_CACHE = [
   '/manifest.json'
 ];
 
-// Install Event: cache core assets
+// Install Event: cache core assets and activate immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -19,7 +19,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate Event: clean up outdated caches
+// Activate Event: clean up ALL outdated caches (evicts v1 for existing users)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -48,10 +48,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const isNavigation =
+    event.request.mode === 'navigate' ||
+    (event.request.headers.get('accept') || '').includes('text/html');
+
+  // NETWORK FIRST for pages: every visit gets the newest deploy.
+  // Cache is only the offline fallback.
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => cached || caches.match('/'));
+        })
+    );
+    return;
+  }
+
+  // CACHE FIRST for hashed static assets (safe: filenames change per deploy),
+  // with background refresh to keep the cache warm.
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Serve cached resource immediately, and update the cache in background
         fetch(event.request)
           .then((networkResponse) => {
             if (networkResponse.status === 200) {
@@ -76,8 +102,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // If offline and requesting an HTML document/page, return index.html fallback
-          if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+          if ((event.request.headers.get('accept') || '').includes('text/html')) {
             return caches.match('/');
           }
         });
