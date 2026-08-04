@@ -11,6 +11,10 @@
   --color-rose: #E8845C;
   --color-teal: #3D9E8C;
   --color-gold: #D4A843;
+  --color-amethyst: #8B6AAE;
+  --color-rosequartz: #C4849A;
+  --color-seaglass: #5A9BA5;
+  --color-seaglass-light: #7ABFC4;
 }
 
 body {
@@ -51,3 +55,123 @@ body {
 }
 
 
+
+/* ============================================================
+   FlowHer Glass Themes: aurora atmospheres
+   Layered radial gradients painted on the app root. Static by
+   design: calm, low-stimulation backgrounds per ADHD UX research.
+   ============================================================ */
+.fh-aurora-amethyst {
+  background-image:
+    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(139, 106, 174, 0.16), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(196, 132, 154, 0.13), transparent 55%),
+    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(122, 191, 196, 0.12), transparent 60%);
+}
+
+.fh-aurora-rose {
+  background-image:
+    radial-gradient(ellipse 80% 55% at 12% 0%, rgba(196, 132, 154, 0.18), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 92% 15%, rgba(139, 106, 174, 0.11), transparent 55%),
+    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(217, 167, 140, 0.12), transparent 60%);
+}
+
+.fh-aurora-seaglass {
+  background-image:
+    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(90, 155, 165, 0.16), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(122, 191, 196, 0.14), transparent 55%),
+    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(139, 106, 174, 0.10), transparent 60%);
+}
+
+.fh-aurora-moonlight {
+  background-image:
+    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(139, 106, 174, 0.22), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 12%, rgba(196, 132, 154, 0.10), transparent 55%),
+    radial-gradient(ellipse 85% 60% at 50% 100%, rgba(90, 155, 165, 0.12), transparent 60%);
+}
+
+/* Calm mode strips glass blur and gradients for the flattest view */
+.fh-calm-mode .fh-aurora-amethyst,
+.fh-calm-mode .fh-aurora-rose,
+.fh-calm-mode .fh-aurora-seaglass,
+.fh-calm-mode .fh-aurora-moonlight {
+  background-image: none;
+}
+.fh-calm-mode [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ============================================================
+   Light-glass readability remap
+   The app view was styled dark-first: ~240 spots hardcode pale
+   text and white-tint surfaces. Scoped under .fh-glass-light,
+   these rules re-ink them for light glass themes without touching
+   16k lines of JSX. Overlays render outside this wrapper and are
+   unaffected. Escape hatches keep white text on solid/gradient
+   accent elements, and .fh-dark-card preserves intentionally dark
+   islands.
+   ============================================================ */
+.fh-glass-light {
+  --fh-ink: 46 36 64;
+}
+
+/* Muted body text: pale grays become readable ink */
+.fh-glass-light .text-gray-200,
+.fh-glass-light .text-gray-300 {
+  color: rgb(var(--fh-ink) / 0.78);
+}
+.fh-glass-light .text-gray-400 {
+  color: rgb(var(--fh-ink) / 0.62);
+}
+.fh-glass-light .text-\[\#FAF7FF\],
+.fh-glass-light .text-\[\#FAF6F0\],
+.fh-glass-light .text-white {
+  color: rgb(var(--fh-ink) / 0.92);
+}
+
+/* Escapes: white text stays white on gradient and solid accents */
+.fh-glass-light [class*="bg-gradient"].text-white,
+.fh-glass-light [class*="bg-gradient"] .text-white,
+.fh-glass-light [class*="bg-["].text-white,
+.fh-glass-light .bg-mag.text-white,
+.fh-glass-light .bg-teal.text-white,
+.fh-glass-light .bg-plum.text-white,
+.fh-glass-light .fh-dark-card .text-white,
+.fh-glass-light .fh-dark-card .text-gray-200,
+.fh-glass-light .fh-dark-card .text-gray-300,
+.fh-glass-light .fh-dark-card .text-\[\#FAF7FF\],
+.fh-glass-light .fh-dark-card .text-\[\#FAF6F0\] {
+  color: #ffffff;
+}
+.fh-glass-light .fh-dark-card .text-gray-300 {
+  color: #d1d5db;
+}
+.fh-glass-light .fh-dark-card .text-gray-400 {
+  color: #9ca3af;
+}
+
+/* White-tint surfaces become soft ink-tint glass on light */
+.fh-glass-light .bg-white\/5 {
+  background-color: rgb(var(--fh-ink) / 0.045);
+}
+.fh-glass-light .bg-white\/10 {
+  background-color: rgb(var(--fh-ink) / 0.07);
+}
+.fh-glass-light .border-white\/5 {
+  border-color: rgb(var(--fh-ink) / 0.08);
+}
+.fh-glass-light .border-white\/10 {
+  border-color: rgb(var(--fh-ink) / 0.12);
+}
+.fh-glass-light .fh-dark-card .bg-white\/5 {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.fh-glass-light .fh-dark-card .bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+.fh-glass-light .fh-dark-card .border-white\/5 {
+  border-color: rgb(255 255 255 / 0.05);
+}
+.fh-glass-light .fh-dark-card .border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}

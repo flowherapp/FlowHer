@@ -640,7 +640,15 @@ const renderHighlightedText = (text: string) => {
   );
 };
 
-const TOUR_STEPS = [
+const TOUR_STEPS: {
+  title: string;
+  text: string;
+  targetTab: string;
+  tool: string | null;
+  highlightIndicator: string;
+  iconName: string;
+  subTab?: string;
+}[] = [
   {
     title: "Welcome to FlowHer\u2122",
     text: "This is a quieter place to work from. FlowHer\u2122 takes the hard parts of a workday, the overwhelm, the emails you cannot start, the doubt, and gives each one a simple tool. No streaks to protect. No guilt. Just help.",
@@ -976,27 +984,61 @@ export default function App() {
 
   // Focus Theme Selector State
   const [activeThemeId, setActiveThemeId] = useState<string>(() => {
-    return localStorage.getItem("fh_active_theme") || "cosmic";
+    return localStorage.getItem("fh_active_theme") || "amethyst";
   });
 
   const [lastSyncedThemeId, setLastSyncedThemeId] = useState<string>(() => {
-    return localStorage.getItem("fh_last_synced_theme") || "cosmic";
+    return localStorage.getItem("fh_last_synced_theme") || "amethyst";
   });
 
   const [syncWithSystem, setSyncWithSystem] = useState<boolean>(() => {
     return localStorage.getItem("fh_sync_with_system") === "true";
   });
 
+  // Light themes must never be stored as the "preferred dark" theme for
+  // system sync. Registry covers the glass light themes plus sanctuary.
+  const LIGHT_THEME_IDS = ["sanctuary", "amethyst", "rosequartz", "seaglass"];
+
   const [preferredDarkThemeId, setPreferredDarkThemeId] = useState<string>(
     () => {
       const saved = localStorage.getItem("fh_preferred_dark_theme");
-      return saved && saved !== "sanctuary" ? saved : "cosmic";
+      return saved && !LIGHT_THEME_IDS.includes(saved) ? saved : "moonlight";
     },
   );
 
   const activeTheme = useMemo<FocusTheme>(() => {
     return FOCUS_THEMES.find((t) => t.id === activeThemeId) || FOCUS_THEMES[0];
   }, [activeThemeId]);
+
+  // True for every light theme (sanctuary + the glass light themes), so
+  // light/dark styling branches cover all of them, not just sanctuary.
+  const isLightTheme = LIGHT_THEME_IDS.includes(activeTheme.id);
+
+  // Signature logo gradient stops for the glass themes, drawn from the
+  // real FlowHer brand mark (jewel purple, rose, sea teal). Non-glass
+  // themes fall through to their original per-theme stops.
+  const GLASS_LOGO_STOPS: Record<
+    string,
+    { outer: [string, string, string]; inner: [string, string, string] }
+  > = {
+    amethyst: {
+      outer: ["#8B6AAE", "#C4849A", "#5A9BA5"],
+      inner: ["#6E4E96", "#C4849A", "#7ABFC4"],
+    },
+    rosequartz: {
+      outer: ["#C4849A", "#8B6AAE", "#D9A78C"],
+      inner: ["#B26E86", "#C4849A", "#F2D8CB"],
+    },
+    seaglass: {
+      outer: ["#5A9BA5", "#7ABFC4", "#8B6AAE"],
+      inner: ["#3F818C", "#7ABFC4", "#CBE8EA"],
+    },
+    moonlight: {
+      outer: ["#8B6AAE", "#C4849A", "#7ABFC4"],
+      inner: ["#6E4E96", "#C4849A", "#B79BD8"],
+    },
+  };
+  const glassLogo = GLASS_LOGO_STOPS[activeTheme.id];
 
   const handleRestoreDefaultTheme = () => {
     const defaultTheme = lastSyncedThemeId;
@@ -1021,7 +1063,7 @@ export default function App() {
       e: MediaQueryListEvent | MediaQueryList,
     ) => {
       if (e.matches) {
-        setActiveThemeId("sanctuary");
+        setActiveThemeId("amethyst");
       } else {
         setActiveThemeId(preferredDarkThemeId);
       }
@@ -1043,9 +1085,9 @@ export default function App() {
   }, [syncWithSystem, preferredDarkThemeId]);
 
   const handleSelectTheme = (themeId: string) => {
-    if (themeId === "sanctuary") {
+    if (LIGHT_THEME_IDS.includes(themeId)) {
       setSyncWithSystem(false);
-      setActiveThemeId("sanctuary");
+      setActiveThemeId(themeId);
     } else {
       setSyncWithSystem(false);
       setPreferredDarkThemeId(themeId);
@@ -2556,7 +2598,7 @@ export default function App() {
                 localStorage.getItem("fh_victory_log") || "[]",
               ),
               activeThemeId:
-                localStorage.getItem("fh_active_theme") || "cosmic",
+                localStorage.getItem("fh_active_theme") || "amethyst",
             };
             await setDoc(userRef, initialProfile);
 
@@ -7795,15 +7837,21 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           {/* Header toolbar */}
           <header
             className={`w-full max-w-lg md:max-w-2xl lg:max-w-4xl px-5 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-35 font-sans border-b transition-all duration-500 ${
-              activeTheme.id === "sanctuary"
-                ? "bg-[#FAF6F0]/90 border-amber-900/10"
-                : activeTheme.id === "forest"
-                  ? "bg-[#091811]/90 border-emerald-900/20"
-                  : activeTheme.id === "ocean"
-                    ? "bg-[#060D17]/90 border-blue-900/20"
-                    : activeTheme.id === "sunset"
-                      ? "bg-[#14081E]/90 border-fuchsia-900/20"
-                      : "bg-[#130620]/90 border-white/5"
+              activeTheme.id === "amethyst" ||
+              activeTheme.id === "rosequartz" ||
+              activeTheme.id === "seaglass"
+                ? "bg-white/55 border-white/60"
+                : activeTheme.id === "moonlight"
+                  ? "bg-[#181026]/85 border-white/10"
+                  : isLightTheme
+                    ? "bg-[#FAF6F0]/90 border-amber-900/10"
+                    : activeTheme.id === "forest"
+                      ? "bg-[#091811]/90 border-emerald-900/20"
+                      : activeTheme.id === "ocean"
+                        ? "bg-[#060D17]/90 border-blue-900/20"
+                        : activeTheme.id === "sunset"
+                          ? "bg-[#14081E]/90 border-fuchsia-900/20"
+                          : "bg-[#130620]/90 border-white/5"
             }`}
           >
             <div
@@ -7826,7 +7874,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="0%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.outer[0]
+                          : isLightTheme
                           ? "#FAF6F0"
                           : activeTheme.id === "forest"
                             ? "#052e16"
@@ -7840,7 +7890,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="60%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.outer[1]
+                          : isLightTheme
                           ? "#E8845C"
                           : activeTheme.id === "forest"
                             ? "#10B981"
@@ -7854,7 +7906,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="100%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.outer[2]
+                          : isLightTheme
                           ? "#D4A843"
                           : activeTheme.id === "forest"
                             ? "#3D9E8C"
@@ -7876,7 +7930,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="0%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.inner[0]
+                          : isLightTheme
                           ? "#FAF6F0"
                           : activeTheme.id === "forest"
                             ? "#022c22"
@@ -7890,7 +7946,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="60%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.inner[1]
+                          : isLightTheme
                           ? "#E8845C"
                           : activeTheme.id === "forest"
                             ? "#059669"
@@ -7904,7 +7962,9 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     <stop
                       offset="100%"
                       stopColor={
-                        activeTheme.id === "sanctuary"
+                        glassLogo
+                          ? glassLogo.inner[2]
+                          : isLightTheme
                           ? "#FBCFE8"
                           : activeTheme.id === "forest"
                             ? "#10b981"
@@ -8087,7 +8147,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               </svg>
               <div className="flex flex-col items-start select-none">
                 <span
-                  className={`font-serif text-2xl font-light ${activeTheme.id === "sanctuary" ? "text-[#1C0A2E]" : "text-[#FAF6F0]"}`}
+                  className={`font-serif text-2xl font-light ${isLightTheme ? "text-[#1C0A2E]" : "text-[#FAF6F0]"}`}
                 >
                   Flow
                   <em
@@ -8098,7 +8158,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   ™
                 </span>
                 <span
-                  className={`text-[10px] tracking-wide font-sans font-light ${activeTheme.id === "sanctuary" ? "text-[#1C0A2E]/60" : "text-[#E085C9]"}`}
+                  className={`text-[10px] tracking-wide font-sans font-light ${isLightTheme ? "text-[#1C0A2E]/60" : "text-[#E085C9]"}`}
                 >
                   For women whose brains work differently.
                 </span>
@@ -8114,7 +8174,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   setShowProfileModal(true);
                 }}
                 className={`h-8 w-8 rounded-full border overflow-hidden flex items-center justify-center transition-all cursor-pointer relative group ${
-                  activeTheme.id === "sanctuary"
+                  isLightTheme
                     ? "border-amber-900/20 bg-amber-900/5 text-[#E8845C] hover:bg-amber-900/10"
                     : "border-[#C45BAA]/40 bg-white/5 text-[#C45BAA] hover:bg-[#C45BAA]/10 hover:border-mag"
                 }`}
@@ -8130,7 +8190,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 ) : (
                   <div
                     className={`h-full w-full flex items-center justify-center text-xs font-mono font-bold select-none uppercase ${
-                      activeTheme.id === "sanctuary"
+                      isLightTheme
                         ? "bg-gradient-to-tr from-[#E8845C] to-[#D4A843] text-white"
                         : "bg-gradient-to-tr from-plum to-[#E085C9] text-white"
                     }`}
@@ -8147,7 +8207,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   className={`flex items-center gap-1 text-[10px] tracking-wider font-mono uppercase px-2.5 py-1 rounded-full border transition-all font-semibold cursor-pointer select-none ${
                     showThemeMenu
                       ? `${activeTheme.accentBorderClass} ${activeTheme.accentTintClass} ${activeTheme.accentTextClass} shadow-[0_0_12px_rgba(196,91,170,0.25)]`
-                      : activeTheme.id === "sanctuary"
+                      : isLightTheme
                         ? "bg-amber-900/5 border-amber-900/15 text-[#1C0A2E]/80 hover:bg-amber-900/10"
                         : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20"
                   }`}
@@ -8170,13 +8230,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                     />
                     <div
                       className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl border p-2 z-50 text-left space-y-1 backdrop-blur-md transition-all duration-200 ${
-                        activeTheme.id === "sanctuary"
+                        isLightTheme
                           ? "bg-white border-amber-900/15 text-[#1C0A2E]"
                           : "bg-[#130620]/95 border-white/10 text-[#FAF6F0]"
                       }`}
                     >
                       <span
-                        className={`text-[8px] font-mono tracking-widest px-2.5 py-1 block uppercase ${activeTheme.id === "sanctuary" ? "text-gray-500" : "text-gray-400"}`}
+                        className={`text-[8px] font-mono tracking-widest px-2.5 py-1 block uppercase ${isLightTheme ? "text-gray-500" : "text-gray-400"}`}
                       >
                         Focus Environment
                       </span>
@@ -8194,10 +8254,10 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                             }}
                             className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
                               isSelected && !syncWithSystem
-                                ? activeTheme.id === "sanctuary"
+                                ? isLightTheme
                                   ? "bg-[#F3ECE0] text-[#E8845C] font-semibold"
                                   : "bg-white/10 text-white font-semibold"
-                                : activeTheme.id === "sanctuary"
+                                : isLightTheme
                                   ? "hover:bg-[#F3ECE0]/50 text-gray-700"
                                   : "hover:bg-white/5 text-gray-300 hover:text-white"
                             }`}
@@ -8213,7 +8273,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         );
                       })}
                       <div
-                        className={`h-px my-1 ${activeTheme.id === "sanctuary" ? "bg-amber-900/10" : "bg-white/5"}`}
+                        className={`h-px my-1 ${isLightTheme ? "bg-amber-900/10" : "bg-white/5"}`}
                       />
                       <button
                         onClick={() => {
@@ -8227,10 +8287,10 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         }}
                         className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
                           syncWithSystem
-                            ? activeTheme.id === "sanctuary"
+                            ? isLightTheme
                               ? "bg-[#F3ECE0] text-[#E8845C] font-semibold"
                               : "bg-white/10 text-white font-semibold"
-                            : activeTheme.id === "sanctuary"
+                            : isLightTheme
                               ? "hover:bg-[#F3ECE0]/50 text-gray-700"
                               : "hover:bg-white/5 text-gray-300 hover:text-white"
                         }`}
@@ -8244,7 +8304,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         )}
                       </button>
                       <div
-                        className={`h-px my-1 ${activeTheme.id === "sanctuary" ? "bg-amber-900/10" : "bg-white/5"}`}
+                        className={`h-px my-1 ${isLightTheme ? "bg-amber-900/10" : "bg-white/5"}`}
                       />
                       <button
                         onClick={() => {
@@ -8252,7 +8312,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           setShowThemeMenu(false);
                         }}
                         className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                          activeTheme.id === "sanctuary"
+                          isLightTheme
                             ? "hover:bg-[#F3ECE0]/50 text-gray-700 font-medium"
                             : "hover:bg-white/5 text-gray-300 hover:text-white font-medium"
                         }`}
@@ -9026,9 +9086,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 {appTab === "home" && (
                   <div className="space-y-6">
                     {/* Integrated user bio / profile quick-view card */}
-                    <div className="bg-gradient-to-br from-[#3D1052]/20 via-[#130620] to-[#C45BAA]/5 border border-[#C45BAA]/15 rounded-2xl p-5 space-y-4">
+                    <div
+                      className={`rounded-2xl p-5 space-y-4 transition-all duration-300 ${activeTheme.panelBgClass}`}
+                    >
                       <div className="flex items-start gap-4">
-                        <div className="h-16 w-16 rounded-2xl border-2 border-[#C45BAA]/40 bg-[#130620] flex-shrink-0 overflow-hidden relative group">
+                        <div
+                          className={`h-16 w-16 rounded-2xl border-2 ${activeTheme.accentBorderClass} ${activeTheme.accentTintClass} flex-shrink-0 overflow-hidden relative group`}
+                        >
                           {profilePic ? (
                             <img
                               src={profilePic}
@@ -9056,7 +9120,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
                         <div className="space-y-1 min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="font-serif text-lg text-[#FAF7FF] truncate leading-none">
+                            <h3 className={`font-serif text-lg truncate leading-none ${activeTheme.textTitleClass}`}>
                               {user?.name || "Professional User"}
                             </h3>
                             <button
@@ -9066,13 +9130,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                                 setIsEditingProfile(true);
                                 setShowProfileModal(true);
                               }}
-                              className="text-[9px] font-mono tracking-widest text-[#C45BAA] hover:text-[#FAF7FF] uppercase transition-all cursor-pointer"
+                              className={`text-[9px] font-mono tracking-widest uppercase transition-all cursor-pointer ${activeTheme.accentTextClass} hover:opacity-70`}
                             >
                               Edit Profile
                             </button>
                           </div>
 
-                          <p className="text-xs text-gray-300 leading-relaxed font-sans font-light italic">
+                          <p className={`text-xs leading-relaxed font-sans font-light italic ${activeTheme.textMutedClass}`}>
                             "{profileBio}"
                           </p>
 
@@ -9107,7 +9171,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           <button
                             onClick={handleRestoreDefaultTheme}
                             className={`text-[9px] font-mono tracking-widest uppercase px-2.5 py-1 rounded-full border transition-all cursor-pointer font-semibold ${
-                              activeTheme.id === "sanctuary"
+                              isLightTheme
                                 ? "bg-amber-900/5 border-amber-900/15 text-[#1C0A2E]/80 hover:bg-amber-900/10"
                                 : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20"
                             }`}
@@ -9158,12 +9222,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/2 border border-white/5 rounded-xl p-3.5">
                         <div className="space-y-0.5">
                           <span
-                            className={`text-xs font-medium block ${activeTheme.id === "sanctuary" ? "text-[#1C0A2E]" : "text-white"}`}
+                            className={`text-xs font-medium block ${isLightTheme ? "text-[#1C0A2E]" : "text-white"}`}
                           >
                             Sync with System Theme
                           </span>
                           <span
-                            className={`text-[10px] font-sans font-light leading-relaxed block ${activeTheme.id === "sanctuary" ? "text-gray-600" : "text-gray-400"}`}
+                            className={`text-[10px] font-sans font-light leading-relaxed block ${isLightTheme ? "text-gray-600" : "text-gray-400"}`}
                           >
                             Automatically switches to 'Sanctuary' (light) when
                             light mode is active on your device, and restores
@@ -15160,7 +15224,7 @@ s.strain04@gmail.com`;
                   setAppTab("home");
                   setSelectedWorkTool(null);
                 }}
-                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "home" ? "text-mag" : "text-gray-400"}`}
+                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "home" ? activeTheme.accentTextClass : "text-gray-400"}`}
               >
                 <Smile className="h-5 w-5" />
                 <span className="text-[10px] font-sans">Home</span>
@@ -15170,7 +15234,7 @@ s.strain04@gmail.com`;
                   setAppTab("focus");
                   setSelectedWorkTool(null);
                 }}
-                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "focus" ? "text-mag" : "text-gray-400"}`}
+                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "focus" ? activeTheme.accentTextClass : "text-gray-400"}`}
               >
                 <Zap className="h-5 w-5" />
                 <span className="text-[10px] font-sans">Focus</span>
@@ -15179,7 +15243,7 @@ s.strain04@gmail.com`;
                 onClick={() => {
                   setAppTab("work");
                 }}
-                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "work" ? "text-mag" : "text-gray-400"}`}
+                className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "work" ? activeTheme.accentTextClass : "text-gray-400"}`}
               >
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-[10px] font-sans">Scripts</span>
@@ -15201,7 +15265,7 @@ s.strain04@gmail.com`;
                           setSelectedWorkTool(null);
                         });
                       }}
-                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "wins" ? "text-mag" : "text-gray-400"}`}
+                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "wins" ? activeTheme.accentTextClass : "text-gray-400"}`}
                     >
                       <Award className="h-5 w-5" />
                       <span className="text-[10px] font-sans">Wins</span>
@@ -15213,7 +15277,7 @@ s.strain04@gmail.com`;
                           setSelectedWorkTool(null);
                         });
                       }}
-                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "unmask" ? "text-mag" : "text-gray-400"}`}
+                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "unmask" ? activeTheme.accentTextClass : "text-gray-400"}`}
                     >
                       <Moon className="h-5 w-5" />
                       <span className="text-[10px] font-sans">Brain Dump</span>
@@ -15223,7 +15287,7 @@ s.strain04@gmail.com`;
                         setAppTab("mask");
                         setSelectedWorkTool(null);
                       }}
-                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "mask" ? "text-mag" : "text-gray-400"}`}
+                      className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "mask" ? activeTheme.accentTextClass : "text-gray-400"}`}
                     >
                       <Lock className="h-5 w-5" />
                       <span className="text-[10px] font-sans">Masking</span>
@@ -15234,7 +15298,7 @@ s.strain04@gmail.com`;
                           setAppTab("promote");
                           setSelectedWorkTool(null);
                         }}
-                        className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "promote" ? "text-mag" : "text-gray-400"}`}
+                        className={`flex flex-col items-center gap-1 shrink-0 py-1 px-2 ${appTab === "promote" ? activeTheme.accentTextClass : "text-gray-400"}`}
                       >
                         <Megaphone className="h-5 w-5" />
                         <span className="text-[10px] font-sans">Promote</span>
