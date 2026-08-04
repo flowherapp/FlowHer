@@ -1308,9 +1308,21 @@ export default function App() {
     const saved = localStorage.getItem("fh_user");
     return saved ? JSON.parse(saved) : null;
   });
+  // ============================================================
+  // FOUNDER OVERRIDE: certain emails always have Core access,
+  // regardless of what Firestore or the payment webhook says.
+  // Protects the founder(s) from ever locking themselves out.
+  // ============================================================
+  const FOUNDER_EMAILS = ["s.strain04@gmail.com"];
+  const isFounder =
+    !!user?.email && FOUNDER_EMAILS.includes(user.email.toLowerCase());
+
   const [userPlan, setUserPlan] = useState<"free" | "core">(() => {
     return "free"; // Plan is server-authoritative: the Lemon Squeezy webhook writes it to Firestore
   });
+
+  // Effective plan: founders always resolve to core
+  const effectivePlan: "free" | "core" = isFounder ? "core" : userPlan;
 
   // ============================================================
   // REAL Lemon Squeezy hosted checkout (card data never touches this app)
@@ -3198,7 +3210,7 @@ export default function App() {
 
   // Plan guard utility
   const executeCoreAction = (featureName: string, action: () => void) => {
-    if (userPlan === "core") {
+    if (effectivePlan === "core") {
       action();
     } else {
       setShowGateModal(featureName);
