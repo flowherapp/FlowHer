@@ -121,15 +121,15 @@ body {
 /* Muted body text: pale grays become readable ink */
 .fh-glass-light .text-gray-200,
 .fh-glass-light .text-gray-300 {
-  color: rgb(var(--fh-ink) / 0.78);
+  color: rgb(var(--fh-ink) / 0.86);
 }
 .fh-glass-light .text-gray-400 {
-  color: rgb(var(--fh-ink) / 0.62);
+  color: rgb(var(--fh-ink) / 0.72);
 }
 .fh-glass-light .text-\[\#FAF7FF\],
 .fh-glass-light .text-\[\#FAF6F0\],
 .fh-glass-light .text-white {
-  color: rgb(var(--fh-ink) / 0.92);
+  color: rgb(var(--fh-ink) / 0.95);
 }
 
 /* Escapes: white text stays white on gradient and solid accents */
@@ -195,7 +195,7 @@ body {
 .fh-glass-light .bg-\[\#110122\],
 .fh-glass-light .bg-\[\#130620\],
 .fh-glass-light .bg-\[\#1C0A2E\] {
-  background-color: rgb(255 255 255 / 0.6);
+  background-color: rgb(255 255 255 / 0.75);
 }
 
 /* Translucent dark surfaces become soft ink-tint glass */
@@ -212,7 +212,7 @@ body {
 .fh-glass-light .bg-black\/40,
 .fh-glass-light .bg-black\/45,
 .fh-glass-light .bg-black\/50 {
-  background-color: rgb(var(--fh-ink) / 0.05);
+  background-color: rgb(var(--fh-ink) / 0.06);
 }
 .fh-glass-light .bg-black\/5,
 .fh-glass-light .bg-black\/10 {
@@ -231,7 +231,7 @@ body {
     rgba(196, 132, 154, 0.1) 55%,
     rgba(122, 191, 196, 0.1)
   );
-  background-color: rgb(255 255 255 / 0.5);
+  background-color: rgb(255 255 255 / 0.65);
 }
 
 /* Text inside lightened containers must be ink, overriding the
@@ -249,5 +249,34 @@ body {
 .fh-glass-light [class*="from-[#3D1052]"] .text-white,
 .fh-glass-light [class*="from-[#1E293B]"] .text-white,
 .fh-glass-light [class*="from-[#1E1B4B]"] .text-white {
-  color: rgb(var(--fh-ink) / 0.92);
+  color: rgb(var(--fh-ink) / 0.95);
+}
+
+/* ============================================================
+   Mood-adaptive atmosphere (v6 engine, stage 1)
+   The daily check-in tints the aurora to the nervous system
+   state. Grounded keeps the theme default. Overwhelmed goes
+   near-still to reduce stimulation.
+   ============================================================ */
+[class*="fh-aurora-"][data-fh-mood="anxious"] {
+  background-image:
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(196, 132, 154, 0.38), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(217, 167, 140, 0.24), transparent 58%),
+    radial-gradient(ellipse 85% 55% at 48% 105%, rgba(139, 106, 174, 0.2), transparent 62%);
+}
+[class*="fh-aurora-"][data-fh-mood="low"] {
+  background-image:
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(110, 78, 150, 0.32), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(139, 106, 174, 0.22), transparent 58%),
+    radial-gradient(ellipse 85% 55% at 48% 105%, rgba(90, 155, 165, 0.18), transparent 62%);
+}
+[class*="fh-aurora-"][data-fh-mood="overwhelmed"] {
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(139, 106, 174, 0.12), transparent 65%);
+}
+[class*="fh-aurora-"][data-fh-mood="wired"] {
+  background-image:
+    radial-gradient(ellipse 75% 50% at 12% -5%, rgba(90, 155, 165, 0.36), transparent 62%),
+    radial-gradient(ellipse 65% 45% at 92% 8%, rgba(122, 191, 196, 0.3), transparent 58%),
+    radial-gradient(ellipse 85% 55% at 48% 105%, rgba(139, 106, 174, 0.18), transparent 62%);
 }
