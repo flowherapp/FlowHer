@@ -2516,9 +2516,24 @@ export default function App() {
     primaryGoal: "",
   });
 
-  // Reset active tab to home if on a non-essential tab when entering Focus Mode
+  // Focus Mode narrows the nav but must never trap the user off a real
+  // destination. Every top-level tab in the new skeleton (Now, Tools,
+  // Wins) plus the tool interiors must remain reachable.
   useEffect(() => {
-    if (isNavFocusMode && !["home", "focus", "work"].includes(appTab)) {
+    if (
+      isNavFocusMode &&
+      ![
+        "home",
+        "tools",
+        "wins",
+        "focus",
+        "work",
+        "unmask",
+        "mask",
+        "glossary",
+        "promote",
+      ].includes(appTab)
+    ) {
       setAppTab("home");
     }
   }, [isNavFocusMode, appTab]);
@@ -14252,7 +14267,7 @@ s.strain04@gmail.com`;
                 >
                   {isNavFocusMode ? "Low (Focused)" : "Normal (Full)"}
                 </span>
-                <span className="opacity-40">&middot; b277</span>
+                <span className="opacity-40">&middot; b285</span>
               </div>
               <div
                 role="group"
