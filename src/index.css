@@ -105,151 +105,82 @@ body {
 }
 
 /* ============================================================
-   Light-glass readability remap
-   The app view was styled dark-first: ~240 spots hardcode pale
-   text and white-tint surfaces. Scoped under .fh-glass-light,
-   these rules re-ink them for light glass themes without touching
-   16k lines of JSX. Overlays render outside this wrapper and are
-   unaffected. Escape hatches keep white text on solid/gradient
-   accent elements, and .fh-dark-card preserves intentionally dark
-   islands.
+   FlowHer Light-theme legibility enforcement
+   The app was written dark-first: 500+ pale text spots. This
+   block re-inks EVERY category with weight sufficient to beat
+   Tailwind's per-class specificity, scoped to light glass themes
+   only. Escape hatches keep white text on the colored accent
+   buttons and inside the .fh-dark-card islands.
    ============================================================ */
-.fh-glass-light {
-  --fh-ink: 46 36 64;
-}
 
-/* Muted body text: pale grays become readable ink */
 .fh-glass-light .text-gray-200,
-.fh-glass-light .text-gray-300 {
-  color: rgb(var(--fh-ink) / 0.86);
+.fh-glass-light .text-gray-300,
+.fh-glass-light .text-\[\#8A7F8D\],
+.fh-glass-light .text-\[#8A7F8D\] {
+  color: rgb(46 36 64 / 0.85) !important;
 }
-.fh-glass-light .text-gray-400 {
-  color: rgb(var(--fh-ink) / 0.72);
+
+.fh-glass-light .text-gray-400,
+.fh-glass-light .text-gray-500 {
+  color: rgb(46 36 64 / 0.72) !important;
 }
+
+.fh-glass-light .text-gray-600 {
+  color: rgb(46 36 64 / 0.85) !important;
+}
+
+.fh-glass-light .text-white,
 .fh-glass-light .text-\[\#FAF7FF\],
-.fh-glass-light .text-\[\#FAF6F0\],
-.fh-glass-light .text-white {
-  color: rgb(var(--fh-ink) / 0.95);
+.fh-glass-light .text-\[\#FAF6F0\] {
+  color: rgb(46 36 64 / 0.94) !important;
 }
 
-/* Escapes: white text stays white on gradient and solid accents */
-.fh-glass-light [class*="bg-gradient"].text-white,
+.fh-glass-light .text-\[\#E085C9\] {
+  color: #8B6AAE !important;
+}
+
+/* Brand colors darken slightly for AA contrast on white glass */
+.fh-glass-light .text-mag {
+  color: #A24793 !important;
+}
+.fh-glass-light .text-plum {
+  color: #3D1052 !important;
+}
+.fh-glass-light .text-teal {
+  color: #2A7A6E !important;
+}
+
+/* Escape 1: white text stays white on colored/gradient accent surfaces */
 .fh-glass-light [class*="bg-gradient"] .text-white,
-.fh-glass-light [class*="bg-["].text-white,
+.fh-glass-light [class*="bg-gradient"].text-white,
+.fh-glass-light .bg-mag .text-white,
 .fh-glass-light .bg-mag.text-white,
+.fh-glass-light .bg-teal .text-white,
 .fh-glass-light .bg-teal.text-white,
+.fh-glass-light .bg-plum .text-white,
 .fh-glass-light .bg-plum.text-white,
-.fh-glass-light .fh-dark-card .text-white,
-.fh-glass-light .fh-dark-card .text-gray-200,
-.fh-glass-light .fh-dark-card .text-gray-300,
-.fh-glass-light .fh-dark-card .text-\[\#FAF7FF\],
-.fh-glass-light .fh-dark-card .text-\[\#FAF6F0\] {
-  color: #ffffff;
-}
-.fh-glass-light .fh-dark-card .text-gray-300 {
-  color: #d1d5db;
-}
-.fh-glass-light .fh-dark-card .text-gray-400 {
-  color: #9ca3af;
-}
-
-/* White-tint surfaces become soft ink-tint glass on light */
-.fh-glass-light .bg-white\/5 {
-  background-color: rgb(var(--fh-ink) / 0.045);
-}
-.fh-glass-light .bg-white\/10 {
-  background-color: rgb(var(--fh-ink) / 0.07);
-}
-.fh-glass-light .border-white\/5 {
-  border-color: rgb(var(--fh-ink) / 0.08);
-}
-.fh-glass-light .border-white\/10 {
-  border-color: rgb(var(--fh-ink) / 0.12);
-}
-.fh-glass-light .fh-dark-card .bg-white\/5 {
-  background-color: rgb(255 255 255 / 0.05);
-}
-.fh-glass-light .fh-dark-card .bg-white\/10 {
-  background-color: rgb(255 255 255 / 0.1);
-}
-.fh-glass-light .fh-dark-card .border-white\/5 {
-  border-color: rgb(255 255 255 / 0.05);
-}
-.fh-glass-light .fh-dark-card .border-white\/10 {
-  border-color: rgb(255 255 255 / 0.1);
-}
-
-/* Force white text on colored pills/buttons inside light glass themes */
-.fh-glass-light .fh-keep-white {
+.fh-glass-light [class*="bg-[#8B6AAE]"] .text-white,
+.fh-glass-light [class*="bg-[#8B6AAE]"].text-white,
+.fh-glass-light [class*="bg-[#C4849A]"] .text-white,
+.fh-glass-light [class*="bg-[#C4849A]"].text-white,
+.fh-glass-light [class*="bg-[#5A9BA5]"] .text-white,
+.fh-glass-light [class*="bg-[#5A9BA5]"].text-white,
+.fh-glass-light .fh-keep-white,
+.fh-glass-light .fh-keep-white * {
   color: #ffffff !important;
 }
 
-/* ============================================================
-   Light-glass container remap
-   Hardcoded dark surfaces (cards, inputs, overlays, gradient
-   panels) become glass on light themes. Solid brand-plum and
-   bright accent elements intentionally stay dark/colored.
-   ============================================================ */
-
-/* Solid dark panels and inputs become white glass */
-.fh-glass-light .bg-\[\#110122\],
-.fh-glass-light .bg-\[\#130620\],
-.fh-glass-light .bg-\[\#1C0A2E\] {
-  background-color: rgb(255 255 255 / 0.75);
+/* Escape 2: explicitly dark cards keep their pale text */
+.fh-glass-light .fh-dark-card .text-white,
+.fh-glass-light .fh-dark-card .text-gray-200 {
+  color: #ffffff !important;
 }
-
-/* Translucent dark surfaces become soft ink-tint glass */
-.fh-glass-light .bg-\[\#110122\]\/70,
-.fh-glass-light .bg-\[\#110122\]\/80,
-.fh-glass-light .bg-\[\#130620\]\/40,
-.fh-glass-light .bg-\[\#130620\]\/60,
-.fh-glass-light .bg-\[\#1C0A2E\]\/50,
-.fh-glass-light .bg-\[\#1C0A2E\]\/60,
-.fh-glass-light .bg-\[\#3D1052\]\/20,
-.fh-glass-light .bg-black\/20,
-.fh-glass-light .bg-black\/25,
-.fh-glass-light .bg-black\/30,
-.fh-glass-light .bg-black\/40,
-.fh-glass-light .bg-black\/45,
-.fh-glass-light .bg-black\/50 {
-  background-color: rgb(var(--fh-ink) / 0.06);
+.fh-glass-light .fh-dark-card .text-gray-300 {
+  color: rgb(255 255 255 / 0.8) !important;
 }
-.fh-glass-light .bg-black\/5,
-.fh-glass-light .bg-black\/10 {
-  background-color: rgb(var(--fh-ink) / 0.04);
-}
-
-/* Dark gradient hero/decor cards become soft brand-light gradients */
-.fh-glass-light [class*="from-[#3D1052]"],
-.fh-glass-light [class*="via-[#130620]"],
-.fh-glass-light [class*="to-[#130620]"],
-.fh-glass-light [class*="from-[#1E293B]"],
-.fh-glass-light [class*="from-[#1E1B4B]"] {
-  background-image: linear-gradient(
-    135deg,
-    rgba(139, 106, 174, 0.16),
-    rgba(196, 132, 154, 0.1) 55%,
-    rgba(122, 191, 196, 0.1)
-  );
-  background-color: rgb(255 255 255 / 0.65);
-}
-
-/* Text inside lightened containers must be ink, overriding the
-   white-text escape that protects true accent buttons */
-.fh-glass-light .bg-\[\#110122\].text-white,
-.fh-glass-light .bg-\[\#130620\].text-white,
-.fh-glass-light .bg-\[\#1C0A2E\].text-white,
-.fh-glass-light .bg-\[\#110122\]\/70.text-white,
-.fh-glass-light .bg-\[\#110122\]\/80.text-white,
-.fh-glass-light .bg-\[\#130620\]\/40.text-white,
-.fh-glass-light .bg-\[\#130620\]\/60.text-white,
-.fh-glass-light .bg-\[\#1C0A2E\]\/50.text-white,
-.fh-glass-light .bg-\[\#1C0A2E\]\/60.text-white,
-.fh-glass-light [class*="via-[#130620]"] .text-white,
-.fh-glass-light [class*="from-[#3D1052]"] .text-white,
-.fh-glass-light [class*="from-[#1E293B]"] .text-white,
-.fh-glass-light [class*="from-[#1E1B4B]"] .text-white {
-  color: rgb(var(--fh-ink) / 0.95);
+.fh-glass-light .fh-dark-card .text-gray-400,
+.fh-glass-light .fh-dark-card .text-\[\#8A7F8D\] {
+  color: rgb(255 255 255 / 0.6) !important;
 }
 
 /* ============================================================
@@ -279,4 +210,59 @@ body {
     radial-gradient(ellipse 75% 50% at 12% -5%, rgba(90, 155, 165, 0.36), transparent 62%),
     radial-gradient(ellipse 65% 45% at 92% 8%, rgba(122, 191, 196, 0.3), transparent 58%),
     radial-gradient(ellipse 85% 55% at 48% 105%, rgba(139, 106, 174, 0.18), transparent 62%);
+}
+
+/* ============================================================
+   Tool interior sweep: covers panels missed by the top-level
+   surface remap. Nested cards inside Focus, Career Armor, Brain
+   Dump, Masking Debt, and Glossary all wear these classes.
+   ============================================================ */
+
+/* Solid dark plum wrappers → white glass */
+.fh-glass-light .bg-\[\#3D1052\],
+.fh-glass-light [class*="bg-[#3D1052]/"] {
+  background-color: rgb(255 255 255 / 0.65) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Nested slash-opacity dark panels */
+.fh-glass-light [class*="bg-[#110122]"],
+.fh-glass-light [class*="bg-[#130620]"],
+.fh-glass-light [class*="bg-[#1C0A2E]"] {
+  background-color: rgb(255 255 255 / 0.6) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Dark gradient panels (Career Armor hero, Brain Dump banner) */
+.fh-glass-light [class*="from-[#3D1052]"],
+.fh-glass-light [class*="via-[#130620]"],
+.fh-glass-light [class*="from-[#1E293B]"],
+.fh-glass-light [class*="from-[#1E1B4B]"] {
+  background-image: linear-gradient(
+    135deg,
+    rgba(139, 106, 174, 0.14),
+    rgba(196, 132, 154, 0.09) 55%,
+    rgba(122, 191, 196, 0.09)
+  ) !important;
+  background-color: rgb(255 255 255 / 0.6) !important;
+}
+
+/* Any text living inside those relit surfaces must be dark ink */
+.fh-glass-light .bg-\[\#3D1052\] .text-white,
+.fh-glass-light [class*="bg-[#3D1052]/"] .text-white,
+.fh-glass-light [class*="bg-[#110122]"] .text-white,
+.fh-glass-light [class*="bg-[#130620]"] .text-white,
+.fh-glass-light [class*="bg-[#1C0A2E]"] .text-white,
+.fh-glass-light [class*="from-[#3D1052]"] .text-white,
+.fh-glass-light [class*="via-[#130620]"] .text-white {
+  color: rgb(46 36 64 / 0.92) !important;
+}
+
+/* Borders that were designed for dark backgrounds go soft ink */
+.fh-glass-light [class*="border-[#C45BAA]"],
+.fh-glass-light [class*="border-mag"],
+.fh-glass-light [class*="border-plum"] {
+  border-color: rgba(139, 106, 174, 0.22) !important;
 }

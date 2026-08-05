@@ -2516,27 +2516,7 @@ export default function App() {
     primaryGoal: "",
   });
 
-  // Focus Mode narrows the nav but must never trap the user off a real
-  // destination. Every top-level tab in the new skeleton (Now, Tools,
-  // Wins) plus the tool interiors must remain reachable.
-  useEffect(() => {
-    if (
-      isNavFocusMode &&
-      ![
-        "home",
-        "tools",
-        "wins",
-        "focus",
-        "work",
-        "unmask",
-        "mask",
-        "glossary",
-        "promote",
-      ].includes(appTab)
-    ) {
-      setAppTab("home");
-    }
-  }, [isNavFocusMode, appTab]);
+  // (Focus Mode was removed; the three-tab skeleton is already the calm view.)
 
   // ============================================================
   // Shared sync helper. Writes a value to localStorage immediately, then
@@ -14255,96 +14235,9 @@ s.strain04@gmail.com`;
 
           {/* DYNAMIC NAVIGATION CONTROL BAR TAB BUTTONSROW */}
           <nav className={`w-full max-w-lg md:max-w-2xl lg:max-w-4xl ${isLightTheme ? "bg-white/80 border-t border-[#8B6AAE]/15 shadow-[0_-8px_30px_rgba(139,106,174,0.18)]" : "bg-[#130620]/95 border-t border-white/5 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"} backdrop-blur-md rounded-t-3xl fixed bottom-0 left-1/2 -translate-x-1/2 px-4 py-3 flex flex-col gap-2.5 z-30 select-none font-sans transition-colors duration-500`}>
-            {/* Cognitive Mode Toggle Switch Header */}
-            <div className="flex items-center justify-between px-2 pb-1.5 border-b border-white/5 text-[10px] text-gray-400 select-none">
-              <div className="flex items-center gap-1.5 font-mono tracking-wider uppercase text-[#E085C9]">
-                <Brain className="h-3 w-3 text-teal animate-pulse" />
-                <span>View:</span>
-                <span
-                  className={
-                    isNavFocusMode ? "text-teal font-bold" : "text-[#C45BAA]"
-                  }
-                >
-                  {isNavFocusMode ? "Low (Focused)" : "Normal (Full)"}
-                </span>
-                <span className="opacity-40">&middot; b285</span>
-              </div>
-              <div
-                role="group"
-                aria-label="Toggle between full view and focus view"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    const newMode = !isNavFocusMode;
-                    setIsNavFocusMode(newMode);
-                    localStorage.setItem("fh_nav_focus_mode", String(newMode));
-                    if (newMode) {
-                      triggerToast(
-                        "Focus Mode Active: Non-essential tabs hidden for zero cognitive friction.",
-                      );
-                    } else {
-                      triggerToast(
-                        "Full Workspace Activated! All tabs and tools restored.",
-                      );
-                    }
-                  }
-                }}
-                className={`relative flex items-center ${isLightTheme ? "bg-[#2E2440]/10" : "bg-black/45"} p-0.5 rounded-full border overflow-hidden transition-all duration-300 hover:scale-[1.04] focus:outline-none focus:ring-2 ${isNavFocusMode ? "border-teal/40 shadow-[0_0_10px_rgba(45,212,191,0.2)] hover:border-teal/60 hover:shadow-[0_0_14px_rgba(45,212,191,0.35)] focus:ring-teal/50" : "border-white/5 hover:border-[#C45BAA]/40 hover:shadow-[0_0_12px_rgba(196,91,170,0.25)] focus:ring-[#C45BAA]/50"}`}
-              >
-                <button
-                  onClick={() => {
-                    setIsNavFocusMode(false);
-                    localStorage.setItem("fh_nav_focus_mode", "false");
-                    triggerToast(
-                      "Full Workspace Activated! All tabs and tools restored.",
-                    );
-                  }}
-                  aria-label="Full Workspace Mode"
-                  aria-pressed={!isNavFocusMode}
-                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${!isNavFocusMode ? "fh-keep-white text-white font-bold" : "text-gray-500 hover:text-gray-300"}`}
-                  title="Show all tabs and tracking logs"
-                >
-                  {!isNavFocusMode && (
-                    <motion.span
-                      layoutId="activeTabPill"
-                      className="absolute inset-0 bg-gradient-to-r from-[#8a2575] to-[#C45BAA] rounded-full -z-10"
-                      transition={{
-                        type: "spring",
-                        stiffness: 380,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                  Full Mode
-                </button>
-                <button
-                  onClick={() => {
-                    setIsNavFocusMode(true);
-                    localStorage.setItem("fh_nav_focus_mode", "true");
-                    triggerToast(
-                      "Focus Mode Active: Non-essential tabs hidden for zero cognitive friction.",
-                    );
-                  }}
-                  aria-label="Cognitive Focus Mode"
-                  aria-pressed={isNavFocusMode}
-                  className={`relative z-10 px-2.5 py-1 rounded-full text-[9px] font-semibold transition-colors duration-200 cursor-pointer ${isNavFocusMode ? "text-[#130620] font-bold" : "text-gray-500 hover:text-gray-300"}`}
-                  title="Hide non-essential tracking tabs to reduce clutter"
-                >
-                  {isNavFocusMode && (
-                    <motion.span
-                      layoutId="activeTabPill"
-                      className="absolute inset-0 bg-[#2DD4BF] rounded-full -z-10 shadow-[0_0_8px_rgba(45,212,191,0.5)]"
-                      transition={{
-                        type: "spring",
-                        stiffness: 380,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                  Focus Mode
-                </button>
-              </div>
+            {/* Debug build tag */}
+            <div className="px-2 pb-1.5 border-b border-white/5 text-[9px] font-mono tracking-wider uppercase opacity-40 select-none">
+              b310
             </div>
 
             {/* Navigation Buttons Row: Now / Tools / Wins */}
