@@ -32,11 +32,12 @@ import {
 
 const triggerQuickConfetti = () => {
   try {
+    if (localStorage.getItem("fh_confetti_enabled") === "false") return;
     confetti({
-      particleCount: 85,
-      spread: 65,
-      origin: { y: 0.72 },
-      colors: ["#C45BAA", "#3D1052", "#E8845C", "#2DD4BF", "#8B5CF6"],
+      particleCount: 120,
+      spread: 75,
+      origin: { y: 0.7 },
+      colors: ["#8B6AAE", "#C4849A", "#5A9BA5", "#7ABFC4", "#D9A78C"],
     });
   } catch (e) {
     console.warn("Unable to trigger confetti", e);
@@ -64,7 +65,7 @@ const triggerCelebrationConfetti = () => {
       spread: 360,
       ticks: 60,
       zIndex: 100,
-      colors: ["#C45BAA", "#3D1052", "#E8845C", "#2DD4BF", "#FCD34D"],
+      colors: ["#8B6AAE", "#C4849A", "#5A9BA5", "#7ABFC4", "#D9A78C"],
     };
 
     const randomInRange = (min: number, max: number) => {
@@ -4871,8 +4872,8 @@ Remember: You aren't lazy or behind. Starting is just a chemical spark threshold
     setWinsList(updated);
     localStorage.setItem("fh_wins_list", JSON.stringify(updated));
     setNewWinText("");
-    triggerQuickConfetti();
-    triggerToast("Excellent work! Win recorded in your archive.");
+    triggerCelebrationConfetti();
+    triggerToast("Logged. That counts. Every one of them counts.");
   };
 
   const handleDeleteWin = async (id: string) => {
@@ -9401,7 +9402,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                 {appTab === "home" && (
                   <div className="space-y-8 pb-6">
                     {/* Hero greeting */}
-                    <div className="pt-3 pb-1 px-1 space-y-2">
+                    <div className="pt-3 pb-1 px-1 space-y-2 relative">
+                      <div
+                        aria-hidden="true"
+                        className={`absolute -top-4 right-0 h-24 w-24 rounded-full bg-gradient-to-br ${activeTheme.logoGradientClass} opacity-20 blur-2xl pointer-events-none animate-pulse`}
+                        style={{ animationDuration: "4s" }}
+                      />
                       <span
                         className={`text-[10px] font-mono tracking-[0.25em] uppercase block ${activeTheme.accentTextClass}`}
                       >
@@ -9696,20 +9702,22 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                       <div className="relative overflow-hidden bg-gradient-to-br from-teal/15 via-[#C45BAA]/5 to-transparent border border-teal/15 rounded-xl p-4.5 flex items-center justify-between gap-4">
                         <div className="space-y-1 text-left">
                           <span className="text-[9px] font-mono tracking-wider text-teal uppercase font-bold">
-                            Consecutive Completes
+                            Momentum
                           </span>
                           <h4 className="text-3xl font-black text-white tracking-tight flex items-baseline gap-2 font-sans">
                             {streakData.current}
                             <span className="text-xs font-normal text-gray-400 font-mono">
                               {streakData.current === 1
-                                ? "day streak count"
-                                : "consecutive days"}
+                                ? "day in a row"
+                                : streakData.current === 0
+                                  ? "days · start today"
+                                  : "days in a row"}
                             </span>
                           </h4>
                           <p className="text-[11px] text-[#807584] leading-relaxed">
                             {streakData.current > 0
-                              ? "Sparkling executive stamina! Maintain the high-dopamine cycle today."
-                              : "Power up! Tackle all 3 daily priorities to activate your consecutive streak."}
+                              ? "You are showing up. Keep going, this is the muscle."
+                              : "Every streak starts with one day. Today can be it."}
                           </p>
                         </div>
                         <div className="flex-shrink-0 relative">
@@ -9808,11 +9816,13 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         </div>
 
                         {victoryLog.length === 0 ? (
-                          <div className="border border-dashed border-white/5 bg-white/2 rounded-xl p-4 text-center">
-                            <p className="text-xs text-[#8A7F8D] italic">
-                              No logged absolute victories today yet. Complete
-                              all 3 priorities above to trigger a celebratory
-                              dopamine blast and record your win!
+                          <div className="border border-dashed border-[#8B6AAE]/25 bg-gradient-to-br from-[#8B6AAE]/5 to-[#C4849A]/5 rounded-2xl p-6 text-center space-y-3">
+                            <div className="text-3xl">✨</div>
+                            <p className="font-serif italic text-base text-[#2E2440]/85 leading-relaxed">
+                              Your first win is waiting.
+                            </p>
+                            <p className="text-xs text-[#2E2440]/60 leading-relaxed max-w-xs mx-auto">
+                              Surviving a hard meeting counts. Sending the scary email counts. Getting out of bed counts. Log one and this page starts remembering who you are.
                             </p>
                           </div>
                         ) : (
