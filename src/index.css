@@ -393,3 +393,55 @@ body {
 .fh-landing section {
   border-radius: 2rem;
 }
+
+/* ============================================================
+   FINAL LEGIBILITY & SHADOW ENFORCEMENT
+   Total specificity, no leaks. Every remaining pale hex text
+   on light themes goes to readable dark ink. Every glow shadow
+   is reduced to a whisper so the app reads calm, not haunted.
+   ============================================================ */
+
+/* Additional pale hex text colors missed by earlier passes */
+.fh-glass-light .text-\[\#FAF6F0\],
+.fh-glass-light .text-\[\#FAF7FF\] {
+  color: rgb(46 36 64 / 0.94) !important;
+}
+
+/* Gray placeholder hex that still ghosts */
+.fh-glass-light .placeholder\:text-gray-500::placeholder,
+.fh-glass-light input::placeholder,
+.fh-glass-light textarea::placeholder {
+  color: rgb(46 36 64 / 0.5) !important;
+}
+
+/* Kill the glowing colored shadows on light themes: they read as
+   haunted halos on white. Preserve subtle depth via a single
+   quiet shadow instead. */
+.fh-glass-light [class*="shadow-\[0_0_"],
+.fh-glass-light .shadow-2xl,
+.fh-glass-light .shadow-xl {
+  box-shadow: 0 8px 24px rgba(139, 106, 174, 0.10) !important;
+}
+.fh-glass-light .shadow-lg,
+.fh-glass-light .shadow-md {
+  box-shadow: 0 4px 14px rgba(139, 106, 174, 0.08) !important;
+}
+.fh-glass-light .shadow-sm,
+.fh-glass-light .shadow-xs {
+  box-shadow: 0 2px 8px rgba(139, 106, 174, 0.06) !important;
+}
+
+/* Preserve intentional colored glow ONLY on active/accent CTAs */
+.fh-glass-light .bg-teal.shadow-md,
+.fh-glass-light .bg-teal.shadow-lg,
+.fh-glass-light [class*="bg-gradient"].shadow-md,
+.fh-glass-light [class*="bg-gradient"].shadow-lg,
+.fh-glass-light [class*="bg-[#8B6AAE]"].shadow-md {
+  box-shadow: 0 6px 20px rgba(139, 106, 174, 0.30) !important;
+}
+
+/* Aurora backdrop can also feel busy behind glass. Calm it slightly. */
+.fh-glass-light.fh-aurora-amethyst,
+.fh-aurora-amethyst.fh-glass-light {
+  background-color: #F9F7FC !important;
+}
