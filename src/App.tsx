@@ -688,27 +688,35 @@ const TOUR_STEPS: {
 }[] = [
   {
     title: "Welcome to FlowHer\u2122",
-    text: "This is a quieter place to work from. FlowHer\u2122 takes the hard parts of a workday, the overwhelm, the emails you cannot start, the doubt, and gives each one a simple tool. No streaks to protect. No guilt. Just help.",
+    text: "This is a quieter place to work from. No streaks to protect. No guilt. Three calm tabs that adapt to your nervous system: Now, Tools, and Wins. Let us walk them.",
     targetTab: "home",
     tool: null,
     highlightIndicator: "Main Navigation Space",
     iconName: "Sparkles",
   },
   {
-    title: "Start with a check-in",
-    text: "Tell FlowHer\u2122 how your brain actually feels today. Not how it should feel. The app adjusts to your real energy, and you get one small suggestion that fits the day you are actually having.",
+    title: "Now: start with a check-in",
+    text: "Tell FlowHer\u2122 how you are actually showing up today. The whole app tints itself to your nervous system. Now stays quiet on purpose: one greeting, one insight, one path to breathe, one door to the toolkit.",
     targetTab: "home",
     tool: null,
-    highlightIndicator: "How is your brain energy level today?",
+    highlightIndicator: "Now Tab",
     iconName: "Smile",
   },
   {
-    title: "Stuck? Find the smallest step",
-    text: "When a task will not start, this tool shrinks it until it can. One physical action, under two minutes. That is the whole ask. Everything else in FlowHer\u2122 you can discover as you need it.",
-    targetTab: "focus",
+    title: "Tools: every instrument, one door each",
+    text: "Focus timers with body doubles. Career Armor for emails, scripts, and meetings. Brain Dump. Masking Debt. RSD Vault. The ADHD Glossary. Each opens full screen and does one thing.",
+    targetTab: "tools",
     tool: null,
-    highlightIndicator: "Smallest Step AI Breakdown Engine",
+    highlightIndicator: "Tools Tab",
     iconName: "Brain",
+  },
+  {
+    title: "Wins: keep the receipts",
+    text: "Every proof you showed up gets logged here. Career, boundary, self-care, brain wins. Export to PDF anytime for reviews, therapy, or your own future eyes.",
+    targetTab: "wins",
+    tool: null,
+    highlightIndicator: "Wins Tab",
+    iconName: "Award",
   },
 ];
 
@@ -1519,6 +1527,8 @@ export default function App() {
   >("inhale");
   const [breathingTimer, setBreathingTimer] = useState(4);
   const [isDronePlaying, setIsDronePlaying] = useState(false);
+  // Breathing loop runs only when user explicitly presses Start
+  const [isBreathingActive, setIsBreathingActive] = useState(false);
   const droneOsc1Ref = useRef<any>(null);
   const droneOsc2Ref = useRef<any>(null);
   const droneLfoRef = useRef<any>(null);
@@ -4171,14 +4181,16 @@ export default function App() {
     }
   };
 
-  // Box Breathing Loop automation
+  // Box Breathing Loop automation: runs only when user starts it
   useEffect(() => {
     if (!isZenMode) {
       stopSomaticDrone();
       stopBrownNoise();
       stopAmbientTrack();
+      setIsBreathingActive(false);
       return;
     }
+    if (!isBreathingActive) return;
     const interval = setInterval(() => {
       setBreathingTimer((prev) => {
         if (prev <= 1) {
@@ -4200,7 +4212,7 @@ export default function App() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [isZenMode]);
+  }, [isZenMode, isBreathingActive]);
 
   // Handle unmounting cleanup of continuous sound waves
   useEffect(() => {
@@ -6270,7 +6282,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
       LANDING VIEW SCREEN
      ========================================== */}
       {currentView === "landing" && (
-        <div className="w-full max-w-7xl px-4 md:px-8 flex flex-col items-center relative">
+        <div className="fh-landing w-full max-w-7xl px-4 md:px-8 flex flex-col items-center relative">
           <div className="fixed inset-0 -z-10 fh-aurora-amethyst bg-[#F7F4FB]" />
           {/* Header navigation */}
           <header className="w-full py-6 flex items-center justify-between border-b border-[#8B6AAE]/10 sticky top-0 bg-white/60 backdrop-blur-md z-40 transition-all select-none">
@@ -7936,7 +7948,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   })()}
                 </span>
                 <h1
-                  className={`font-serif text-3xl md:text-4xl font-light leading-tight ${activeTheme.textTitleClass}`}
+                  className={`font-serif text-2xl md:text-4xl font-light leading-tight ${activeTheme.textTitleClass}`}
                 >
                   How are you showing up?
                 </h1>
@@ -8511,10 +8523,11 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               </button>
               <button
                 onClick={() => setShowLegalModal(true)}
-                className="p-1.5 rounded-full hover:bg-white/5 text-[#E085C9] hover:text-mag transition-all"
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#E085C9] hover:text-mag transition-all flex items-center gap-1.5 text-xs font-semibold"
                 title="Privacy, Safety & Brand Protection Disclosures"
               >
-                <ShieldCheck className="h-4.5 w-4.5" />
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Legal</span>
               </button>
               <button
                 onClick={handleSignOut}
@@ -8921,20 +8934,43 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                           }`}
                         >
                           <span className="text-[10px] uppercase font-mono tracking-widest font-black block text-center px-1">
-                            {breathingPhase === "inhale"
-                              ? "Breathe In"
-                              : breathingPhase === "hold-in"
-                                ? "Hold"
-                                : breathingPhase === "exhale"
-                                  ? "Breathe Out"
-                                  : "Hold Empty"}
+                            {!isBreathingActive
+                              ? "Tap Start"
+                              : breathingPhase === "inhale"
+                                ? "Breathe In"
+                                : breathingPhase === "hold-in"
+                                  ? "Hold"
+                                  : breathingPhase === "exhale"
+                                    ? "Breathe Out"
+                                    : "Hold Empty"}
                           </span>
                           <span className="text-xl font-mono font-light mt-1">
-                            {breathingTimer}s
+                            {isBreathingActive ? `${breathingTimer}s` : "—"}
                           </span>
                         </div>
                         <div className="absolute h-44 w-44 border border-white/5 rounded-full scale-105 pointer-events-none" />
                       </div>
+
+                      {/* Explicit Start/Pause control for breathing loop */}
+                      <button
+                        onClick={() => {
+                          setIsBreathingActive((prev) => {
+                            const next = !prev;
+                            if (next) {
+                              setBreathingPhase("inhale");
+                              setBreathingTimer(4);
+                            }
+                            return next;
+                          });
+                        }}
+                        className={`px-6 py-2 rounded-full font-mono uppercase tracking-wider text-xs transition-all cursor-pointer border ${
+                          isBreathingActive
+                            ? "bg-teal/15 border-teal/40 text-teal"
+                            : "bg-teal text-white border-teal shadow-[0_4px_16px_rgba(45,212,191,0.35)]"
+                        }`}
+                      >
+                        {isBreathingActive ? "⏸ Pause Breathing" : "▶ Start Breathing"}
+                      </button>
 
                       {/* Display Steps */}
                       <div className="flex gap-1.5 items-center justify-center">
@@ -9247,7 +9283,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         Your instruments
                       </span>
                       <h2
-                        className={`font-serif text-3xl md:text-4xl font-light leading-tight ${activeTheme.textTitleClass}`}
+                        className={`font-serif text-2xl md:text-4xl font-light leading-tight ${activeTheme.textTitleClass}`}
                       >
                         The toolkit.
                       </h2>
@@ -14235,11 +14271,6 @@ s.strain04@gmail.com`;
 
           {/* DYNAMIC NAVIGATION CONTROL BAR TAB BUTTONSROW */}
           <nav className={`w-full max-w-lg md:max-w-2xl lg:max-w-4xl ${isLightTheme ? "bg-white/80 border-t border-[#8B6AAE]/15 shadow-[0_-8px_30px_rgba(139,106,174,0.18)]" : "bg-[#130620]/95 border-t border-white/5 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"} backdrop-blur-md rounded-t-3xl fixed bottom-0 left-1/2 -translate-x-1/2 px-4 py-3 flex flex-col gap-2.5 z-30 select-none font-sans transition-colors duration-500`}>
-            {/* Debug build tag */}
-            <div className="px-2 pb-1.5 border-b border-white/5 text-[9px] font-mono tracking-wider uppercase opacity-40 select-none">
-              b310
-            </div>
-
             {/* Navigation Buttons Row: Now / Tools / Wins */}
             <div className="flex items-center justify-around w-full">
               <button

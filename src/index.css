@@ -266,3 +266,130 @@ body {
 .fh-glass-light [class*="border-plum"] {
   border-color: rgba(139, 106, 174, 0.22) !important;
 }
+
+/* ============================================================
+   Accent-color darkening on light themes
+   Section headings and labels used pale accents designed for
+   plum backgrounds. On white, they ghost. Each hex code below
+   darkens to a WCAG AA-passing equivalent that keeps identity.
+   ============================================================ */
+
+/* Peach / orange accents → burnt sienna */
+.fh-glass-light .text-\[\#E8845C\] { color: #B8542A !important; }
+.fh-glass-light .text-\[\#FF9E7D\] { color: #C4593A !important; }
+
+/* Pink / magenta accents → deep berry */
+.fh-glass-light .text-\[\#C45BAA\] { color: #8E2A76 !important; }
+.fh-glass-light .text-\[\#E085C9\] { color: #9A3A80 !important; }
+.fh-glass-light .text-\[\#E879F9\] { color: #A21CAF !important; }
+
+/* Gold accent → warm bronze */
+.fh-glass-light .text-\[\#D4A843\] { color: #8A6A18 !important; }
+
+/* Teal accents → forest teal */
+.fh-glass-light .text-\[\#2DD4BF\] { color: #0F766E !important; }
+.fh-glass-light .text-\[\#A6DCAE\] { color: #2A7A55 !important; }
+
+/* Muted grays that were dark-mode dim → readable ink */
+.fh-glass-light .text-\[\#A697AA\],
+.fh-glass-light .text-\[\#897E8C\],
+.fh-glass-light .text-\[\#817786\],
+.fh-glass-light .text-\[\#807584\] {
+  color: rgb(46 36 64 / 0.72) !important;
+}
+
+/* Peach/orange text INSIDE dark-card islands stays original */
+.fh-glass-light .fh-dark-card .text-\[\#E8845C\],
+.fh-glass-light .fh-dark-card .text-\[\#FF9E7D\] { color: #E8845C !important; }
+.fh-glass-light .fh-dark-card .text-\[\#C45BAA\],
+.fh-glass-light .fh-dark-card .text-\[\#E085C9\] { color: #E085C9 !important; }
+.fh-glass-light .fh-dark-card .text-\[\#D4A843\] { color: #D4A843 !important; }
+.fh-glass-light .fh-dark-card .text-\[\#2DD4BF\] { color: #2DD4BF !important; }
+
+/* ============================================================
+   Landing page glass cohesion sweep
+   The old landing was cream (#FAF6F0) with dark plum accent
+   sections. The new hero rides on aurora glass. This scope
+   relights every dark section on the same glass language so
+   the whole page reads as one intentional design.
+   ============================================================ */
+
+/* Dark plum solids become soft plum-tinted glass */
+.fh-landing .bg-plum,
+.fh-landing .bg-\[\#3D1052\] {
+  background-color: rgb(255 255 255 / 0.7) !important;
+  color: #2E2440 !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgb(139 106 174 / 0.15);
+  box-shadow: 0 12px 40px rgba(139, 106, 174, 0.15);
+}
+
+.fh-landing .bg-\[\#1C0A2E\] {
+  background-color: rgb(255 255 255 / 0.7) !important;
+  color: #2E2440 !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(139, 106, 174, 0.18) !important;
+  box-shadow: 0 12px 40px rgba(139, 106, 174, 0.12);
+}
+
+/* Text inside the relit surfaces */
+.fh-landing .bg-plum .text-\[\#FAF6F0\],
+.fh-landing .bg-plum .text-\[\#FAF7FF\],
+.fh-landing .bg-plum .text-white,
+.fh-landing .bg-\[\#3D1052\] .text-\[\#FAF6F0\],
+.fh-landing .bg-\[\#3D1052\] .text-white,
+.fh-landing .bg-\[\#1C0A2E\] .text-\[\#FAF6F0\],
+.fh-landing .bg-\[\#1C0A2E\] .text-\[\#FAF7FF\],
+.fh-landing .bg-\[\#1C0A2E\] .text-white {
+  color: rgb(46 36 64 / 0.94) !important;
+}
+.fh-landing .bg-plum .text-mag,
+.fh-landing .bg-\[\#3D1052\] .text-mag,
+.fh-landing .bg-\[\#1C0A2E\] .text-mag {
+  color: #8E2A76 !important;
+}
+.fh-landing .bg-plum .text-teal,
+.fh-landing .bg-\[\#3D1052\] .text-teal,
+.fh-landing .bg-\[\#1C0A2E\] .text-teal {
+  color: #2A7A6E !important;
+}
+.fh-landing .bg-plum .text-gray-300,
+.fh-landing .bg-plum .text-gray-400,
+.fh-landing .bg-\[\#3D1052\] .text-gray-300,
+.fh-landing .bg-\[\#3D1052\] .text-gray-400,
+.fh-landing .bg-\[\#1C0A2E\] .text-gray-300,
+.fh-landing .bg-\[\#1C0A2E\] .text-gray-400 {
+  color: rgb(46 36 64 / 0.72) !important;
+}
+
+/* Plum-to-mag CTA gradients become the brand jewel gradient */
+.fh-landing .from-plum.to-mag,
+.fh-landing [class*="from-plum"][class*="to-mag"] {
+  background-image: linear-gradient(to right, #8B6AAE, #C4849A) !important;
+}
+
+/* Plum outline buttons darken border for aurora backdrop */
+.fh-landing .bg-plum\/10 {
+  background-color: rgb(139 106 174 / 0.08) !important;
+  color: #3D1052 !important;
+  border-color: rgba(139, 106, 174, 0.25) !important;
+}
+.fh-landing .bg-plum\/10:hover,
+.fh-landing .hover\:bg-plum\/15:hover {
+  background-color: rgb(139 106 174 / 0.14) !important;
+}
+
+/* Nav pill CTAs on white glass */
+.fh-landing .bg-\[\#3D1052\].text-\[\#FAF6F0\] {
+  background: linear-gradient(to right, #8B6AAE, #C4849A) !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 4px 16px rgba(139, 106, 174, 0.35);
+}
+
+/* Landing sections get consistent gentle borders */
+.fh-landing section {
+  border-radius: 2rem;
+}
