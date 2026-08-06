@@ -4849,6 +4849,13 @@ Remember: You aren't lazy or behind. Starting is just a chemical spark threshold
   ) => {
     const { setLoading, setResult, fallback } = opts;
     const fb = () => (typeof fallback === "function" ? fallback() : fallback);
+    // Warm, non-clinical fallback prefix in the FlowHer voice so a cold
+    // backend never reads as a broken product to the user.
+    const warmFallback = () => {
+      const prefix =
+        "The writer is a little cold right now. Here is a starting point while it warms back up.\n\n";
+      return prefix + fb();
+    };
     setLoading(true);
     setResult("");
     try {
@@ -4857,11 +4864,17 @@ Remember: You aren't lazy or behind. Starting is just a chemical spark threshold
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (!response.ok) {
+        setResult(warmFallback());
+        return;
+      }
       const data = await response.json();
-      setResult(response.ok ? data.result : fb());
+      // Blank result also gets the warm treatment
+      const result = data?.result?.trim?.() || "";
+      setResult(result || warmFallback());
     } catch (err) {
       console.warn("AI request failed:", endpoint, err);
-      setResult(fb());
+      setResult(warmFallback());
     } finally {
       setLoading(false);
     }
@@ -6851,15 +6864,14 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
           {/* Why FlowHer sections */}
           <section className="py-20 w-full">
             <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
-              <span className="text-xs tracking-widest text-mag uppercase font-semibold">
-                Interactive Grid Profiles
+              <span className="text-xs tracking-widest text-[#8B6AAE] uppercase font-semibold">
+                Built for the way you already are
               </span>
               <h2 className="font-serif text-4xl font-light text-plum">
-                You fully belong here if...
+                FlowHer™ is for you if…
               </h2>
               <p className="text-xs text-[#8A7F8D]">
-                Typical tools feel too rigid, overwhelming, or demanding for
-                your brain.
+                Regular productivity tools were built for a brain that is not yours.
               </p>
             </div>
 
@@ -6867,18 +6879,18 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
               {[
                 {
                   emoji: "⚡",
-                  title: "Focus Waves & Fluctuating Energy",
-                  body: "Tasks either slip right out of sight, or seem impossible to start, leading to procrastination stress and frantic rushes to finish.",
+                  title: "Your focus is a wave, not a switch",
+                  body: "Some days everything flows. Other days getting one email out takes six hours. FlowHer™ meets you at whichever kind of day you woke up in.",
                 },
                 {
                   emoji: "🌊",
-                  title: "Worrying About Feedback",
-                  body: "A brief or neutral message from a teammate makes you feel anxious, triggering heavy doubts and completely draining your focus for hours.",
+                  title: "A three-word message can spiral you",
+                  body: "You read “let’s chat quickly” and lose your afternoon to what-ifs. The RSD vault holds that spiral for 48 hours while your nervous system settles.",
                 },
                 {
                   emoji: "🎭",
-                  title: "Putting on a 'Work Face'",
-                  body: "Spending all your energy trying to look relaxed, cheerful, and active in meetings, leaving you completely exhausted before the workday even finishes.",
+                  title: "You end most days exhausted from performing",
+                  body: "Masking through meetings costs you real energy. FlowHer™ tracks that cost so you can plan recovery instead of collapsing into it.",
                 },
               ].map((c, i) => (
                 <div
@@ -6906,8 +6918,12 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                   Complete Toolbox Map
                 </span>
                 <h2 className="font-serif text-4xl font-light">
-                  Engineered for Your Brain's Operating System
+                  A companion, not a to-do list
                 </h2>
+                <p className="text-xs text-white/70 pt-2 max-w-md mx-auto">
+                  Every tool here is built for a nervous system, not a task list.
+                  Use one, use all, or just breathe.
+                </p>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -10609,6 +10625,17 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                         })()
                       ) : (
                         <div className="space-y-4">
+                          {/* First-time coaching banner */}
+                          <div className="bg-gradient-to-br from-[#8B6AAE]/8 to-[#C4849A]/8 border border-[#8B6AAE]/20 rounded-xl p-3.5 text-left">
+                            <p className="text-xs font-serif italic text-[#2E2440]/85 leading-relaxed">
+                              Pick a companion below, then tap{" "}
+                              <span className="font-semibold not-italic text-[#8B6AAE]">
+                                Activate Co-Focus Session
+                              </span>{" "}
+                              at the bottom. They will co-work with you for 25 quiet minutes.
+                            </p>
+                          </div>
+
                           {/* Interactive Buddy Selection list */}
                           <div className="space-y-1.5 text-left">
                             <label className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block font-bold">
@@ -14917,17 +14944,15 @@ s.strain04@gmail.com`;
               <X className="h-5 w-5" />
             </button>
 
-            <div className="bg-[#C45BAA]/10 text-[#C45BAA] px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest inline-block mb-3 select-none">
-              COMPLIANCE & SAFETY ASSURANCE
+            <div className="bg-[#8B6AAE]/10 text-[#8B6AAE] px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest inline-block mb-3 select-none">
+              The fine print, kindly
             </div>
 
             <h3 className="font-serif text-2xl font-light leading-tight mb-1 text-[#1C0A2E]">
-              Legal Disclosures & Privacy
+              Legal & Privacy
             </h3>
             <p className="text-[11px] text-gray-500 mb-4 leading-relaxed">
-              We value your mental well-being, trust, and privacy. Read how
-              FlowHer™ protects your business, your identity, and your security
-              under our legal framework.
+              FlowHer\u2122 is a companion, not a clinician. Everything you write is yours. Here is how we honor both.
             </p>
 
             {/* Legal modal sub-tabs directory */}
