@@ -651,3 +651,31 @@ body {
 .fh-glass-light button:disabled {
   opacity: 0.55 !important;
 }
+
+/* ============================================================
+   Select dropdowns: default browser styling greys out text
+   even when a real value is selected. Force dark ink.
+   ============================================================ */
+.fh-glass-light select {
+  color: rgb(46 36 64 / 0.95) !important;
+  background-color: rgb(255 255 255 / 0.85) !important;
+  font-weight: 500 !important;
+}
+.fh-glass-light select option {
+  color: rgb(46 36 64 / 0.95) !important;
+  background-color: #ffffff !important;
+}
+
+/* ============================================================
+   Glossary expanded card: the sneaky dark plum shade my earlier
+   remap missed. Force to white glass on light themes.
+   ============================================================ */
+.fh-glass-light .bg-\[\#1E112A\],
+.fh-glass-light [class*="bg-[#1E112A]/"] {
+  background-color: rgb(255 255 255 / 0.75) !important;
+}
+
+/* Additional pale text classes that live only in Glossary */
+.fh-glass-light .text-\[\#FAF7FF\] {
+  color: rgb(46 36 64 / 0.95) !important;
+}
