@@ -482,3 +482,64 @@ body {
 .fh-glass-light.bg-\[\#FAF6F0\] [class*="bg-[#1C0A2E]/"] {
   background-color: rgb(255 255 255 / 0.9) !important;
 }
+
+/* ============================================================
+   NUCLEAR LEGIBILITY: catch every text class I have not named
+   Applies to every text-* class inside a light theme by default,
+   with pure escape hatches for accent buttons and dark cards.
+   ============================================================ */
+
+/* Anything not already dark gets forced to dark ink */
+.fh-glass-light p,
+.fh-glass-light span,
+.fh-glass-light h1,
+.fh-glass-light h2,
+.fh-glass-light h3,
+.fh-glass-light h4,
+.fh-glass-light h5,
+.fh-glass-light h6,
+.fh-glass-light li,
+.fh-glass-light label,
+.fh-glass-light div {
+  color: rgb(46 36 64 / 0.92);
+}
+
+/* Override for known accent classes (keep their identity but readable) */
+.fh-glass-light .text-teal,
+.fh-glass-light .text-mag,
+.fh-glass-light .text-plum,
+.fh-glass-light [class*="text-[#8B6AAE]"],
+.fh-glass-light [class*="text-[#C4849A]"],
+.fh-glass-light [class*="text-[#5A9BA5]"],
+.fh-glass-light [class*="text-[#3F818C]"],
+.fh-glass-light [class*="text-[#B26E86]"] {
+  /* accent colors already darkened by earlier rules, do not override */
+}
+
+/* True escapes: white text stays white on accents/gradients/dark cards */
+.fh-glass-light [class*="bg-gradient"],
+.fh-glass-light [class*="bg-gradient"] *,
+.fh-glass-light .bg-teal,
+.fh-glass-light .bg-teal *,
+.fh-glass-light .bg-mag,
+.fh-glass-light .bg-mag *,
+.fh-glass-light .bg-plum,
+.fh-glass-light .bg-plum *,
+.fh-glass-light [class*="bg-[#8B6AAE]"],
+.fh-glass-light [class*="bg-[#8B6AAE]"] *,
+.fh-glass-light [class*="bg-[#C4849A]"],
+.fh-glass-light [class*="bg-[#C4849A]"] *,
+.fh-glass-light [class*="bg-[#5A9BA5]"],
+.fh-glass-light [class*="bg-[#5A9BA5]"] *,
+.fh-glass-light .fh-dark-card,
+.fh-glass-light .fh-dark-card * {
+  color: #ffffff;
+}
+
+/* Buttons with only accent bg override to keep visible label */
+.fh-glass-light button[class*="bg-gradient"],
+.fh-glass-light button.bg-teal,
+.fh-glass-light button.bg-mag,
+.fh-glass-light button[class*="bg-[#8B6AAE]"] {
+  color: #ffffff !important;
+}
