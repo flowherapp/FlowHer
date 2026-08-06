@@ -543,3 +543,60 @@ body {
 .fh-glass-light button[class*="bg-[#8B6AAE]"] {
   color: #ffffff !important;
 }
+
+/* ============================================================
+   ABSOLUTE FINAL: kill parent opacity fading child text
+   Any container inside a light theme that carries an opacity
+   attribute now forces opacity: 1 on descendant text nodes.
+   ============================================================ */
+.fh-glass-light p,
+.fh-glass-light span,
+.fh-glass-light h1,
+.fh-glass-light h2,
+.fh-glass-light h3,
+.fh-glass-light h4,
+.fh-glass-light h5,
+.fh-glass-light h6,
+.fh-glass-light li,
+.fh-glass-light label {
+  opacity: 1 !important;
+}
+
+/* Remove opacity dimming utility classes on text elements */
+.fh-glass-light .opacity-40,
+.fh-glass-light .opacity-50,
+.fh-glass-light .opacity-60,
+.fh-glass-light .opacity-70 {
+  opacity: 1 !important;
+}
+
+/* Force dark ink on labels that were pale accent labels */
+.fh-glass-light .text-\[\#8A7F8D\],
+.fh-glass-light .text-gray-500,
+.fh-glass-light .text-gray-600 {
+  color: rgb(46 36 64 / 0.85) !important;
+}
+
+/* Glossary and other intentional dark cards on light themes:
+   dark cards do not belong on a light theme. Turn them to
+   white glass matching the rest of the app. */
+.fh-glass-light .fh-dark-card {
+  background-color: rgb(255 255 255 / 0.7) !important;
+  background-image: none !important;
+  border-color: rgba(139, 106, 174, 0.18) !important;
+}
+.fh-glass-light .fh-dark-card *,
+.fh-glass-light .fh-dark-card .text-white,
+.fh-glass-light .fh-dark-card .text-gray-200,
+.fh-glass-light .fh-dark-card .text-gray-300,
+.fh-glass-light .fh-dark-card .text-gray-400 {
+  color: rgb(46 36 64 / 0.90) !important;
+}
+
+/* Same for hardcoded plum backgrounds in Glossary */
+.fh-glass-light .bg-\[\#1C0A2E\],
+.fh-glass-light .bg-\[\#110122\],
+.fh-glass-light .bg-\[\#130620\] {
+  background-color: rgb(255 255 255 / 0.7) !important;
+  background-image: none !important;
+}
