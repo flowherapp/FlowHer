@@ -4502,6 +4502,112 @@ export default function App() {
   }, [unmaskFloatingThoughts.length]);
 
   // COMPANIONS DATABASE LIST FOR IMMERSIVE BODY DOUBLE CO-FOCUS
+  // Original hand-crafted SVG portraits: faceless jewel-tone silhouettes
+  // in the FlowHer emblem language. Each has a distinct color signature
+  // (Silvella = amethyst/rose, Maeve = teal/sea, Iris = ochre/rose).
+  const SilvellaPortrait = ({ size = 64 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="silvGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#8B6AAE" />
+          <stop offset="60%" stopColor="#B79BD8" />
+          <stop offset="100%" stopColor="#C4849A" />
+        </linearGradient>
+        <radialGradient id="silvHalo" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stopColor="#C4849A" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#8B6AAE" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#silvHalo)" />
+      <path
+        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
+        fill="url(#silvGrad)"
+        opacity="0.95"
+      />
+      <circle cx="32" cy="18" r="9" fill="url(#silvGrad)" />
+      <path
+        d="M22 16 Q26 8 32 9 Q38 8 42 16 Q40 12 32 12 Q24 12 22 16 Z"
+        fill="#6E4E96"
+        opacity="0.8"
+      />
+      <circle cx="32" cy="30" r="1.5" fill="#F2EDF8" opacity="0.6" />
+    </svg>
+  );
+
+  const MaevePortrait = ({ size = 64 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="maeveGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#5A9BA5" />
+          <stop offset="60%" stopColor="#7ABFC4" />
+          <stop offset="100%" stopColor="#8B6AAE" />
+        </linearGradient>
+        <radialGradient id="maeveHalo" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stopColor="#7ABFC4" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#5A9BA5" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#maeveHalo)" />
+      <path
+        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
+        fill="url(#maeveGrad)"
+        opacity="0.95"
+      />
+      <circle cx="32" cy="18" r="9" fill="url(#maeveGrad)" />
+      <path
+        d="M24 10 L32 6 L40 10 L36 14 L32 12 L28 14 Z"
+        fill="#3F818C"
+        opacity="0.85"
+      />
+      <circle cx="28" cy="17" r="0.9" fill="#F2EDF8" opacity="0.8" />
+      <circle cx="36" cy="17" r="0.9" fill="#F2EDF8" opacity="0.8" />
+    </svg>
+  );
+
+  const IrisPortrait = ({ size = 64 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="irisGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#C4849A" />
+          <stop offset="55%" stopColor="#D9A78C" />
+          <stop offset="100%" stopColor="#8B6AAE" />
+        </linearGradient>
+        <radialGradient id="irisHalo" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stopColor="#D9A78C" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#C4849A" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#irisHalo)" />
+      <path
+        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
+        fill="url(#irisGrad)"
+        opacity="0.95"
+      />
+      <circle cx="32" cy="18" r="9" fill="url(#irisGrad)" />
+      <path
+        d="M20 20 Q22 10 32 10 Q42 10 44 20 Q40 14 32 14 Q24 14 20 20 Z M18 26 Q16 30 20 34"
+        fill="#B26E86"
+        opacity="0.85"
+      />
+      <path
+        d="M46 26 Q48 30 44 34"
+        fill="none"
+        stroke="#B26E86"
+        strokeWidth="2"
+        opacity="0.85"
+      />
+    </svg>
+  );
+
+  const COMPANION_PORTRAITS: Record<
+    string,
+    React.FC<{ size?: number }>
+  > = {
+    silvella: SilvellaPortrait,
+    maeve: MaevePortrait,
+    iris: IrisPortrait,
+  };
+
   const COMPANIONS = [
     {
       id: "silvella" as const,
@@ -10294,8 +10400,20 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
 
                               {/* Companion Identity Header */}
                               <div className="flex items-center gap-3 bg-white/2 p-3 rounded-xl border border-white/5 relative">
-                                <div className="text-3xl bg-[#3D1052] rounded-full p-2 h-12 w-12 flex items-center justify-center border border-white/10 animate-pulse">
-                                  {activeCompanion.avatar}
+                                <div className="rounded-full h-12 w-12 flex items-center justify-center border border-white/10 animate-pulse overflow-hidden bg-white/5">
+                                  {(() => {
+                                    const Portrait =
+                                      COMPANION_PORTRAITS[
+                                        activeCompanion.id
+                                      ];
+                                    return Portrait ? (
+                                      <Portrait size={48} />
+                                    ) : (
+                                      <span className="text-2xl">
+                                        {activeCompanion.avatar}
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                                 <div className="text-left flex-1 min-w-0">
                                   <span className="text-[8px] font-mono uppercase text-teal block tracking-wider font-semibold">
@@ -10458,8 +10576,18 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                                         : "border-white/5 bg-white/2 text-gray-400 hover:bg-white/5 font-light"
                                     }`}
                                   >
-                                    <span className="text-2xl mb-1">
-                                      {buddy.avatar}
+                                    <span className="mb-1 inline-flex items-center justify-center">
+                                      {(() => {
+                                        const Portrait =
+                                          COMPANION_PORTRAITS[buddy.id];
+                                        return Portrait ? (
+                                          <Portrait size={56} />
+                                        ) : (
+                                          <span className="text-2xl">
+                                            {buddy.avatar}
+                                          </span>
+                                        );
+                                      })()}
                                     </span>
                                     <span className="font-serif text-xs font-semibold block">
                                       {buddy.name}
