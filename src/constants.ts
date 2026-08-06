@@ -353,7 +353,7 @@ export const FOCUS_THEMES: FocusTheme[] = [
     name: "Warm Sanctuary",
     emoji: "🏡",
     description: "A gentle light-mode sanctuary in warm oatmeal & terracotta.",
-    bgClass: "bg-[#FAF6F0]",
+    bgClass: "fh-glass-light bg-[#FAF6F0]",
     textClass: "text-[#1C0A2E]",
     panelBgClass: "bg-white border border-amber-900/15 shadow-xs",
     panelInnerBgClass: "bg-[#F3ECE0] border border-amber-900/10",

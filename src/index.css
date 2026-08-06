@@ -445,3 +445,40 @@ body {
 .fh-aurora-amethyst.fh-glass-light {
   background-color: #F9F7FC !important;
 }
+
+/* ============================================================
+   FINAL PASS: text and text-area container legibility fixes
+   ============================================================ */
+
+/* Feeling-completely-overwhelmed style heading text darker */
+.fh-glass-light .text-gray-200 {
+  color: rgb(46 36 64 / 0.94) !important;
+  font-weight: 500 !important;
+}
+.fh-glass-light .text-\[\#8A7F8D\] {
+  color: rgb(46 36 64 / 0.70) !important;
+}
+
+/* Brain Dump / textarea containers: any slash-opacity dark plum
+   forced to true white glass so typed text is visible */
+.fh-glass-light [class*="bg-[#130620]/"],
+.fh-glass-light [class*="bg-[#110122]/"],
+.fh-glass-light [class*="bg-[#1C0A2E]/"] {
+  background-color: rgb(255 255 255 / 0.75) !important;
+}
+
+/* Text INSIDE textareas and inputs on light themes */
+.fh-glass-light textarea,
+.fh-glass-light input[type="text"],
+.fh-glass-light input[type="email"],
+.fh-glass-light input[type="search"] {
+  color: rgb(46 36 64 / 0.95) !important;
+  background-color: rgb(255 255 255 / 0.85) !important;
+}
+
+/* Sanctuary specifically: does not use aurora glass, needs
+   direct white surface overrides for glass panels */
+.fh-glass-light.bg-\[\#FAF6F0\] [class*="bg-[#130620]/"],
+.fh-glass-light.bg-\[\#FAF6F0\] [class*="bg-[#1C0A2E]/"] {
+  background-color: rgb(255 255 255 / 0.9) !important;
+}
