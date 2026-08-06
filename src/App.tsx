@@ -4502,100 +4502,155 @@ export default function App() {
   }, [unmaskFloatingThoughts.length]);
 
   // COMPANIONS DATABASE LIST FOR IMMERSIVE BODY DOUBLE CO-FOCUS
-  // Original hand-crafted SVG portraits: faceless jewel-tone silhouettes
-  // in the FlowHer emblem language. Each has a distinct color signature
-  // (Silvella = amethyst/rose, Maeve = teal/sea, Iris = ochre/rose).
+  // FlowHer companion marks: each is drawn as a member of the sacred-
+  // geometry flower emblem family, sharing radial symmetry and layered
+  // petals, but each carrying a distinct motif and jewel signature.
+  //   Silvella: a full bloom (calm, grounded, blossomed)
+  //   Maeve:   a faceted gem geometry (sharp, precise, engineered)
+  //   Iris:    flowing calligraphy petals (fluid, expressive, literary)
   const SilvellaPortrait = ({ size = 64 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <defs>
-        <linearGradient id="silvGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#8B6AAE" />
-          <stop offset="60%" stopColor="#B79BD8" />
-          <stop offset="100%" stopColor="#C4849A" />
-        </linearGradient>
-        <radialGradient id="silvHalo" cx="50%" cy="35%" r="55%">
-          <stop offset="0%" stopColor="#C4849A" stopOpacity="0.35" />
+        <radialGradient id="silvGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#B79BD8" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#8B6AAE" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="30" fill="url(#silvHalo)" />
-      <path
-        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
-        fill="url(#silvGrad)"
-        opacity="0.95"
-      />
-      <circle cx="32" cy="18" r="9" fill="url(#silvGrad)" />
-      <path
-        d="M22 16 Q26 8 32 9 Q38 8 42 16 Q40 12 32 12 Q24 12 22 16 Z"
-        fill="#6E4E96"
-        opacity="0.8"
-      />
-      <circle cx="32" cy="30" r="1.5" fill="#F2EDF8" opacity="0.6" />
+      <circle cx="32" cy="32" r="30" fill="url(#silvGlow)" />
+      {/* Outer petals rose */}
+      {[0, 90, 180, 270].map((r) => (
+        <ellipse
+          key={`so${r}`}
+          cx="32"
+          cy="17"
+          rx="6"
+          ry="14"
+          fill="#C4849A"
+          opacity="0.85"
+          transform={`rotate(${r} 32 32)`}
+        />
+      ))}
+      {/* Mid petals purple */}
+      {[45, 135, 225, 315].map((r) => (
+        <ellipse
+          key={`sm${r}`}
+          cx="32"
+          cy="19"
+          rx="5"
+          ry="12"
+          fill="#8B6AAE"
+          opacity="0.85"
+          transform={`rotate(${r} 32 32)`}
+        />
+      ))}
+      {/* Inner petals lavender */}
+      {[0, 90, 180, 270].map((r) => (
+        <ellipse
+          key={`si${r}`}
+          cx="32"
+          cy="24"
+          rx="3"
+          ry="7"
+          fill="#B79BD8"
+          opacity="0.85"
+          transform={`rotate(${r} 32 32)`}
+        />
+      ))}
+      <circle cx="32" cy="32" r="4" fill="#6E4E96" />
+      <circle cx="32" cy="32" r="2" fill="#F2EDF8" />
     </svg>
   );
 
   const MaevePortrait = ({ size = 64 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <defs>
-        <linearGradient id="maeveGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5A9BA5" />
-          <stop offset="60%" stopColor="#7ABFC4" />
-          <stop offset="100%" stopColor="#8B6AAE" />
-        </linearGradient>
-        <radialGradient id="maeveHalo" cx="50%" cy="35%" r="55%">
+        <radialGradient id="maeveGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#7ABFC4" stopOpacity="0.4" />
           <stop offset="100%" stopColor="#5A9BA5" stopOpacity="0" />
         </radialGradient>
+        <linearGradient id="maeveFacet" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#7ABFC4" />
+          <stop offset="100%" stopColor="#3F818C" />
+        </linearGradient>
       </defs>
-      <circle cx="32" cy="32" r="30" fill="url(#maeveHalo)" />
-      <path
-        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
-        fill="url(#maeveGrad)"
-        opacity="0.95"
-      />
-      <circle cx="32" cy="18" r="9" fill="url(#maeveGrad)" />
-      <path
-        d="M24 10 L32 6 L40 10 L36 14 L32 12 L28 14 Z"
-        fill="#3F818C"
+      <circle cx="32" cy="32" r="30" fill="url(#maeveGlow)" />
+      {/* Faceted crystal outer */}
+      <polygon
+        points="32,8 48,20 44,40 32,52 20,40 16,20"
+        fill="#5A9BA5"
         opacity="0.85"
       />
-      <circle cx="28" cy="17" r="0.9" fill="#F2EDF8" opacity="0.8" />
-      <circle cx="36" cy="17" r="0.9" fill="#F2EDF8" opacity="0.8" />
+      <polygon
+        points="32,14 42,22 39,38 32,46 25,38 22,22"
+        fill="url(#maeveFacet)"
+        opacity="0.95"
+      />
+      {/* Facet lines */}
+      <line
+        x1="32"
+        y1="14"
+        x2="32"
+        y2="46"
+        stroke="#F2EDF8"
+        strokeWidth="0.5"
+        opacity="0.35"
+      />
+      <line
+        x1="22"
+        y1="22"
+        x2="42"
+        y2="38"
+        stroke="#F2EDF8"
+        strokeWidth="0.5"
+        opacity="0.35"
+      />
+      <line
+        x1="42"
+        y1="22"
+        x2="22"
+        y2="38"
+        stroke="#F2EDF8"
+        strokeWidth="0.5"
+        opacity="0.35"
+      />
+      {/* Central gem */}
+      <polygon points="32,26 36,30 32,34 28,30" fill="#B79BD8" />
+      <polygon points="32,28 34,30 32,32 30,30" fill="#F2EDF8" />
     </svg>
   );
 
   const IrisPortrait = ({ size = 64 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <defs>
-        <linearGradient id="irisGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#C4849A" />
-          <stop offset="55%" stopColor="#D9A78C" />
-          <stop offset="100%" stopColor="#8B6AAE" />
-        </linearGradient>
-        <radialGradient id="irisHalo" cx="50%" cy="35%" r="55%">
+        <radialGradient id="irisGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#D9A78C" stopOpacity="0.4" />
           <stop offset="100%" stopColor="#C4849A" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="30" fill="url(#irisHalo)" />
-      <path
-        d="M20 42 Q20 24 32 22 Q44 24 44 42 Z"
-        fill="url(#irisGrad)"
-        opacity="0.95"
-      />
-      <circle cx="32" cy="18" r="9" fill="url(#irisGrad)" />
-      <path
-        d="M20 20 Q22 10 32 10 Q42 10 44 20 Q40 14 32 14 Q24 14 20 20 Z M18 26 Q16 30 20 34"
-        fill="#B26E86"
-        opacity="0.85"
-      />
-      <path
-        d="M46 26 Q48 30 44 34"
-        fill="none"
-        stroke="#B26E86"
-        strokeWidth="2"
-        opacity="0.85"
-      />
+      <circle cx="32" cy="32" r="30" fill="url(#irisGlow)" />
+      {/* Flowing calligraphic petals: soft curved arcs, 3-fold rotation */}
+      {[0, 120, 240].map((r) => (
+        <path
+          key={`iflow${r}`}
+          d="M32 32 Q26 18 32 6 Q38 18 32 32 Z"
+          fill="#C4849A"
+          opacity="0.85"
+          transform={`rotate(${r} 32 32)`}
+        />
+      ))}
+      {[60, 180, 300].map((r) => (
+        <path
+          key={`iunder${r}`}
+          d="M32 32 Q28 22 32 12 Q36 22 32 32 Z"
+          fill="#D9A78C"
+          opacity="0.75"
+          transform={`rotate(${r} 32 32)`}
+        />
+      ))}
+      {/* Central iris */}
+      <circle cx="32" cy="32" r="6" fill="#B26E86" />
+      <circle cx="32" cy="32" r="3.5" fill="#8B6AAE" opacity="0.9" />
+      <circle cx="32" cy="32" r="1.5" fill="#F2EDF8" />
     </svg>
   );
 
