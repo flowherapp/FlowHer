@@ -600,3 +600,54 @@ body {
   background-color: rgb(255 255 255 / 0.7) !important;
   background-image: none !important;
 }
+
+/* ============================================================
+   CORRECTIVE: undo the gradient white-text overreach.
+   Soft tinted-gradient SURFACES get dark ink; only gradient
+   BUTTONS and LINKS keep white labels.
+   ============================================================ */
+.fh-glass-light [class*="bg-gradient"] p,
+.fh-glass-light [class*="bg-gradient"] span,
+.fh-glass-light [class*="bg-gradient"] h1,
+.fh-glass-light [class*="bg-gradient"] h2,
+.fh-glass-light [class*="bg-gradient"] h3,
+.fh-glass-light [class*="bg-gradient"] h4,
+.fh-glass-light [class*="bg-gradient"] li,
+.fh-glass-light [class*="bg-gradient"] label,
+.fh-glass-light [class*="bg-gradient"] div {
+  color: rgb(46 36 64 / 0.92);
+}
+.fh-glass-light button[class*="bg-gradient"],
+.fh-glass-light button[class*="bg-gradient"] *,
+.fh-glass-light a[class*="bg-gradient"],
+.fh-glass-light a[class*="bg-gradient"] *,
+.fh-glass-light .fh-keep-white,
+.fh-glass-light .fh-keep-white * {
+  color: #ffffff !important;
+}
+
+/* Accent tint chips (slash-opacity accent backgrounds) carry
+   accent ink text, never white */
+.fh-glass-light [class*="bg-[#8B6AAE]/"],
+.fh-glass-light [class*="bg-[#8B6AAE]/"] *,
+.fh-glass-light [class*="bg-[#C4849A]/"],
+.fh-glass-light [class*="bg-[#C4849A]/"] *,
+.fh-glass-light [class*="bg-[#5A9BA5]/"],
+.fh-glass-light [class*="bg-[#5A9BA5]/"] * {
+  color: rgb(46 36 64 / 0.9);
+}
+
+/* Gray config cards die: any black-tint container becomes glass */
+.fh-glass-light .bg-black\/20,
+.fh-glass-light .bg-black\/25,
+.fh-glass-light .bg-black\/30,
+.fh-glass-light .bg-black\/40,
+.fh-glass-light .bg-black\/45,
+.fh-glass-light .bg-black\/50 {
+  background-color: rgb(255 255 255 / 0.7) !important;
+}
+
+/* Disabled buttons stay legible instead of ghosting */
+.fh-glass-light button:disabled {
+  opacity: 0.55 !important;
+}

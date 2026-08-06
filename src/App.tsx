@@ -4507,7 +4507,7 @@ export default function App() {
       id: "silvella" as const,
       name: "Silvella",
       role: "The Calm Strategist",
-      avatar: "‍",
+      avatar: "S",
       desc: "A quiet planner who edits organizational booklets, sips chamomile tea, and values comfort pacing.",
       busyMsg: `"Drafting our custom playbook grids..."`,
     },
@@ -4515,7 +4515,7 @@ export default function App() {
       id: "maeve" as const,
       name: "Maeve",
       role: "The Dopamine Miner",
-      avatar: "‍",
+      avatar: "M",
       desc: "A software dev who focuses on typescript compilers, clicky blue switches, and spinning widgets.",
       busyMsg: `"Compiling full-stack state targets..."`,
     },
@@ -4523,7 +4523,7 @@ export default function App() {
       id: "iris" as const,
       name: "Iris",
       role: "The Calm Copywriter",
-      avatar: "✍️",
+      avatar: "I",
       desc: "A deep deliberate writer who drafts apology-free sentences and stretches periodically.",
       busyMsg: `"Refining standard outreach guides..."`,
     },
@@ -10508,7 +10508,7 @@ Subject: Pitch: Why late-diagnosed professional women are abandoning traditional
                                   `Started Co-Focus with ${bdCompanionId === "silvella" ? "Silvella" : bdCompanionId === "maeve" ? "Maeve" : "Iris"}! `,
                                 );
                               }}
-                              className="w-full py-3 bg-[#3D1052] border border-teal/40 text-teal text-xs font-semibold rounded-xl hover:bg-teal/5 disabled:opacity-50 transition-all cursor-pointer uppercase tracking-wider font-mono flex items-center justify-center gap-1"
+                              className="fh-keep-white w-full py-3 bg-gradient-to-r from-[#8B6AAE] to-[#C4849A] text-white text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer uppercase tracking-wider font-mono flex items-center justify-center gap-1 shadow-[0_6px_20px_rgba(139,106,174,0.35)]"
                             >
                               <span>Activate Co-Focus Session </span>
                             </button>
