@@ -4594,7 +4594,7 @@ export default function App() {
     const isCapacitor =
       typeof window !== "undefined" && (window as any).Capacitor;
     if (isCapacitor) {
-      return "https://ais-dev-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
+      return "https://flowher.ai.studio";
     }
     const h = window.location.hostname;
     if (
@@ -4605,7 +4605,7 @@ export default function App() {
     ) {
       return "";
     }
-    return "https://ais-dev-ucznitfcv5dhn3x4fzm436-744722211242.us-east1.run.app";
+    return "https://flowher.ai.studio";
   })();
 
   // Dynamic ADHD Step Fallback for extreme local resilience
